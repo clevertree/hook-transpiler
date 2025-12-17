@@ -1,0 +1,30 @@
+# Rust/Cargo
+target/
+**/target/
+debug/
+release/
+
+# Keep Cargo.lock tracked for binaries/libs
+# !Cargo.lock
+
+# OS/Editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Env files
+.env
+.env.*
+!.env.example
+
+# Logs and coverage
+*.log
+coverage/
+.nyc_output/
+
+# Misc caches
+**/.cache/
+.parcel-cache/
+.eslintcache
+*.tsbuildinfo
