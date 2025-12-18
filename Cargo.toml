@@ -1,6 +1,6 @@
 [package]
 name = "hook-transpiler"
-version = "0.2.0"
+version = "0.2.5"
 edition = "2024"
 license = "MIT OR Apache-2.0"
 description = "Minimal JSX/TSX transpiler for Relay hooks with dynamic import() rewrite to context.helpers.loadModule and friendly errors"
@@ -22,7 +22,7 @@ exclude = [
 ]
 
 [lib]
-name = "relay_hook_transpiler"
+name = "hook_transpiler"
 crate-type = ["cdylib", "rlib"]
 
 [features]

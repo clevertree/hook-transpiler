@@ -56,14 +56,14 @@ pub struct TranspileOutput {
     pub map: Option<String>,
 }
 
-/// Visitor to rewrite dynamic import(spec) to context.helpers.loadModule(spec)
+/// Visitor to rewrite dynamic import(spec) to __hook_import(spec)
 struct ImportRewriter;
 impl VisitMut for ImportRewriter {
     fn visit_mut_expr(&mut self, n: &mut ast::Expr) {
         n.visit_mut_children_with(self);
         if let ast::Expr::Call(call) = n {
             if let ast::Callee::Import(_) = call.callee {
-                // import(arg) -> context.helpers.loadModule(arg)
+                // import(arg) -> __hook_import(arg)
                 let arg = call
                     .args
                     .get(0)
@@ -75,17 +75,7 @@ impl VisitMut for ImportRewriter {
                     })));
                 let ident_ctx =
                     |name: &str| ast::Ident::new(name.into(), DUMMY_SP, SyntaxContext::empty());
-                let member = ast::Expr::Member(ast::MemberExpr {
-                    span: DUMMY_SP,
-                    obj: ast::Expr::Member(ast::MemberExpr {
-                        span: DUMMY_SP,
-                        obj: ast::Expr::Ident(ident_ctx("context")).into(),
-                        prop: ast::MemberProp::Ident(ident_ctx("helpers").into()),
-                    })
-                    .into(),
-                    prop: ast::MemberProp::Ident(ident_ctx("loadModule").into()),
-                });
-                call.callee = ast::Callee::Expr(Box::new(member));
+                call.callee = ast::Callee::Expr(Box::new(ast::Expr::Ident(ident_ctx("__hook_import"))));
                 call.args = vec![ast::ExprOrSpread {
                     spread: None,
                     expr: Box::new(arg),
@@ -93,6 +83,132 @@ impl VisitMut for ImportRewriter {
                 call.type_args = None;
             }
         }
+    }
+}
+
+/// Visitor to rewrite static imports from special modules to variable declarations using globals.
+/// Rewrites:
+///   import React from 'react' -> const React = globalThis.__hook_react
+///   import { useState } from 'react' -> const { useState } = globalThis.__hook_react
+///   import { jsx as _jsx } from 'react/jsx-runtime' -> const { jsx: _jsx } = globalThis.__hook_jsx_runtime
+///   import FileRenderer from '@relay/file-renderer' -> const FileRenderer = globalThis.__hook_file_renderer
+///   import helpers from '@relay/helpers' -> const helpers = globalThis.__hook_helpers
+struct StaticImportRewriter;
+impl VisitMut for StaticImportRewriter {
+    fn visit_mut_module_items(&mut self, items: &mut Vec<ast::ModuleItem>) {
+        let mut new_items = Vec::with_capacity(items.len());
+        for item in items.drain(..) {
+            match item {
+                ast::ModuleItem::ModuleDecl(ast::ModuleDecl::Import(import_decl)) => {
+                    // Check the import source against known special modules
+                    let src = &import_decl.src.value;
+                    let is_react = src == "react";
+                    let is_jsx_runtime = src == "react/jsx-runtime" || src == "react/jsx-dev-runtime";
+                    let is_file_renderer = src == "@relay/file-renderer";
+                    let is_helpers = src == "@relay/helpers";
+                    
+                    let global_name = if is_react {
+                        Some("__hook_react")
+                    } else if is_jsx_runtime {
+                        Some("__hook_jsx_runtime")
+                    } else if is_file_renderer {
+                        Some("__hook_file_renderer")
+                    } else if is_helpers {
+                        Some("__hook_helpers")
+                    } else {
+                        None
+                    };
+                    
+                    if let Some(global) = global_name {
+                        let ident_ctx = |name: &str| ast::Ident::new(
+                            name.into(),
+                            DUMMY_SP,
+                            SyntaxContext::empty()
+                        );
+                        
+                        // globalThis.__hook_react (or other global)
+                        let global_member = ast::Expr::Member(ast::MemberExpr {
+                            span: DUMMY_SP,
+                            obj: Box::new(ast::Expr::Ident(ident_ctx("globalThis"))),
+                            prop: ast::MemberProp::Ident(ast::IdentName::new(global.into(), DUMMY_SP)),
+                        });
+                        
+                        // Handle different import types
+                        for spec in &import_decl.specifiers {
+                            match spec {
+                                // Default import: import X from 'react'
+                                ast::ImportSpecifier::Default(default_spec) => {
+                                    let local_name = default_spec.local.sym.clone();
+                                    let var_decl = ast::VarDecl {
+                                        span: DUMMY_SP,
+                                        kind: ast::VarDeclKind::Const,
+                                        declare: false,
+                                        decls: vec![ast::VarDeclarator {
+                                            span: DUMMY_SP,
+                                            name: ast::Pat::Ident(ast::BindingIdent {
+                                                id: ident_ctx(&local_name),
+                                                type_ann: None,
+                                            }),
+                                            init: Some(Box::new(global_member.clone())),
+                                            definite: false,
+                                        }],
+                                        ..Default::default()
+                                    };
+                                    new_items.push(ast::ModuleItem::Stmt(ast::Stmt::Decl(ast::Decl::Var(
+                                        Box::new(var_decl)
+                                    ))));
+                                },
+                                // Named imports: import { useState, useEffect } from 'react'
+                                ast::ImportSpecifier::Named(named_spec) => {
+                                    // Build destructuring pattern
+                                    let imported_name = match &named_spec.imported {
+                                        Some(ast::ModuleExportName::Ident(id)) => id.sym.clone(),
+                                        None => named_spec.local.sym.clone(),
+                                        _ => continue,
+                                    };
+                                    let local_name = named_spec.local.sym.clone();
+                                    
+                                    // For simplicity, create individual const declarations
+                                    // const useState = globalThis.__hook_react.useState
+                                    let member_access = ast::Expr::Member(ast::MemberExpr {
+                                        span: DUMMY_SP,
+                                        obj: Box::new(global_member.clone()),
+                                        prop: ast::MemberProp::Ident(ast::IdentName::new(imported_name, DUMMY_SP)),
+                                    });
+                                    
+                                    let var_decl = ast::VarDecl {
+                                        span: DUMMY_SP,
+                                        kind: ast::VarDeclKind::Const,
+                                        declare: false,
+                                        decls: vec![ast::VarDeclarator {
+                                            span: DUMMY_SP,
+                                            name: ast::Pat::Ident(ast::BindingIdent {
+                                                id: ident_ctx(&local_name),
+                                                type_ann: None,
+                                            }),
+                                            init: Some(Box::new(member_access)),
+                                            definite: false,
+                                        }],
+                                        ..Default::default()
+                                    };
+                                    new_items.push(ast::ModuleItem::Stmt(ast::Stmt::Decl(ast::Decl::Var(
+                                        Box::new(var_decl)
+                                    ))));
+                                },
+                                _ => {
+                                    // Namespace imports not supported for now
+                                }
+                            }
+                        }
+                    } else {
+                        // Keep non-special imports as-is
+                        new_items.push(ast::ModuleItem::ModuleDecl(ast::ModuleDecl::Import(import_decl)));
+                    }
+                }
+                other => new_items.push(other),
+            }
+        }
+        *items = new_items;
     }
 }
 
@@ -165,16 +281,10 @@ pub fn transpile(
         }
 
         if is_jsx {
-            let pragma = opts.pragma.clone().unwrap_or_else(|| "h".into());
-            let pragma_frag = opts
-                .pragma_frag
-                .clone()
-                .unwrap_or_else(|| "React.Fragment".into());
             let react_cfg = react::Options {
                 development: Some(opts.react_dev),
-                runtime: Some(react::Runtime::Classic),
-                pragma: Some(pragma.into()),
-                pragma_frag: Some(pragma_frag.into()),
+                runtime: Some(react::Runtime::Automatic),
+                import_source: Some("react".into()),
                 ..Default::default()
             };
             let pass = react::react(
@@ -186,7 +296,12 @@ pub fn transpile(
             );
             module = run_module_pass(pass, module);
         }
-
+        
+        // Rewrite static imports from special modules to globals AFTER react transform
+        // so we can catch jsx-runtime imports that React transform adds
+        module.visit_mut_with(&mut StaticImportRewriter);
+        
+        // Rewrite dynamic import() to __hook_import()
         module.visit_mut_with(&mut ImportRewriter);
 
         if opts.to_commonjs {
@@ -223,6 +338,11 @@ pub fn transpile(
             }
         }
         let mut code = String::from_utf8(buf).unwrap_or_default();
+        
+        // Post-process: __hook_import is available on globalThis in the web loader
+        // and is bound per-module with the calling filename context.
+        // No additional wrapping needed - it's already set up by the runtime.
+        
         // Post-process fix for SWC CJS edge-case that generates invalid LHS:
         // `0 && module.exports = {...};` → `0 && (module.exports = {...});`
         if opts.to_commonjs {
@@ -285,7 +405,7 @@ mod wasm_api {
             filename: Some(filename.to_string()),
             react_dev: false,
             to_commonjs: false,
-            pragma: Some("h".to_string()),
+            pragma: None,
             pragma_frag: None,
         };
         let result = match transpile(source, opts) {
@@ -302,6 +422,11 @@ mod wasm_api {
         };
         to_value(&result)
             .unwrap_or_else(|err| JsValue::from_str(&format!("serde-wasm-bindgen error: {err}")))
+    }
+
+    #[wasm_bindgen]
+    pub fn get_version() -> String {
+        version().to_string()
     }
 }
 
@@ -393,7 +518,36 @@ mod tests {
             },
         )
         .unwrap();
-        assert!(out.code.contains("context.helpers.loadModule"));
+        assert!(out.code.contains("__hook_import"));
+        assert_parseable(&out.code);
+    }
+
+    #[test]
+    fn rewrites_static_special_imports() {
+        let src = r#"
+import React from 'react'
+import FileRenderer from '@relay/file-renderer'
+import helpers from '@relay/helpers'
+
+export default function App() {
+    return <div>test</div>
+}
+"#;
+        let out = transpile(
+            src,
+            TranspileOptions {
+                filename: Some("test.jsx".into()),
+                react_dev: false,
+                to_commonjs: false,
+                pragma: Some("h".into()),
+                pragma_frag: None,
+            },
+        )
+        .unwrap();
+        assert!(out.code.contains("const React = globalThis.__hook_react"), "expected React global rewrite");
+        assert!(out.code.contains("const FileRenderer = globalThis.__hook_file_renderer"), "expected FileRenderer global rewrite");
+        assert!(out.code.contains("const helpers = globalThis.__hook_helpers"), "expected helpers global rewrite");
+        assert!(!out.code.contains("import React from"), "should not contain original import");
         assert_parseable(&out.code);
     }
 
@@ -452,7 +606,7 @@ mod tests {
         .unwrap();
         assert!(
             out.code
-                .contains("context.helpers.loadModule('./query-client.jsx')")
+                .contains("__hook_import('./query-client.jsx')")
         );
         assert_parseable(&out.code);
     }
@@ -480,8 +634,8 @@ mod tests {
         )
         .expect("transpile get-client.jsx");
         assert!(
-            out.code.contains("helpers.loadModule"),
-            "expected helper loadModule usage"
+            out.code.contains("__hook_import"),
+            "expected __hook_import usage"
         );
         assert!(
             out.code.contains("React.createElement") || out.code.contains("h("),
@@ -518,12 +672,12 @@ mod tests {
         .expect("transpile query-client.jsx");
         assert!(
             out.code
-                .contains("helpers.loadModule('./components/MovieResults.jsx')"),
-            "expected helpers.loadModule for MovieResults"
+                .contains("__hook_import('./components/MovieResults.jsx')"),
+            "expected __hook_import for MovieResults"
         );
         assert!(
-            out.code.contains("helpers.loadModule('./plugin/tmdb.mjs')"),
-            "expected helpers.loadModule for tmdb plugin"
+            out.code.contains("__hook_import('./plugin/tmdb.mjs')"),
+            "expected __hook_import for tmdb plugin"
         );
         assert_parseable(&out.code);
     }
