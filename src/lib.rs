@@ -91,9 +91,9 @@ impl VisitMut for ImportRewriter {
 ///   import React from 'react' -> const React = globalThis.__hook_react
 ///   import { useState } from 'react' -> const { useState } = globalThis.__hook_react
 ///   import { jsx as _jsx } from 'react/jsx-runtime' -> const { jsx: _jsx } = globalThis.__hook_jsx_runtime
-///   import FileRenderer from '@relay/file-renderer' -> const FileRenderer = globalThis.__hook_file_renderer
-///   import helpers from '@relay/helpers' -> const helpers = globalThis.__hook_helpers
-///   import { dirname, url } from '@relay/meta' -> const { dirname, url } = globalThis.__relay_meta
+///   import FileRenderer from '@clevertree/file-renderer' -> const FileRenderer = globalThis.__hook_file_renderer
+///   import helpers from '@clevertree/helpers' -> const helpers = globalThis.__hook_helpers
+///   import { dirname, url } from '@clevertree/meta' -> const { dirname, url } = globalThis.__relay_meta
 struct StaticImportRewriter;
 impl VisitMut for StaticImportRewriter {
     fn visit_mut_module_items(&mut self, items: &mut Vec<ast::ModuleItem>) {
@@ -105,9 +105,9 @@ impl VisitMut for StaticImportRewriter {
                     let src = &import_decl.src.value;
                     let is_react = src == "react";
                     let is_jsx_runtime = src == "react/jsx-runtime" || src == "react/jsx-dev-runtime";
-                    let is_file_renderer = src == "@relay/file-renderer";
-                    let is_helpers = src == "@relay/helpers";
-                    let is_meta = src == "@relay/meta";
+                    let is_file_renderer = src == "@clevertree/file-renderer";
+                    let is_helpers = src == "@clevertree/helpers";
+                    let is_meta = src == "@clevertree/meta";
                     
                     let global_name = if is_react {
                         Some("__hook_react")
@@ -533,8 +533,8 @@ mod tests {
     fn rewrites_static_special_imports() {
         let src = r#"
 import React from 'react'
-import FileRenderer from '@relay/file-renderer'
-import helpers from '@relay/helpers'
+import FileRenderer from '@clevertree/file-renderer'
+import helpers from '@clevertree/helpers'
 
 export default function App() {
     return <div>test</div>

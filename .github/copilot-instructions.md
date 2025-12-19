@@ -24,9 +24,9 @@ Maps special modules to globalThis:
 ```
 'react' → globalThis.__hook_react
 'react/jsx-runtime' → globalThis.__hook_jsx_runtime
-'@relay/file-renderer' → globalThis.__hook_file_renderer
-'@relay/helpers' → globalThis.__hook_helpers
-'@relay/meta' → globalThis.__relay_meta
+'@clevertree/file-renderer' → globalThis.__hook_file_renderer
+'@clevertree/helpers' → globalThis.__hook_helpers
+'@clevertree/meta' → globalThis.__relay_meta
 ```
 
 All other imports pass through unchanged.
