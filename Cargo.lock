@@ -690,24 +690,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fc0fef456e4baa96da950455cd02c081ca953b141298e41db3fc7e36b1da849c"
 
 [[package]]
-name = "hook-transpiler"
-version = "0.2.5"
-dependencies = [
- "anyhow",
- "jni",
- "once_cell",
- "pretty_assertions",
- "regex",
- "reqwest",
- "serde",
- "serde-wasm-bindgen",
- "swc_core",
- "swc_ecma_transforms_module",
- "thiserror 2.0.17",
- "wasm-bindgen",
-]
-
-[[package]]
 name = "hstr"
 version = "3.0.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1521,6 +1503,24 @@ name = "regex-syntax"
 version = "0.8.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7a2d987857b319362043e95f5353c0535c1f58eec5336fdfcf626430af7def58"
+
+[[package]]
+name = "relay-hook-transpiler"
+version = "0.2.15"
+dependencies = [
+ "anyhow",
+ "jni",
+ "once_cell",
+ "pretty_assertions",
+ "regex",
+ "reqwest",
+ "serde",
+ "serde-wasm-bindgen",
+ "swc_core",
+ "swc_ecma_transforms_module",
+ "thiserror 2.0.17",
+ "wasm-bindgen",
+]
 
 [[package]]
 name = "reqwest"

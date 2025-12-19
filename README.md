@@ -17,9 +17,9 @@ This crate is the foundation for client‑side (WASM) and server‑side transpil
 - Friendly error types implemented (parse/transform/codegen)
 - Initial unit tests included (JSX basics, dynamic import rewrite, minimal get‑client snippet)
 - Server fallback route implemented and calling this crate: `POST /api/transpile`
-- Client‑web wired for strict crate‑WASM usage (no SWC/Babel/server fallback while validating) — confirmed working
+- Client‑web wired for strict crate‑WASM usage (no SWC/Babel/server fallback while validating) — ✅ **WORKING**
+- WASM build uses `wasm-pack --target web` for Vite compatibility (generates self-contained ES module)
 - RN integration next: choose native binding approach (JSI) or use server fallback initially
-- A separate isolated WASM crate for the browser is aligned to `swc_core v50.x` APIs (in progress; usable subset already powering client‑web)
 
 ## Task List and Status
 
@@ -35,11 +35,12 @@ This crate is the foundation for client‑side (WASM) and server‑side transpil
      - [ ] Negative cases with user‑friendly diagnostics (parse error locations)
 
 2. Web/WASM build (client‑first)
-   - [x] Add build script to emit wasm + JS glue to client‑web public assets (`scripts/build-hook-wasm.sh`)
+   - [x] Add build script to emit wasm + JS glue to client‑web public assets (`build-and-deploy.sh`)
    - [x] Client‑web loader that initializes the WASM and exposes `globalThis.__hook_transpile_jsx`
-   - [*] Align and finalize WASM build against `swc_core v50.x` (isolated browser crate) — in progress
+   - [x] Align and finalize WASM build against `swc_core v50.x` using `--target web`
    - [x] Minimal wasm‑exposed API shape: `transpile_jsx(source, filename) -> { code, map?, diagnostics? }`
    - [x] Document WASM loading behavior and troubleshooting — see Release Validation doc
+   - [x] **CRITICAL:** Must use `wasm-pack build --release --target web --features wasm` (NOT `--target bundler`)
 
 3. Server fallback (apps/server)
    - [x] Implement `POST /api/transpile` endpoint invoking this crate
@@ -107,15 +108,57 @@ npm run web:dev:wasm
 ```
 
 Expected outputs (canonical location under the web app source):
-- `apps/client-web/src/wasm/hook_transpiler.js`
-- `apps/client-web/src/wasm/hook_transpiler_bg.wasm`
+- `relay-clients/packages/web/src/wasm/relay_hook_transpiler.js`
+- `relay-clients/packages/web/src/wasm/relay_hook_transpiler_bg.wasm`
 
-Client‑web loads these at startup via `apps/client-web/src/wasmEntry.ts` (shim) and exposes:
+Client‑web loads these at startup via `relay-clients/packages/web/src/wasmEntry.ts` (shim) and exposes:
 ```
 globalThis.__hook_transpile_jsx(source: string, filename: string) => string | { code: string }
 ```
 
+### WASM Loading in Vite (Critical)
+
+**Problem:** The `wasm-bindgen` tool generates JavaScript that imports the `.wasm` file as an ES module:
+```javascript
+import * as wasm from "./relay_hook_transpiler_bg.wasm";  // ❌ Fails in Vite
+```
+
+This fails in Vite because Vite needs to handle WASM imports with the `?url` query parameter to get the asset path.
+
+**Solution:** The generated `relay_hook_transpiler.js` must export an async init function that accepts the WASM URL as a parameter:
+
+```javascript
+let wasm;
+
+export default async function init(wasmUrl) {
+  const response = await fetch(wasmUrl);
+  const buffer = await response.arrayBuffer();
+  const { instance } = await WebAssembly.instantiate(buffer);
+  wasm = instance.exports;
+  
+  // Return object with all exported functions
+  return {
+    transpile_jsx: (source, filename) => wasm.transpile_jsx(source, filename),
+    get_version: () => wasm.get_version(),
+  };
+}
+```
+
+The `wasmEntry.ts` then calls it like this:
+```typescript
+const hookWasmUrl = new URL('./relay_hook_transpiler_bg.wasm?url', import.meta.url).href;
+await hookMod.default(hookWasmUrl);
+```
+
+**Troubleshooting:** If you see "WASM not loaded (unknown)" error:
+1. Verify `build-and-deploy.sh` was run with `--features wasm`
+2. Check that `relay_hook_transpiler_bg.wasm` is ~4.4 MB (not 365 bytes)
+3. Inspect `relay_hook_transpiler.js` — it should NOT have `import * as wasm from...`
+4. Rebuild web app: `cd relay-clients/packages/web && npm run build`
+5. Hard refresh browser and check DevTools Console for fetch errors
+
 See also: Release validation steps in `docs/RELEASE_VALIDATION.md`.
+
 
 ## Minimal Public API (Rust)
 The crate exposes a Rust API consumed by the server and unit tests:

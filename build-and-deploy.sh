@@ -11,30 +11,16 @@ echo "Incrementing version: $VERSION -> $NEW_VERSION"
 sed -i "s/^version = \"$VERSION\"/version = \"$NEW_VERSION\"/" Cargo.toml
 
 # Build WASM for web
-echo "Building WASM for web..."
-wasm-pack build --target web --out-dir pkg --features wasm
+echo "Building WASM for web with --target web and --features wasm..."
+wasm-pack build --release --target web --features wasm
 
-# Deploy to web client
 echo "Deploying to web client..."
-cp pkg/hook_transpiler_bg.wasm ../relay-clients/packages/web/src/wasm/
-cp pkg/hook_transpiler.js ../relay-clients/packages/web/src/wasm/
-
-# Update React Native dependency version
-echo "Updating React Native dependency..."
-RN_CARGO="../relay-clients/packages/mobile/rust/Cargo.toml"
-if [ -f "$RN_CARGO" ]; then
-  # Check if hook-transpiler is already in dependencies
-  if grep -q "hook-transpiler" "$RN_CARGO"; then
-    # Update existing version
-    sed -i "s/hook-transpiler = { version = \"[^\"]*\"/hook-transpiler = { version = \"$NEW_VERSION\"/" "$RN_CARGO"
-    echo "Updated hook-transpiler dependency to $NEW_VERSION in React Native"
-  else
-    echo "Note: hook-transpiler not found in $RN_CARGO dependencies"
-  fi
-else
-  echo "Warning: React Native Cargo.toml not found at $RN_CARGO"
-fi
+WASM_DIR="../relay-clients/packages/web/src/wasm"
+cp pkg/relay_hook_transpiler_bg.wasm "$WASM_DIR/"
+cp pkg/relay_hook_transpiler.js "$WASM_DIR/"
+cp pkg/relay_hook_transpiler.d.ts "$WASM_DIR/" 2>/dev/null || true
+cp pkg/relay_hook_transpiler_bg.wasm.d.ts "$WASM_DIR/" 2>/dev/null || true
+echo "✓ Deployed to $WASM_DIR"
 
 echo "✅ Build complete! Version $NEW_VERSION deployed"
 echo "   - Web: relay-clients/packages/web/src/wasm/"
-echo "   - React Native: Cargo.toml dependency updated (rebuild native module to apply)"

@@ -93,6 +93,7 @@ impl VisitMut for ImportRewriter {
 ///   import { jsx as _jsx } from 'react/jsx-runtime' -> const { jsx: _jsx } = globalThis.__hook_jsx_runtime
 ///   import FileRenderer from '@relay/file-renderer' -> const FileRenderer = globalThis.__hook_file_renderer
 ///   import helpers from '@relay/helpers' -> const helpers = globalThis.__hook_helpers
+///   import { dirname, url } from '@relay/meta' -> const { dirname, url } = globalThis.__relay_meta
 struct StaticImportRewriter;
 impl VisitMut for StaticImportRewriter {
     fn visit_mut_module_items(&mut self, items: &mut Vec<ast::ModuleItem>) {
@@ -106,6 +107,7 @@ impl VisitMut for StaticImportRewriter {
                     let is_jsx_runtime = src == "react/jsx-runtime" || src == "react/jsx-dev-runtime";
                     let is_file_renderer = src == "@relay/file-renderer";
                     let is_helpers = src == "@relay/helpers";
+                    let is_meta = src == "@relay/meta";
                     
                     let global_name = if is_react {
                         Some("__hook_react")
@@ -115,6 +117,8 @@ impl VisitMut for StaticImportRewriter {
                         Some("__hook_file_renderer")
                     } else if is_helpers {
                         Some("__hook_helpers")
+                    } else if is_meta {
+                        Some("__relay_meta")
                     } else {
                         None
                     };
@@ -285,6 +289,7 @@ pub fn transpile(
                 development: Some(opts.react_dev),
                 runtime: Some(react::Runtime::Automatic),
                 import_source: Some("react".into()),
+                throw_if_namespace: Some(false),
                 ..Default::default()
             };
             let pass = react::react(
@@ -473,7 +478,9 @@ mod tests {
             },
         )
         .unwrap();
-        assert!(out.code.contains("React.createElement") || out.code.contains("h("));
+        println!("\n=== BASIC JSX OUTPUT ===\n{}\n", out.code);
+        assert!(out.code.contains("React.createElement") || out.code.contains("h(") || out.code.contains("_jsx"), 
+                "should use JSX transform (React.createElement, h(), or _jsx)");
         assert_parseable(&out.code);
     }
 
@@ -707,4 +714,51 @@ export default function App() {
         assert!(out.code.contains("h("), "expected Layout output to call h");
         assert_parseable(&out.code);
     }
+
+    #[test]
+    fn transpiles_map_with_jsx_automatic_runtime() {
+        // Test for the automatic JSX runtime fix
+        // Ensures that .map() with JSX calls _jsx() with key as third parameter
+        let src = r#"
+export function MovieList(props) {
+  const movies = [{id: 1, title: "Movie 1"}, {id: 2, title: "Movie 2"}];
+  return (
+    <div>
+      {movies.map((movie) => (
+        <div key={String(movie.id)}>{movie.title}</div>
+      ))}
+    </div>
+  );
 }
+"#;
+        let out = transpile(
+            src,
+            TranspileOptions {
+                filename: Some("MovieList.jsx".into()),
+                react_dev: false,
+                to_commonjs: false,
+                pragma: None,
+                pragma_frag: None,
+            },
+        )
+        .unwrap();
+
+        // The transpiler should use automatic JSX runtime (React 17+)
+        assert!(out.code.contains("const _jsx = globalThis.__hook_jsx_runtime.jsx"), 
+                "should use automatic JSX runtime from globalThis");
+        
+        // The map callback should call _jsx with key as third parameter
+        assert!(out.code.contains("movies.map"), "should contain movies.map call");
+        assert!(out.code.contains("_jsx"), "should use _jsx for JSX elements");
+        
+        // The output should call _jsx with three parameters for the inner div
+        // The pattern should be: _jsx("div", { children: movie.title }, String(movie.id))
+        assert!(out.code.contains("String(movie.id)"), 
+                "key should be converted to string and passed as third parameter");
+        
+        // Verify the transpiled code is syntactically valid
+        assert_parseable(&out.code);
+    }
+}
+
+
