@@ -1,6 +1,6 @@
 # @clevertree/hook-transpiler
 
-A minimal JSX/TSX transpiler specifically designed for Relay hooks. This library provides a unified interface for code transpilation across Web (via WASM) and Android/iOS (via native TurboModules).
+A minimal JSX/TSX transpiler specifically designed for Relay hooks. This library provides a unified interface for code transpilation across Web (via WASM) and Android (QuickJS + JNI).
 
 ## Why this library?
 
@@ -23,18 +23,9 @@ async function startApp() {
 }
 ```
 
-### Android / React Native
+### Android (QuickJS/JNI)
 
-The library automatically detects the React Native environment and uses the `RustTranspiler` TurboModule.
-
-```typescript
-import { initTranspiler } from '@clevertree/hook-transpiler';
-
-// In your App initialization
-useEffect(() => {
-  initTranspiler();
-}, []);
-```
+Android builds should expose `globalThis.__hook_transpile_jsx` via the host JNI module (e.g., `RustTranspilerModule.transpile(code, filename)`). The Android entrypoint in this package is a no-op initializer so it will not attempt WASM or React Native bootstraps.
 
 ## Features
 
