@@ -25,11 +25,11 @@ describe('Hook Transpilation and Rendering', () => {
     });
 
     // Wait for hook content to be rendered
-    cy.contains('Hello from Test Hook!', { timeout: 20000 }).should('be.visible');
-    cy.contains('This hook was transpiled and rendered by HookRenderer.').should('be.visible');
-    
-    // Check if the div with Tailwind class exists
-    cy.get('.bg-blue-500').should('exist');
+    cy.contains('Mapped Hierarchy Test', { timeout: 20000 }).should('be.visible');
+    cy.contains('Item 1').should('be.visible');
+    cy.contains('urgent').should('be.visible');
+    cy.contains('Lazy Data:').should('be.visible');
+    cy.contains('This string contains JSX-like text:').should('be.visible');
     
     console.log('E2E Test Passed!');
   });

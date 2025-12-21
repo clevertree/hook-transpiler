@@ -66,7 +66,80 @@ pub fn transpile_jsx(source: &str, opts: &TranspileOptions) -> Result<String> {
     let mut output = String::new();
     
     while ctx.pos < ctx.source.len() {
-        if ctx.current_char() == Some('<') && is_jsx_start(&ctx) {
+        let ch = ctx.current_char();
+        
+        // Handle strings to avoid transpiling JSX inside them
+        if ch == Some('"') || ch == Some('\'') || ch == Some('`') {
+            let quote = ch.unwrap();
+            output.push(quote);
+            ctx.advance();
+            while let Some(c) = ctx.current_char() {
+                output.push(c);
+                if c == '\\' {
+                    ctx.advance();
+                    if let Some(next) = ctx.current_char() {
+                        output.push(next);
+                        ctx.advance();
+                    }
+                    continue;
+                }
+                
+                if c == quote {
+                    ctx.advance();
+                    break;
+                }
+                
+                // Handle template literal interpolation
+                if quote == '`' && c == '$' && ctx.peek(1) == Some('{') {
+                    output.push('{');
+                    ctx.advance(); // consume $
+                    ctx.advance(); // consume {
+                    let expr = parse_js_expression(&mut ctx, '}')?;
+                    ctx.consume('}')?;
+                    let transpiled_expr = transpile_jsx(&expr, opts)?;
+                    output.push_str(&transpiled_expr);
+                    output.push('}');
+                    continue;
+                }
+                
+                ctx.advance();
+            }
+            continue;
+        }
+
+        // Handle comments
+        if ch == Some('/') {
+            if ctx.peek(1) == Some('/') {
+                output.push_str("//");
+                ctx.advance();
+                ctx.advance();
+                while let Some(c) = ctx.current_char() {
+                    output.push(c);
+                    ctx.advance();
+                    if c == '\n' {
+                        break;
+                    }
+                }
+                continue;
+            } else if ctx.peek(1) == Some('*') {
+                output.push_str("/*");
+                ctx.advance();
+                ctx.advance();
+                while let Some(c) = ctx.current_char() {
+                    if c == '*' && ctx.peek(1) == Some('/') {
+                        output.push_str("*/");
+                        ctx.advance();
+                        ctx.advance();
+                        break;
+                    }
+                    output.push(c);
+                    ctx.advance();
+                }
+                continue;
+            }
+        }
+
+        if ch == Some('<') && is_jsx_start(&ctx) {
             let jsx_code = parse_jsx_element(&mut ctx)?;
             output.push_str(&jsx_code);
         } else {

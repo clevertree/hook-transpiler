@@ -74,14 +74,61 @@ app.use('/react-dom', express.static(path.join(repoRoot, 'node_modules/react-dom
 app.get('/hooks/test-hook.jsx', (req, res) => {
   res.setHeader('Content-Type', 'text/javascript');
   res.send(`
-    import React from 'react';
-    export default function TestHook() {
+    import React, { useState, useEffect } from 'react';
+    
+    const ListItem = ({ item }) => (
+      <div className="p-2 border-b border-gray-200">
+        <span className="font-medium">{item.name}</span>
+        {item.tags && (
+          <div className="flex gap-1 mt-1">
+            {item.tags.map(tag => (
+              <span key={tag} className="text-xs bg-gray-100 px-1 rounded">{tag}</span>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+
+    export default function(context) {
+      return <TestHook />;
+    }
+
+    function TestHook() {
+      const [items, setItems] = useState([
+        { id: 1, name: 'Item 1', tags: ['urgent', 'bug'] },
+        { id: 2, name: 'Item 2', tags: ['feature'] },
+        { id: 3, name: 'Item 3' }
+      ]);
+
+      const [lazyData, setLazyData] = useState(null);
+
+      useEffect(() => {
+        // Test lazy load import()
+        import('./lazy-data.js').then(mod => {
+          setLazyData(mod.default);
+        }).catch(err => {
+          console.error("Failed to load lazy data", err);
+          setLazyData("Lazy data failed to load (expected if file missing)");
+        });
+      }, []);
+
       return (
-        <div className="p-4 bg-blue-500 text-white rounded shadow-lg">
-          <h1 className="text-2xl font-bold">Hello from Test Hook!</h1>
-          <p className="mt-2">This hook was transpiled and rendered by HookRenderer.</p>
-          <div className="mt-4 p-2 bg-white text-blue-800 rounded">
-            Tailwind class 'bg-blue-500' should be active if themed-styler is working.
+        <div className="p-4 bg-white text-gray-800 rounded shadow-lg">
+          <h1 className="text-2xl font-bold mb-4">Mapped Hierarchy Test</h1>
+          
+          <div className="space-y-2">
+            {items.map(item => (
+              <ListItem key={item.id} item={item} />
+            ))}
+          </div>
+
+          <div className="mt-4 p-2 bg-blue-50 text-blue-800 rounded">
+            <p>Lazy Data: {lazyData || 'Loading...'}</p>
+          </div>
+
+          <div className="mt-4 text-sm text-gray-500">
+            {/* Test JSX-like string in an expression */}
+            <p>This string contains JSX-like text: {"<div>test</div>"}</p>
           </div>
         </div>
       );
