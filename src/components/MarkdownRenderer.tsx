@@ -70,9 +70,9 @@ export function MarkdownRenderer({ content, navigate, onElement, overrides = {} 
         overrides: defaultOverrides,
         createElement: (type, props, ...children) => {
           if (typeof type === 'string' && onElement) {
-            try { onElement(type, props) } catch (e) {}
+            try { onElement(type, props as any) } catch (e) {}
           }
-          return React.createElement(type, props, ...children)
+          return React.createElement(type, props as any, ...children)
         }
       }}>
         {processedContent}

@@ -1,9 +1,9 @@
 import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { HookLoader, WebModuleLoader, transpileCode, createHookReact } from '../runtimeLoader.js';
-import ErrorBoundary from './ErrorBoundary';
-import { MarkdownRenderer } from './MarkdownRenderer';
-import { FileRenderer } from './FileRenderer';
+import ErrorBoundary from './ErrorBoundary.js';
+import { MarkdownRenderer } from './MarkdownRenderer.js';
+import { FileRenderer } from './FileRenderer.js';
 function normalizeHostUrl(host) {
     if (!host)
         return '';
@@ -184,20 +184,28 @@ export const HookRenderer = ({ host, hookPath, onElement, requestRender, renderC
         };
     }, [normalizedHost, onElement, registerUsageFromElement, loadThemesFromYamlUrl, renderCssIntoDom, registerTheme]);
     const tryRender = useCallback(async () => {
-        if (!wasmReady)
+        console.log('[HookRenderer] tryRender called, wasmReady:', wasmReady);
+        if (!wasmReady) {
+            console.log('[HookRenderer] wasm not ready yet, skipping render');
             return;
+        }
         setLoading(true);
         setError(null);
         setElement(null);
         try {
             const path = hookPath || 'http://localhost:8002/hooks/client/get-client.jsx';
+            console.log('[HookRenderer] Loading hook:', path);
             if (!loaderRef.current)
                 throw new Error('hook loader not initialized');
             const ctx = createHookContext(path);
+            console.log('[HookRenderer] HookContext created for:', path);
             const el = await loaderRef.current.loadAndExecuteHook(path, ctx);
+            console.log('[HookRenderer] Hook executed successfully');
             setElement(el);
-            if (renderCssIntoDom)
+            if (renderCssIntoDom) {
+                console.log('[HookRenderer] Triggering renderCssIntoDom');
                 renderCssIntoDom();
+            }
         }
         catch (e) {
             console.error('[HookRenderer] Error loading/executing hook:', e);
@@ -212,7 +220,9 @@ export const HookRenderer = ({ host, hookPath, onElement, requestRender, renderC
     }, [createHookContext, hookPath, wasmReady, renderCssIntoDom]);
     useEffect(() => { void tryRender(); }, [tryRender]);
     useEffect(() => {
+        console.log('[HookRenderer] mounted, onElement present:', !!onElement);
         if (onElement) {
+            console.log('[HookRenderer] Registering container div');
             onElement('div', { style: { height: '100%', display: 'flex', flexDirection: 'column' } });
         }
     }, [onElement]);

@@ -947,11 +947,15 @@ export function applyHookRewrite(code: string): string {
   const metaRe = /import\s+(\w+)\s+from\s+['"]@clevertree\/meta['"];?/g
   const metaStarRe = /import\s*\*\s*as\s+(\w+)\s+from\s+['"]@clevertree\/meta['"];?/g
   const metaDestructureRe = /import\s+\{\s*([^}]+)\s*\}\s+from\s+['"]@clevertree\/meta['"];?/g
+  const reactRe = /import\s+React\s+from\s+['"]react['"];?/g
+  const reactStarRe = /import\s*\*\s*as\s+React\s+from\s+['"]react['"];?/g
 
   const jsxRuntimeRe = /import\s+\{\s*jsx\s+as\s+(_jsx)\s*,\s*jsxs\s+as\s+(_jsxs)\s*,\s*Fragment\s+as\s+(_Fragment)\s*\}\s+from\s+['"]react\/jsx-runtime['"];?/g
 
   let rewritten = code.replace(markdownRe, mkBuiltin('@clevertree/markdown', '{ MarkdownRenderer }'))
   rewritten = rewritten.replace(themeRe, mkBuiltin('@clevertree/theme', '{ registerThemesFromYaml }'))
+  rewritten = rewritten.replace(reactRe, 'const React = (globalThis.__hook_react || globalThis.React);')
+  rewritten = rewritten.replace(reactStarRe, 'const React = (globalThis.__hook_react || globalThis.React);')
 
   // Support @clevertree/meta
   rewritten = rewritten.replace(metaRe, (_m, name) => `const ${name} = (globalThis.__relay_meta || { filename: '', dirname: '', url: '' });`)

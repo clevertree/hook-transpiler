@@ -25,23 +25,25 @@ export async function initWasmTranspiler() {
         // Get WASM module path - only for web builds
         let wasmPath;
         try {
-            // @ts-ignore
-            wasmPath = new URL('../wasm/relay_hook_transpiler_bg.wasm', import.meta.url);
-            console.log('[hook-transpiler] wasmPath resolved to:', wasmPath.toString());
+            // Use the unified /wasm/ path for reliable loading in various environments
+            wasmPath = new URL('/wasm/relay_hook_transpiler_bg.wasm', window.location.origin).toString();
+            console.log('[hook-transpiler] Using unified wasmPath:', wasmPath);
         }
         catch (e) {
             console.warn('[hook-transpiler] Failed to construct wasm path via URL, using fallback string');
-            wasmPath = '../wasm/relay_hook_transpiler_bg.wasm';
+            wasmPath = '/wasm/relay_hook_transpiler_bg.wasm';
         }
-        if (isNode && typeof wasmPath === 'object' && wasmPath.protocol === 'file:') {
+        // Workaround for esbuild: if wasmPath is an object, convert to string
+        const wasmUrl = wasmPath;
+        if (isNode && typeof wasmUrl === 'string' && wasmUrl.startsWith('file:')) {
             const fs = await import('node:fs/promises');
-            const buffer = await fs.readFile(wasmPath);
+            const buffer = await fs.readFile(new URL(wasmUrl));
             await init({ module_or_path: buffer });
         }
         else {
-            console.log('[hook-transpiler] calling init with wasmPath:', wasmPath.toString());
+            console.log('[hook-transpiler] calling init with wasmUrl:', wasmUrl);
             // Pass as an object to avoid deprecation warning
-            await init({ module_or_path: wasmPath });
+            await init({ module_or_path: wasmUrl });
         }
         const transpileFn = (code, filename, isTypescript) => {
             return transpile_jsx(code, filename || 'module.tsx', isTypescript);

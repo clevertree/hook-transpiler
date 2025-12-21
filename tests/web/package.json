@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "start": "node server.js",
-    "build": "esbuild public/test-app.js --bundle --outfile=public/test-app.bundle.js --format=esm --platform=browser --loader:.wasm=file",
+    "build": "esbuild public/test-app.js --bundle --outfile=public/test-app.bundle.js --format=esm --platform=browser --loader:.wasm=file --loader:.js=jsx --alias:react=./node_modules/react --alias:react-dom=./node_modules/react-dom",
     "test:e2e": "npm run build && cypress run",
     "cypress:open": "cypress open"
   },

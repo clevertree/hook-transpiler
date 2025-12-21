@@ -793,9 +793,13 @@ export function applyHookRewrite(code) {
     const metaRe = /import\s+(\w+)\s+from\s+['"]@clevertree\/meta['"];?/g;
     const metaStarRe = /import\s*\*\s*as\s+(\w+)\s+from\s+['"]@clevertree\/meta['"];?/g;
     const metaDestructureRe = /import\s+\{\s*([^}]+)\s*\}\s+from\s+['"]@clevertree\/meta['"];?/g;
+    const reactRe = /import\s+React\s+from\s+['"]react['"];?/g;
+    const reactStarRe = /import\s*\*\s*as\s+React\s+from\s+['"]react['"];?/g;
     const jsxRuntimeRe = /import\s+\{\s*jsx\s+as\s+(_jsx)\s*,\s*jsxs\s+as\s+(_jsxs)\s*,\s*Fragment\s+as\s+(_Fragment)\s*\}\s+from\s+['"]react\/jsx-runtime['"];?/g;
     let rewritten = code.replace(markdownRe, mkBuiltin('@clevertree/markdown', '{ MarkdownRenderer }'));
     rewritten = rewritten.replace(themeRe, mkBuiltin('@clevertree/theme', '{ registerThemesFromYaml }'));
+    rewritten = rewritten.replace(reactRe, 'const React = (globalThis.__hook_react || globalThis.React);');
+    rewritten = rewritten.replace(reactStarRe, 'const React = (globalThis.__hook_react || globalThis.React);');
     // Support @clevertree/meta
     rewritten = rewritten.replace(metaRe, (_m, name) => `const ${name} = (globalThis.__relay_meta || { filename: '', dirname: '', url: '' });`);
     rewritten = rewritten.replace(metaStarRe, (_m, name) => `const ${name} = (globalThis.__relay_meta || { filename: '', dirname: '', url: '' });`);
@@ -994,7 +998,7 @@ export class HookLoader {
         try {
             diag.phase = 'fetch';
             const hookUrl = `${this.protocol}://${this.host}${hookPath}`;
-            console.debug(`[HookLoader] Fetching hook from: ${hookUrl}`);
+            console.log(`[HookLoader] Fetching hook from: ${hookUrl}`);
             const requestHeaders = this.buildRequestHeaders(context);
             const fetchOptions = Object.keys(requestHeaders).length ? { headers: requestHeaders } : undefined;
             let response;
@@ -1008,7 +1012,7 @@ export class HookLoader {
                 console.error('[HookLoader] Fetch failed, got error immediately:', fetchErr);
                 throw fetchErr;
             }
-            console.debug(`[HookLoader] Received hook code (${code.length} chars)`);
+            console.log(`[HookLoader] Received hook code (${code.length} chars), status: ${response.status}`);
             diag.fetch = {
                 status: response.status,
                 ok: response.ok,
@@ -1028,7 +1032,7 @@ export class HookLoader {
             const shouldTranspile = !!this.transpiler || looksLikeTsOrJsx(code, hookPath);
             if (shouldTranspile) {
                 try {
-                    console.debug(`[HookLoader] Transpiling ${hookPath}`);
+                    console.log(`[HookLoader] Transpiling ${hookPath}`);
                     // Use custom transpiler if provided (e.g., for Android with CommonJS conversion)
                     if (this.transpiler) {
                         finalCode = await this.transpiler(code, hookPath);
@@ -1038,7 +1042,7 @@ export class HookLoader {
                         finalCode = await transpileCode(code, { filename: hookPath, hasJsxPragma: /@jsx\s+h/m.test(code) }, false // Web uses dynamic import
                         );
                     }
-                    console.debug(`[HookLoader] Transpilation complete (${finalCode.length} chars)`);
+                    console.log(`[HookLoader] Transpilation complete (${finalCode.length} chars)`);
                 }
                 catch (err) {
                     const msg = err?.message || String(err);
@@ -1052,7 +1056,7 @@ export class HookLoader {
             }
             // Execute
             diag.phase = 'import';
-            console.debug(`[HookLoader] Executing hook module`);
+            console.log(`[HookLoader] Executing hook module`);
             try {
                 // Pass the actual fetch URL for @clevertree/meta injection, not the logical path
                 const mod = await this.moduleLoader.executeModule(finalCode, hookPath, context, hookUrl);
@@ -1060,9 +1064,9 @@ export class HookLoader {
                     throw new Error('Hook module does not export a default function');
                 }
                 diag.phase = 'exec';
-                console.debug(`[HookLoader] Calling hook function`);
+                console.log(`[HookLoader] Calling hook function`);
                 const element = await mod.default(context);
-                console.debug(`[HookLoader] Hook executed successfully`);
+                console.log(`[HookLoader] Hook executed successfully`);
                 return element;
             }
             catch (execErr) {

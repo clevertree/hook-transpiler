@@ -1,8 +1,8 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { HookLoader, WebModuleLoader, transpileCode, createHookReact, type HookContext } from '../runtimeLoader.js'
-import ErrorBoundary from './ErrorBoundary'
-import { MarkdownRenderer } from './MarkdownRenderer'
-import { FileRenderer } from './FileRenderer'
+import ErrorBoundary from './ErrorBoundary.js'
+import { MarkdownRenderer } from './MarkdownRenderer.js'
+import { FileRenderer } from './FileRenderer.js'
 
 export interface HookRendererProps {
     host: string

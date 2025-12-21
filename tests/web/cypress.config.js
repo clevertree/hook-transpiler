@@ -2,7 +2,7 @@ import { defineConfig } from "cypress";
 
 export default defineConfig({
   e2e: {
-    baseUrl: 'http://localhost:8081',
+    baseUrl: 'http://localhost:8083',
     setupNodeEvents(on, config) {
       on('task', {
         log(message) {
@@ -11,6 +11,9 @@ export default defineConfig({
         }
       })
     },
-    supportFile: false
+    supportFile: false,
+    video: false,
+    screenshotOnRunFailure: false,
+    chromeWebSecurity: false
   },
 });
