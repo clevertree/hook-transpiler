@@ -1,5 +1,17 @@
 mod jsx_parser;
 
+pub struct TranspileOptions {
+    pub is_typescript: bool,
+}
+
+impl Default for TranspileOptions {
+    fn default() -> Self {
+        Self {
+            is_typescript: false,
+        }
+    }
+}
+
 /// Returns the crate version
 pub fn version() -> &'static str {
     env!("CARGO_PKG_VERSION")
@@ -8,7 +20,12 @@ pub fn version() -> &'static str {
 /// Simple JSX to JS transpiler using custom parser
 /// Outputs direct calls to __hook_jsx_runtime.jsx(...)
 pub fn transpile_jsx_simple(source: &str) -> Result<String, String> {
-    jsx_parser::transpile_jsx(source).map_err(|e| e.to_string())
+    transpile_jsx_with_options(source, &TranspileOptions::default())
+}
+
+/// Transpile JSX with options (e.g. TypeScript support)
+pub fn transpile_jsx_with_options(source: &str, opts: &TranspileOptions) -> Result<String, String> {
+    jsx_parser::transpile_jsx(source, opts).map_err(|e| e.to_string())
 }
 
 // WASM bindings for client-web (feature = "wasm")
@@ -26,8 +43,13 @@ mod wasm_api {
     }
 
     #[wasm_bindgen]
-    pub fn transpile_jsx(source: &str, _filename: &str) -> JsValue {
-        let result = match transpile_jsx_simple(source) {
+    pub fn transpile_jsx(source: &str, filename: &str, is_typescript: Option<bool>) -> JsValue {
+        let is_typescript = is_typescript.unwrap_or_else(|| {
+            filename.ends_with(".ts") || filename.ends_with(".tsx")
+        });
+        let opts = TranspileOptions { is_typescript };
+        
+        let result = match transpile_jsx_with_options(source, &opts) {
             Ok(code) => WasmTranspileResult {
                 code: Some(code),
                 error: None,

@@ -1,7 +1,7 @@
 /**
- * ES6 Import Handler for React Native
+ * ES6 Import Handler for Android
  *
- * Provides runtime support for ES6 dynamic import() calls in React Native.
+ * Provides runtime support for ES6 dynamic import() calls in Android.
  * Allows hooks to use modern ES6 import syntax instead of CommonJS require().
  *
  * Usage in hook code:

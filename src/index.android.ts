@@ -1,4 +1,4 @@
-// Android QuickJS/JNI entrypoint: keep API aligned with web exports without React Native bindings
+// Android QuickJS/JNI entrypoint: keep API aligned with web exports without Android-specific JSI bindings
 export {
     type TransformOptions,
     type TransformResult,
@@ -8,6 +8,7 @@ export {
     type ModuleLoader,
     type HookLoaderOptions,
     WebModuleLoader,
+    AndroidModuleLoader,
     transpileCode,
     looksLikeTsOrJsx,
     HookLoader,
@@ -16,7 +17,7 @@ export {
 export { ES6ImportHandler, type ImportHandlerOptions } from './es6ImportHandler'
 export { buildPeerUrl, buildRepoHeaders } from './urlBuilder'
 
-// Android uses native JNI/QuickJS to set __hook_transpile_jsx; no WASM or RN bootstrap here
+// Android uses native JNI/QuickJS to set __hook_transpile_jsx; no WASM or Android bootstrap here
 export async function initTranspiler(): Promise<void> {
     return
 }

@@ -47,7 +47,7 @@ Previously, the host (HookRenderer/RepoBrowser) maintained a global `params` obj
 
 Repos should not use `window.location`, `window.history`, or other browser APIs for navigation. This enables:
 
-- Embedding in non-browser contexts (React Native, Node.js SSR).
+- Embedding in non-browser contexts (Android QuickJS, Node.js SSR).
 - Sandboxing and security (repos can't manipulate browser state).
 - Cleaner separation of concerns.
 

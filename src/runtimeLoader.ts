@@ -2,8 +2,8 @@
  * Unified Runtime Loader for Relay Hooks
  *
  * Provides a shared interface for loading and transpiling TS/TSX/JSX hooks
- * across both web and React Native clients. Abstracts away platform-specific
- * module execution (browser import vs RN eval).
+ * across both web and Android clients. Abstracts away platform-specific
+ * module execution (browser import vs Android eval).
  */
 
 import { ES6ImportHandler, type ImportHandlerOptions } from './es6ImportHandler'
@@ -17,10 +17,11 @@ export interface TransformOptions {
   filename: string
   hasJsxPragma?: boolean
   development?: boolean
+  isTypescript?: boolean
 }
 
 /**
- * Result of transpiling code to CommonJS (used in RN)
+ * Result of transpiling code to CommonJS (used in Android)
  */
 export interface TransformResult {
   code: string
@@ -39,6 +40,8 @@ export interface HookContext {
   Layout?: ComponentType<any>
   params: Record<string, any>
   helpers: HookHelpers
+  onElement?: (tag: string, props: any) => void
+  [key: string]: any
 }
 
 /**
@@ -198,6 +201,9 @@ export class WebModuleLoader implements ModuleLoader {
               }
 
               logJsx('prod', type, key, props)
+              if (typeof type === 'string' && context.onElement) {
+                try { context.onElement(type, props) } catch { }
+              }
               return {
                 '$$typeof': elementType,
                 type,
@@ -433,6 +439,9 @@ try {
           }
 
           logJsx('func', type, key, props)
+          if (typeof type === 'string' && context.onElement) {
+            try { context.onElement(type, props) } catch { }
+          }
           return {
             '$$typeof': elementType,
             type,
@@ -474,12 +483,27 @@ try {
 }
 
 /**
- * React Native module loader: uses Function constructor with ES6 import() support
+ * Wrapper for React that adds element usage tracking
+ */
+export function createHookReact(reactModule: any, onElement?: (tag: string, props: any) => void) {
+  if (!reactModule) return undefined
+  const baseCreate = reactModule.createElement.bind(reactModule)
+  function hookCreateElement(type: any, props: any, ...children: any[]) {
+    if (typeof type === 'string' && onElement) {
+      try { onElement(type, props || undefined) } catch (e) { }
+    }
+    return baseCreate(type, props, ...children)
+  }
+  return { ...reactModule, createElement: hookCreateElement }
+}
+
+/**
+ * Android module loader: uses Function constructor with ES6 import() support
  * 
  * Executes hook code with support for ES6 dynamic imports via __import__() calls.
  * This allows hooks to use modern import() syntax instead of CommonJS require().
  */
-export class RNModuleLoader implements ModuleLoader {
+export class AndroidModuleLoader implements ModuleLoader {
   private importHandler: ES6ImportHandler | null = null
   private requireShim: (spec: string) => any
   private transpiler: (code: string, filename: string) => Promise<string>
@@ -491,10 +515,16 @@ export class RNModuleLoader implements ModuleLoader {
     onDiagnostics?: (diag: any) => void
   }) {
     this.requireShim = options?.requireShim || ((spec: string) => {
-      // Provide basic React shim for RN
+      // Provide basic React shim for Android
       if (spec === 'react') {
-        // For RN, React is already in the global scope
+        // For Android, React is already in the global scope
         return typeof (global as any).React !== 'undefined' ? (global as any).React : {}
+      }
+      if (spec === '@clevertree/meta') {
+        return (globalThis as any).__relay_meta || { filename: '', dirname: '', url: '' }
+      }
+      if (spec === '@clevertree/markdown' || spec === '@clevertree/theme') {
+        return (globalThis as any).__relay_builtins?.[spec] || {}
       }
       return {}
     })
@@ -528,7 +558,7 @@ export class RNModuleLoader implements ModuleLoader {
 
     if (usesES6Import && !this.importHandler) {
       console.warn(
-        '[RNModuleLoader] Code uses import() but no ES6ImportHandler available. Install will fail.',
+        '[AndroidModuleLoader] Code uses import() but no ES6ImportHandler available. Install will fail.',
         { filename }
       )
     }
@@ -544,7 +574,7 @@ export class RNModuleLoader implements ModuleLoader {
 try {
   ${code}
 } catch (err) {
-  console.error('[RNModuleLoader] Code execution error in ${filename}:', err.message || err);
+  console.error('[AndroidModuleLoader] Code execution error in ${filename}:', err.message || err);
   throw err;
 }
 //# sourceURL=${filename}
@@ -561,7 +591,7 @@ try {
           // @ts-ignore
           this.importHandler.setExecutionContext?.(context)
         } catch (e) {
-          console.warn('[RNModuleLoader] Failed to set import handler context:', e)
+          console.warn('[AndroidModuleLoader] Failed to set import handler context:', e)
         }
       }
       // Pass ES6 import handler as first parameter (or dummy if not available)
@@ -574,7 +604,12 @@ try {
 
       // Expose global import shim for transpiled code
       ; (globalThis as any).__currentModulePath = filename
-        ; (globalThis as any).__hook_import = importFn
+      ; (globalThis as any).__hook_import = importFn
+      ; (globalThis as any).__relay_meta = {
+        filename,
+        dirname: filename.substring(0, filename.lastIndexOf('/')),
+        url: fetchUrl || filename
+      }
 
       await fn(importFn, this.requireShim, module, exports, context)
 
@@ -595,17 +630,17 @@ try {
         module.exports = exports
       }
     } catch (err) {
-      console.error(`[RNModuleLoader] Failed to execute module ${filename}:`, err)
+      console.error(`[AndroidModuleLoader] Failed to execute module ${filename}:`, err)
       throw err
     }
 
     const mod = (module as any).exports || exports
 
     // Debug logging
-    console.log('[RNModuleLoader] After execution - mod object:', JSON.stringify(mod, null, 2))
-    console.log('[RNModuleLoader] mod.default type:', typeof (mod?.default))
-    console.log('[RNModuleLoader] module.exports === exports?', (module as any).exports === exports)
-    console.log('[RNModuleLoader] exports object:', JSON.stringify(exports, null, 2))
+    console.log('[AndroidModuleLoader] After execution - mod object:', JSON.stringify(mod, null, 2))
+    console.log('[AndroidModuleLoader] mod.default type:', typeof (mod?.default))
+    console.log('[AndroidModuleLoader] module.exports === exports?', (module as any).exports === exports)
+    console.log('[AndroidModuleLoader] exports object:', JSON.stringify(exports, null, 2))
 
     if (!mod || typeof mod.default !== 'function') {
       throw new Error('Hook module must export default function(ctx)')
@@ -620,7 +655,7 @@ try {
  *
  * @param code Source code to transpile
  * @param options Transform configuration
- * @param toCommonJs If true, also transform ESM imports/exports to CommonJS (for RN)
+ * @param toCommonJs If true, also transform ESM imports/exports to CommonJS (for Android)
  * @returns Transpiled code
  */
 export async function transpileCode(
@@ -655,7 +690,7 @@ export async function transpileCode(
         throw new Error(`ServerTranspileError: ${data?.diagnostics || 'unknown error'}`)
       }
       const out = String(data.code)
-      const rewritten = out.replace(/\bimport\s*\(/g, 'context.helpers.loadModule(')
+      const rewritten = applyHookRewrite(out.replace(/\bimport\s*\(/g, 'context.helpers.loadModule('))
       return rewritten + `\n//# sourceURL=${filename}`
     } catch (e) {
       throw e
@@ -688,7 +723,7 @@ export async function transpileCode(
           throw new Error(`ServerTranspileError: ${data?.diagnostics || 'unknown error'}`)
         }
         const out = String(data.code)
-        const rewritten = out.replace(/\bimport\s*\(/g, 'context.helpers.loadModule(')
+        const rewritten = applyHookRewrite(out.replace(/\bimport\s*\(/g, 'context.helpers.loadModule('))
         return rewritten + `\n//# sourceURL=${filename}`
       } catch (e) {
         console.error('[transpileCode] Server fallback failed:', e)
@@ -710,7 +745,7 @@ export async function transpileCode(
   // DEBUG: Check if function is actually callable
   let out: any;
   try {
-    out = await wasmTranspile(codeWithPreamble, filename)
+    out = await wasmTranspile(codeWithPreamble, filename, options.isTypescript)
   } catch (callError) {
     console.error('[transpileCode] WASM call threw exception:', callError)
     // Optional server fallback when enabled
@@ -731,7 +766,7 @@ export async function transpileCode(
           throw new Error(`ServerTranspileError: ${data?.diagnostics || 'unknown error'}`)
         }
         const out = String(data.code)
-        const rewritten = out.replace(/\bimport\s*\(/g, 'context.helpers.loadModule(')
+        const rewritten = applyHookRewrite(out.replace(/\bimport\s*\(/g, 'context.helpers.loadModule('))
         return rewritten + `\n//# sourceURL=${filename}`
       } catch (e) {
         console.error('[transpileCode] Server fallback failed after WASM exception:', e)
@@ -848,7 +883,41 @@ export async function transpileCode(
 
   // Rust transpiler already handles dynamic import() rewriting to __hook_import()
   // No need for JS post-processing
-  return transpiledCode + `\n//# sourceURL=${filename}`
+  return applyHookRewrite(transpiledCode + `\n//# sourceURL=${filename}`)
+}
+
+/**
+ * Centralized import rewriting for hooks.
+ * Offloads JS glue from client repos to the transpiler runtime.
+ */
+export function applyHookRewrite(code: string): string {
+  // Replace bare @clevertree/* imports with globals to avoid browser bare-spec failures
+  const mkBuiltin = (spec: string, destructure: string) =>
+    `const ${destructure} = ((globalThis && globalThis.__relay_builtins && globalThis.__relay_builtins['${spec}']) || {});`
+
+  const markdownRe = /import\s+\{\s*MarkdownRenderer\s*\}\s+from\s+['"]@clevertree\/markdown['"];?/g
+  const themeRe = /import\s+\{\s*registerThemesFromYaml\s*\}\s+from\s+['"]@clevertree\/theme['"];?/g
+  const metaRe = /import\s+(\w+)\s+from\s+['"]@clevertree\/meta['"];?/g
+  const metaStarRe = /import\s*\*\s*as\s+(\w+)\s+from\s+['"]@clevertree\/meta['"];?/g
+  const metaDestructureRe = /import\s+\{\s*([^}]+)\s*\}\s+from\s+['"]@clevertree\/meta['"];?/g
+
+  const jsxRuntimeRe = /import\s+\{\s*jsx\s+as\s+(_jsx)\s*,\s*jsxs\s+as\s+(_jsxs)\s*,\s*Fragment\s+as\s+(_Fragment)\s*\}\s+from\s+['"]react\/jsx-runtime['"];?/g
+
+  let rewritten = code.replace(markdownRe, mkBuiltin('@clevertree/markdown', '{ MarkdownRenderer }'))
+  rewritten = rewritten.replace(themeRe, mkBuiltin('@clevertree/theme', '{ registerThemesFromYaml }'))
+
+  // Support @clevertree/meta
+  rewritten = rewritten.replace(metaRe, (_m, name) => `const ${name} = (globalThis.__relay_meta || { filename: '', dirname: '', url: '' });`)
+  rewritten = rewritten.replace(metaStarRe, (_m, name) => `const ${name} = (globalThis.__relay_meta || { filename: '', dirname: '', url: '' });`)
+  rewritten = rewritten.replace(metaDestructureRe, (_m, destructure) => `const { ${destructure} } = (globalThis.__relay_meta || { filename: '', dirname: '', url: '' });`)
+
+  rewritten = rewritten.replace(jsxRuntimeRe, (_m, a, b, c) =>
+    `const ${a} = (globalThis.__hook_jsx_runtime?.jsx || globalThis.__jsx || (globalThis.__hook_react && globalThis.__hook_react.createElement) || (() => null)); ` +
+    `const ${b} = (globalThis.__hook_jsx_runtime?.jsxs || globalThis.__jsxs || (globalThis.__hook_react && globalThis.__hook_react.createElement) || (() => null)); ` +
+    `const ${c} = (globalThis.__hook_jsx_runtime?.Fragment || globalThis.__Fragment || (globalThis.__hook_react && globalThis.__hook_react.Fragment));`
+  )
+
+  return rewritten
 }
 
 /**
@@ -989,7 +1058,7 @@ export class HookLoader {
 
       const code = await response.text()
 
-      // Transpile if needed (RN always routes through custom transpiler)
+      // Transpile if needed (Android always routes through custom transpiler)
       let finalCode = code
       const shouldTranspile = !!this.transpiler || looksLikeTsOrJsx(code, normalizedPath)
       if (shouldTranspile) {
@@ -1103,7 +1172,7 @@ export class HookLoader {
         try {
           console.debug(`[HookLoader] Transpiling ${hookPath}`)
 
-          // Use custom transpiler if provided (e.g., for React Native with CommonJS conversion)
+          // Use custom transpiler if provided (e.g., for Android with CommonJS conversion)
           if (this.transpiler) {
             finalCode = await this.transpiler(code, hookPath)
             this.logTranspileResult(hookPath, finalCode)

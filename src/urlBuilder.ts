@@ -1,6 +1,6 @@
 /**
  * URL Building Utilities
- * Provides consistent URL construction functions used across web and React Native clients
+ * Provides consistent URL construction functions used across web and Android clients
  */
 
 /**

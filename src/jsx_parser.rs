@@ -3,17 +3,19 @@
 /// Supports: elements, props, children, fragments, spreads
 /// Does NOT support: TypeScript, complex expressions in JSX attributes
 
+use crate::TranspileOptions;
 use anyhow::{Result, anyhow};
 
 #[derive(Debug, Clone)]
 pub struct ParseContext {
     pub source: String,
     pub pos: usize,
+    pub is_typescript: bool,
 }
 
 impl ParseContext {
-    pub fn new(source: String) -> Self {
-        Self { source, pos: 0 }
+    pub fn new(source: String, is_typescript: bool) -> Self {
+        Self { source, pos: 0, is_typescript }
     }
 
     pub fn current_char(&self) -> Option<char> {
@@ -53,8 +55,14 @@ impl ParseContext {
 }
 
 /// Main transpiler entry point
-pub fn transpile_jsx(source: &str) -> Result<String> {
-    let mut ctx = ParseContext::new(source.to_string());
+pub fn transpile_jsx(source: &str, opts: &TranspileOptions) -> Result<String> {
+    let source = if opts.is_typescript {
+        strip_typescript(source)
+    } else {
+        source.to_string()
+    };
+
+    let mut ctx = ParseContext::new(source, opts.is_typescript);
     let mut output = String::new();
     
     while ctx.pos < ctx.source.len() {
@@ -73,11 +81,281 @@ pub fn transpile_jsx(source: &str) -> Result<String> {
     Ok(output)
 }
 
+pub fn strip_typescript(source: &str) -> String {
+    let mut ctx = ParseContext::new(source.to_string(), true);
+    let mut output = String::new();
+    
+    while ctx.pos < ctx.source.len() {
+        let ch = match ctx.current_char() {
+            Some(c) => c,
+            None => break,
+        };
+        
+        // Handle strings
+        if ch == '"' || ch == '\'' || ch == '`' {
+            let quote = ch;
+            output.push(quote);
+            ctx.advance();
+            while let Some(c) = ctx.current_char() {
+                output.push(c);
+                ctx.advance();
+                if c == '\\' {
+                    if let Some(c2) = ctx.current_char() {
+                        output.push(c2);
+                        ctx.advance();
+                    }
+                } else if c == quote {
+                    break;
+                }
+            }
+            continue;
+        }
+        
+        // Handle comments
+        if ch == '/' {
+            if ctx.peek(1) == Some('/') {
+                while let Some(c) = ctx.current_char() {
+                    output.push(c);
+                    ctx.advance();
+                    if c == '\n' { break; }
+                }
+                continue;
+            } else if ctx.peek(1) == Some('*') {
+                while let Some(c) = ctx.current_char() {
+                    output.push(c);
+                    ctx.advance();
+                    if c == '*' && ctx.current_char() == Some('/') {
+                        output.push('/');
+                        ctx.advance();
+                        break;
+                    }
+                }
+                continue;
+            }
+        }
+
+        // Handle keywords
+        if ch.is_alphabetic() {
+            let start = ctx.pos;
+            while let Some(c) = ctx.current_char() {
+                if c.is_alphanumeric() || c == '_' {
+                    ctx.advance();
+                } else {
+                    break;
+                }
+            }
+            let word = ctx.slice(start, ctx.pos);
+            if word == "interface" || word == "enum" {
+                // Skip the name
+                ctx.skip_whitespace();
+                while let Some(c) = ctx.current_char() {
+                    if c.is_alphanumeric() || c == '_' { ctx.advance(); }
+                    else { break; }
+                }
+                ctx.skip_whitespace();
+                if ctx.current_char() == Some('{') {
+                    ctx.advance();
+                    let _ = parse_js_expression(&mut ctx, '}');
+                    ctx.consume('}').ok();
+                }
+                continue;
+            } else if word == "type" {
+                // Check if it's 'type name =' or just a variable named 'type'
+                let saved_pos = ctx.pos;
+                ctx.skip_whitespace();
+                let mut is_type_decl = false;
+                if let Some(c) = ctx.current_char() {
+                    if c.is_alphabetic() {
+                        while let Some(c2) = ctx.current_char() {
+                            if c2.is_alphanumeric() || c2 == '_' { ctx.advance(); }
+                            else { break; }
+                        }
+                        ctx.skip_whitespace();
+                        if ctx.current_char() == Some('=') {
+                            is_type_decl = true;
+                        }
+                    }
+                }
+                
+                if is_type_decl {
+                    let _ = parse_js_expression(&mut ctx, ';');
+                    ctx.consume(';').ok();
+                    continue;
+                } else {
+                    ctx.pos = saved_pos;
+                }
+            } else if word == "as" {
+                // Only treat as 'as' if followed by a type-looking thing
+                let saved_pos = ctx.pos;
+                ctx.skip_whitespace();
+                if let Some(c) = ctx.current_char() {
+                    if c.is_alphabetic() || c == '{' || c == '[' {
+                        skip_type_at_pos(&mut ctx);
+                        output.push(' ');
+                        continue;
+                    }
+                }
+                ctx.pos = saved_pos;
+            } else if word == "public" || word == "private" || word == "protected" || word == "readonly" || word == "abstract" {
+                // Check if it's a modifier or a variable
+                let saved_pos = ctx.pos;
+                ctx.skip_whitespace();
+                if let Some(c) = ctx.current_char() {
+                    if c.is_alphabetic() {
+                        // Likely a modifier, skip it
+                        continue;
+                    }
+                }
+                ctx.pos = saved_pos;
+            }
+            output.push_str(&word);
+            continue;
+        }
+        
+        // Handle type annotations
+        if ch == ':' {
+            let saved_pos = ctx.pos;
+            ctx.advance();
+            ctx.skip_whitespace();
+            if let Some(next_c) = ctx.current_char() {
+                // Heuristic: if it looks like a type, skip it.
+                let type_start = ctx.pos;
+                let mut word = String::new();
+                while let Some(c) = ctx.current_char() {
+                    if c.is_alphanumeric() || c == '_' { 
+                        word.push(c);
+                        ctx.advance();
+                    } else { break; }
+                }
+                
+                let is_builtin = match word.as_str() {
+                    "string" | "number" | "boolean" | "any" | "void" | "unknown" | "never" | "object" => true,
+                    _ => false
+                };
+                
+                let is_type = is_builtin || (word.len() > 0 && word.chars().next().unwrap().is_uppercase()) || next_c == '{' || next_c == '[';
+                
+                if is_type {
+                    // It looks like a type! Skip until terminator
+                    ctx.pos = type_start;
+                    skip_type_at_pos(&mut ctx);
+                    output.push(' ');
+                    continue;
+                } else {
+                    ctx.pos = saved_pos;
+                }
+            } else {
+                ctx.pos = saved_pos;
+            }
+        }
+        
+        // Handle generics
+        if ch == '<' && !is_jsx_start(&ctx) {
+             let saved_pos = ctx.pos;
+             ctx.advance();
+             skip_type_at_pos(&mut ctx);
+             if ctx.current_char() == Some('>') {
+                 ctx.advance();
+                 output.push(' ');
+                 continue;
+             }
+             ctx.pos = saved_pos;
+        }
+
+        // Handle non-null assertion
+        if ch == '!' && ctx.peek(1).map_or(false, |c| !c.is_alphanumeric() && c != '=' && c != '!' && !c.is_whitespace()) {
+             // Likely a non-null assertion, skip it
+             ctx.advance();
+             continue;
+        }
+
+        if let Some(c) = ctx.current_char() {
+            output.push(c);
+            ctx.advance();
+        }
+    }
+    
+    output
+}
+
+fn skip_type_at_pos(ctx: &mut ParseContext) {
+    let mut depth = 0;
+    let mut seen_chars = false;
+    while let Some(ch) = ctx.current_char() {
+        if depth == 0 && (ch == ',' || ch == ';' || ch == '=' || (seen_chars && ch == '{')) {
+            break;
+        }
+        if ch == '<' || ch == '{' || ch == '[' || ch == '(' {
+            depth += 1;
+            ctx.advance();
+            seen_chars = true;
+        } else if ch == '>' || ch == '}' || ch == ']' || ch == ')' {
+            if depth == 0 { 
+                break; 
+            }
+            depth -= 1;
+            ctx.advance();
+            seen_chars = true;
+        } else {
+            if !ch.is_whitespace() {
+                seen_chars = true;
+            }
+            ctx.advance();
+        }
+    }
+}
+
+/// Main transpiler entry point
+
 fn is_jsx_start(ctx: &ParseContext) -> bool {
-    // Check if < is followed by tag name, >, or fragment
+    if ctx.current_char() != Some('<') {
+        return false;
+    }
+
+    // Heuristic: if preceded by an alphanumeric character, it's likely a generic function call
+    // e.g., useState<T> or f<T>. JSX tags are usually preceded by whitespace, operators, or brackets.
+    if ctx.pos > 0 {
+        if let Some(prev) = ctx.source.chars().nth(ctx.pos - 1) {
+            if prev.is_alphanumeric() || prev == '_' || prev == '$' {
+                return false;
+            }
+        }
+    }
+
     match ctx.peek(1) {
-        Some(ch) => ch.is_alphabetic() || ch == '>' || ch == '/',
-        None => false,
+        Some(ch) if ch.is_alphabetic() => {
+            let mut i = 1;
+            while let Some(c) = ctx.peek(i) {
+                if c.is_alphanumeric() || c == '-' || c == '_' || c == '.' {
+                    i += 1;
+                } else {
+                    break;
+                }
+            }
+            let mut j = i;
+            while let Some(c) = ctx.peek(j) {
+                if c.is_whitespace() {
+                    j += 1;
+                } else {
+                    break;
+                }
+            }
+            match ctx.peek(j) {
+                Some('>') | Some('/') => true,
+                Some(c) if c.is_alphabetic() => {
+                    // Check if it's an attribute name or part of a type
+                    // Heuristic: attributes are usually followed by = or another attribute or >
+                    // If it's a type like <User | null>, we'll see | which is handled by the next case
+                    true
+                }
+                _ => {
+                    // If we see something like <User | or <User & or <User [, it's a generic
+                    false
+                }
+            }
+        }
+        Some('>') | Some('/') => true,
+        _ => false,
     }
 }
 
@@ -240,7 +518,7 @@ fn parse_props(ctx: &mut ParseContext) -> Result<String> {
                 let expr = parse_js_expression(ctx, '}')?;
                 ctx.consume('}')?;
                 // Recursively transpile any JSX that appears inside expressions
-                transpile_jsx(&expr)?
+                transpile_jsx(&expr, &TranspileOptions { is_typescript: ctx.is_typescript })?
             } else {
                 return Err(anyhow!("Expected prop value at position {}", ctx.pos));
             };
@@ -318,7 +596,7 @@ fn parse_children(ctx: &mut ParseContext, parent_tag: &str) -> Result<Vec<String
             ctx.consume('}')?;
 
             // Recursively transpile any JSX that appears inside expressions
-            let transpiled_expr = transpile_jsx(&expr)?;
+            let transpiled_expr = transpile_jsx(&expr, &TranspileOptions { is_typescript: ctx.is_typescript })?;
             children.push(transpiled_expr);
             continue;
         }
@@ -438,21 +716,21 @@ mod tests {
     #[test]
     fn test_simple_element() {
         let input = "<div></div>";
-        let output = transpile_jsx(input).unwrap();
+        let output = transpile_jsx(input, &TranspileOptions::default()).unwrap();
         assert_eq!(output, "__hook_jsx_runtime.jsx(\"div\", {})");
     }
 
     #[test]
     fn test_self_closing() {
         let input = "<div />";
-        let output = transpile_jsx(input).unwrap();
+        let output = transpile_jsx(input, &TranspileOptions::default()).unwrap();
         assert_eq!(output, "__hook_jsx_runtime.jsx(\"div\", {})");
     }
 
     #[test]
     fn test_with_props() {
         let input = r#"<div className="foo" id="bar"></div>"#;
-        let output = transpile_jsx(input).unwrap();
+        let output = transpile_jsx(input, &TranspileOptions::default()).unwrap();
         assert!(output.contains("className: \"foo\""));
         assert!(output.contains("id: \"bar\""));
     }
@@ -460,7 +738,7 @@ mod tests {
     #[test]
     fn test_with_children() {
         let input = "<div>Hello World</div>";
-        let output = transpile_jsx(input).unwrap();
+        let output = transpile_jsx(input, &TranspileOptions::default()).unwrap();
         assert!(output.contains("children"));
         assert!(output.contains("Hello World"));
     }
@@ -468,7 +746,7 @@ mod tests {
     #[test]
     fn test_nested_elements() {
         let input = "<div><span>Nested</span></div>";
-        let output = transpile_jsx(input).unwrap();
+        let output = transpile_jsx(input, &TranspileOptions::default()).unwrap();
         assert!(output.contains("div"));
         assert!(output.contains("span"));
         assert!(output.contains("Nested"));
@@ -477,7 +755,8 @@ mod tests {
     #[test]
     fn test_fragment() {
         let input = "<>Fragment content</>";
-        let output = transpile_jsx(input).unwrap();
+        let output = transpile_jsx(input, &TranspileOptions::default()).unwrap();
         assert!(output.contains("Fragment content"));
     }
+
 }

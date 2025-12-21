@@ -17,7 +17,7 @@ fn new_jstring(env: &mut JNIEnv, value: &str) -> jstring {
     }
 }
 
-/// JNI bridge exposed to React Native (via RustTranspilerModule)
+/// JNI bridge exposed to Android (via RustTranspilerModule)
 #[unsafe(no_mangle)]
 pub extern "C" fn Java_com_relay_client_RustTranspilerModule_nativeTranspile(
     mut env: JNIEnv,

@@ -7,6 +7,7 @@ export {
   type ModuleLoader,
   type HookLoaderOptions,
   WebModuleLoader,
+  AndroidModuleLoader,
   transpileCode,
   looksLikeTsOrJsx,
   HookLoader,
@@ -15,15 +16,15 @@ export {
 export { ES6ImportHandler, type ImportHandlerOptions } from './es6ImportHandler'
 export { buildPeerUrl, buildRepoHeaders } from './urlBuilder'
 
-// WASM-based transpiler for web - RN uses native JSI binding instead
+// WASM-based transpiler for web - Android uses native JSI binding instead
 export async function initWasmTranspiler(): Promise<void> {
-  // This is a no-op for React Native
-  // RN apps should use the native JSI module initialized separately
+  // This is a no-op for Android
+  // Android apps should use the native JSI module initialized separately
   if ((globalThis as any).__hook_transpile_jsx) {
     return
   }
 
-  // Only attempt web-based WASM loading in non-React Native environments
+  // Only attempt web-based WASM loading in non-Android environments
   const isWeb = typeof (globalThis as any).window !== 'undefined' && typeof (globalThis as any).window?.location !== 'undefined'
   if (!isWeb) {
     console.debug('[hook-transpiler] Skipping WASM init in non-web environment')
@@ -50,7 +51,7 @@ export async function initWasmTranspiler(): Promise<void> {
       ; (globalThis as any).__hook_transpile_jsx = transpileFn
     console.log('[hook-transpiler] WASM transpiler ready:', version)
   } catch (e) {
-    console.warn('[hook-transpiler] Failed to initialize WASM transpiler (expected in React Native)', e)
+    console.warn('[hook-transpiler] Failed to initialize WASM transpiler (expected in Android)', e)
   }
 }
 
