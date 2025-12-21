@@ -6,11 +6,58 @@
  * module execution (browser import vs Android eval).
  */
 
-import { ES6ImportHandler, type ImportHandlerOptions } from './es6ImportHandler'
+import { ES6ImportHandler, type ImportHandlerOptions } from './es6ImportHandler.js'
 
 // Provide type definitions for global scope (for React and process availability)
 declare const global: any
-declare const process: any/**
+declare const process: any
+
+/**
+ * Global declarations for Relay Hook Environment
+ */
+declare global {
+  var __hook_transpile_jsx: ((code: string, filename: string, isTypescript?: boolean) => any) | undefined
+  var __hook_transpiler_version: string | undefined
+  var __relay_builtins: Record<string, any> | undefined
+  var __currentModulePath: string | undefined
+  var __relay_meta: { filename: string; dirname: string; url: string } | undefined
+}
+
+/**
+ * Unified bridge interface for themed-styler
+ */
+export interface UnifiedBridge {
+  registerUsage(tag: string, props?: Record<string, unknown>): void
+  clearUsage(): void
+  getUsageSnapshot(): any
+  registerTheme(name: string, defs?: Record<string, unknown>): void
+  setCurrentTheme(name: string): void
+  getThemes(): any
+  getThemeList(): string[]
+  getCssForWeb(): string
+  getRnStyles(): any
+  loadThemesFromYamlUrl(url: string): Promise<void>
+  loadThemesFromYamlText(text: string): Promise<void>
+  transpile(code: string, filename?: string): Promise<any>
+  getTranspilerVersion(): string | null
+}
+
+/**
+ * Style manager interface for themed-styler
+ */
+export interface StyleManager {
+  ensureStyleElement(): any
+  renderCssIntoDom(): void
+  tearDownStyleElement(): void
+  startAutoSync(pollInterval?: number): void
+  stopAutoSync(): void
+  requestRender(): void
+  onChange(cb: (ev?: any) => void): () => void
+  wrapCreateElement(reactModule: any): any
+  useStyleManager(cb?: (ev?: any) => void): { requestRender: () => void; renderCssIntoDom: () => void }
+}
+
+/**
  * Babel transform configuration for hook modules
  */
 export interface TransformOptions {
@@ -38,7 +85,7 @@ export interface HookContext {
   createElement: any
   FileRenderer: ComponentType<{ path: string }>
   Layout?: ComponentType<any>
-  params: Record<string, any>
+  params?: Record<string, any>
   helpers: HookHelpers
   onElement?: (tag: string, props: any) => void
   [key: string]: any

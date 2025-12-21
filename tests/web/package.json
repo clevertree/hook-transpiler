@@ -1,0 +1,23 @@
+{
+  "name": "hook-transpiler-web-tests",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "build": "esbuild public/test-app.js --bundle --outfile=public/test-app.bundle.js --format=esm --platform=browser --loader:.wasm=file",
+    "test:e2e": "npm run build && cypress run",
+    "cypress:open": "cypress open"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "@clevertree/themed-styler": "latest",
+    "@clevertree/hook-transpiler": "file:../../"
+  },
+  "devDependencies": {
+    "cypress": "^13.6.0",
+    "esbuild": "^0.20.0"
+  }
+}

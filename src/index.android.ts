@@ -7,15 +7,23 @@ export {
     type LoaderDiagnostics,
     type ModuleLoader,
     type HookLoaderOptions,
+    type UnifiedBridge,
+    type StyleManager,
     WebModuleLoader,
     AndroidModuleLoader,
     transpileCode,
+    createHookReact,
     looksLikeTsOrJsx,
     HookLoader,
-} from './runtimeLoader'
+} from './runtimeLoader.js'
 
-export { ES6ImportHandler, type ImportHandlerOptions } from './es6ImportHandler'
-export { buildPeerUrl, buildRepoHeaders } from './urlBuilder'
+export { HookRenderer, type HookRendererProps } from './components/HookRenderer.js'
+export { ErrorBoundary } from './components/ErrorBoundary.js'
+export { MarkdownRenderer } from './components/MarkdownRenderer.js'
+export { FileRenderer } from './components/FileRenderer.js'
+
+export { ES6ImportHandler, type ImportHandlerOptions } from './es6ImportHandler.js'
+export { buildPeerUrl, buildRepoHeaders } from './urlBuilder.js'
 
 // Android uses native JNI/QuickJS to set __hook_transpile_jsx; no WASM or Android bootstrap here
 export async function initTranspiler(): Promise<void> {

@@ -21,8 +21,8 @@ release/
 # Keep Cargo.lock tracked for binaries/libs
 # !Cargo.lock
 
-# Build output
-dist/
+# Build output (tracked in git for npm package accessibility)
+# dist/
 build/
 out/
 bin/

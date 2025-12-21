@@ -3,14 +3,17 @@
 
 export function get_version(): string;
 
-export function transpile_jsx(source: string, filename: string): any;
+export function run_self_test(): any;
+
+export function transpile_jsx(source: string, filename: string, is_typescript?: boolean | null): any;
 
 export type InitInput = RequestInfo | URL | Response | BufferSource | WebAssembly.Module;
 
 export interface InitOutput {
   readonly memory: WebAssembly.Memory;
   readonly get_version: () => [number, number];
-  readonly transpile_jsx: (a: number, b: number, c: number, d: number) => any;
+  readonly run_self_test: () => any;
+  readonly transpile_jsx: (a: number, b: number, c: number, d: number, e: number) => any;
   readonly __wbindgen_malloc: (a: number, b: number) => number;
   readonly __wbindgen_realloc: (a: number, b: number, c: number, d: number) => number;
   readonly __wbindgen_externrefs: WebAssembly.Table;

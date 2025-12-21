@@ -25,7 +25,7 @@ exclude = [
 
 [lib]
 name = "relay_hook_transpiler"
-crate-type = ["rlib"]
+crate-type = ["cdylib", "rlib"]
 
 [features]
 default = []

@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Hook Transpiler E2E Test</title>
+    <script>
+        window.onerror = function(msg, url, line, col, error) {
+            console.error('GLOBAL ERROR:', msg, url, line);
+            const errDiv = document.createElement('div');
+            errDiv.style.color = 'red';
+            errDiv.textContent = 'GLOBAL ERROR: ' + msg + ' at ' + url + ':' + line;
+            document.body.appendChild(errDiv);
+        };
+        window.onunhandledrejection = function(event) {
+            console.error('UNHANDLED REJECTION:', event.reason);
+            const errDiv = document.createElement('div');
+            errDiv.style.color = 'red';
+            errDiv.textContent = 'UNHANDLED REJECTION: ' + event.reason;
+            document.body.appendChild(errDiv);
+        };
+    </script>
+    <style>
+        body { margin: 0; font-family: sans-serif; display: flex; flex-direction: column; height: 100vh; }
+        #header { padding: 1rem; background: #333; color: white; }
+        #root { flex: 1; }
+        #stats { padding: 0.5rem; background: #eee; font-size: 0.8rem; border-top: 1px solid #ccc; }
+    </style>
+</head>
+<body>
+    <div id="header">
+        <h1>Hook Transpiler E2E Test</h1>
+    </div>
+    <div id="root">Loading...</div>
+    <div id="stats">
+        WASM State: <span id="wasm-state">Initializing...</span> | 
+        Styler State: <span id="styler-state">Not Ready</span>
+    </div>
+    <script type="module" src="test-app.bundle.js"></script>
+</body>
+</html>

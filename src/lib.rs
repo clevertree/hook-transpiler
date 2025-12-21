@@ -67,6 +67,32 @@ mod wasm_api {
     pub fn get_version() -> String {
         version().to_string()
     }
+
+    #[wasm_bindgen]
+    pub fn run_self_test() -> JsValue {
+        let test_cases = vec![
+            ("<div>Hello</div>", "div"),
+            ("<img src='test.jpg' />", "img"),
+            ("<Comp prop={1}>child</Comp>", "Comp"),
+        ];
+
+        let mut results = Vec::new();
+        for (source, expected) in test_cases {
+            let res = transpile_jsx_simple(source);
+            results.push(match res {
+                Ok(code) => {
+                    if code.contains(expected) && code.contains("__hook_jsx_runtime") {
+                        format!("PASS: {}", expected)
+                    } else {
+                        format!("FAIL: {} - output: {}", expected, code)
+                    }
+                }
+                Err(err) => format!("ERROR: {} - {}", expected, err),
+            });
+        }
+
+        to_value(&results).unwrap()
+    }
 }
 
 #[cfg(test)]
