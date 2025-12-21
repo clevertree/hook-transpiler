@@ -998,7 +998,7 @@ export class HookLoader {
         try {
             diag.phase = 'fetch';
             const hookUrl = `${this.protocol}://${this.host}${hookPath}`;
-            console.log(`[HookLoader] Fetching hook from: ${hookUrl}`);
+            console.debug(`[HookLoader] Fetching hook from: ${hookUrl}`);
             const requestHeaders = this.buildRequestHeaders(context);
             const fetchOptions = Object.keys(requestHeaders).length ? { headers: requestHeaders } : undefined;
             let response;
@@ -1012,7 +1012,7 @@ export class HookLoader {
                 console.error('[HookLoader] Fetch failed, got error immediately:', fetchErr);
                 throw fetchErr;
             }
-            console.log(`[HookLoader] Received hook code (${code.length} chars), status: ${response.status}`);
+            console.debug(`[HookLoader] Received hook code (${code.length} chars)`);
             diag.fetch = {
                 status: response.status,
                 ok: response.ok,
@@ -1032,7 +1032,7 @@ export class HookLoader {
             const shouldTranspile = !!this.transpiler || looksLikeTsOrJsx(code, hookPath);
             if (shouldTranspile) {
                 try {
-                    console.log(`[HookLoader] Transpiling ${hookPath}`);
+                    console.debug(`[HookLoader] Transpiling ${hookPath}`);
                     // Use custom transpiler if provided (e.g., for Android with CommonJS conversion)
                     if (this.transpiler) {
                         finalCode = await this.transpiler(code, hookPath);
@@ -1042,7 +1042,7 @@ export class HookLoader {
                         finalCode = await transpileCode(code, { filename: hookPath, hasJsxPragma: /@jsx\s+h/m.test(code) }, false // Web uses dynamic import
                         );
                     }
-                    console.log(`[HookLoader] Transpilation complete (${finalCode.length} chars)`);
+                    console.debug(`[HookLoader] Transpilation complete (${finalCode.length} chars)`);
                 }
                 catch (err) {
                     const msg = err?.message || String(err);
@@ -1056,7 +1056,7 @@ export class HookLoader {
             }
             // Execute
             diag.phase = 'import';
-            console.log(`[HookLoader] Executing hook module`);
+            console.debug(`[HookLoader] Executing hook module`);
             try {
                 // Pass the actual fetch URL for @clevertree/meta injection, not the logical path
                 const mod = await this.moduleLoader.executeModule(finalCode, hookPath, context, hookUrl);
@@ -1064,9 +1064,9 @@ export class HookLoader {
                     throw new Error('Hook module does not export a default function');
                 }
                 diag.phase = 'exec';
-                console.log(`[HookLoader] Calling hook function`);
+                console.debug(`[HookLoader] Calling hook function`);
                 const element = await mod.default(context);
-                console.log(`[HookLoader] Hook executed successfully`);
+                console.debug(`[HookLoader] Hook executed successfully`);
                 return element;
             }
             catch (execErr) {

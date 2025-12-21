@@ -148,7 +148,7 @@ export const HookRenderer: React.FC<HookRendererProps> = ({
             }, [path])
 
             if (loading) return <div>Loading file...</div>
-            return <FileRenderer content={content} contentType={contentType} onElement={onElement} />
+            return <FileRenderer content={content} contentType={contentType} onElement={registerUsageFromElement} />
         }
 
         const registerThemesFromYaml = async (path: string) => {
@@ -164,7 +164,7 @@ export const HookRenderer: React.FC<HookRendererProps> = ({
         }
 
         const builtinModules: Record<string, any> = {
-            '@clevertree/markdown': { MarkdownRenderer: (props: any) => <MarkdownRenderer onElement={onElement} overrides={markdownOverrides} {...props} /> },
+            '@clevertree/markdown': { MarkdownRenderer: (props: any) => <MarkdownRenderer onElement={registerUsageFromElement} overrides={markdownOverrides} {...props} /> },
             '@clevertree/theme': {
                 registerThemeStyles: (name: string, defs?: Record<string, any>) => {
                     if (registerTheme) registerTheme(name, defs)
@@ -230,8 +230,11 @@ export const HookRenderer: React.FC<HookRendererProps> = ({
     useEffect(() => {
         if (onElement) {
             onElement('div', { style: { height: '100%', display: 'flex', flexDirection: 'column' } })
+            if (renderCssIntoDom) {
+                try { renderCssIntoDom() } catch (e) {}
+            }
         }
-    }, [onElement])
+    }, [onElement, renderCssIntoDom])
 
     return (
         <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
@@ -240,7 +243,7 @@ export const HookRenderer: React.FC<HookRendererProps> = ({
             {wasmReady && loading && <div>Loading hook...</div>}
             {error && <div style={{ color: 'red' }}><strong style={{ marginRight: '0.25rem' }}>Error:</strong> {error}</div>}
             {wasmReady && !loading && !error && element && (
-                <ErrorBoundary onElement={onElement}>
+                <ErrorBoundary onElement={registerUsageFromElement}>
                     <div style={{ flex: 1 }}>{element}</div>
                 </ErrorBoundary>
             )}

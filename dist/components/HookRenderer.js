@@ -127,7 +127,7 @@ export const HookRenderer = ({ host, hookPath, onElement, requestRender, renderC
             }, [path]);
             if (loading)
                 return _jsx("div", { children: "Loading file..." });
-            return _jsx(FileRenderer, { content: content, contentType: contentType, onElement: onElement });
+            return _jsx(FileRenderer, { content: content, contentType: contentType, onElement: registerUsageFromElement });
         };
         const registerThemesFromYaml = async (path) => {
             try {
@@ -143,7 +143,7 @@ export const HookRenderer = ({ host, hookPath, onElement, requestRender, renderC
             }
         };
         const builtinModules = {
-            '@clevertree/markdown': { MarkdownRenderer: (props) => _jsx(MarkdownRenderer, { onElement: onElement, overrides: markdownOverrides, ...props }) },
+            '@clevertree/markdown': { MarkdownRenderer: (props) => _jsx(MarkdownRenderer, { onElement: registerUsageFromElement, overrides: markdownOverrides, ...props }) },
             '@clevertree/theme': {
                 registerThemeStyles: (name, defs) => {
                     if (registerTheme)
@@ -184,28 +184,20 @@ export const HookRenderer = ({ host, hookPath, onElement, requestRender, renderC
         };
     }, [normalizedHost, onElement, registerUsageFromElement, loadThemesFromYamlUrl, renderCssIntoDom, registerTheme]);
     const tryRender = useCallback(async () => {
-        console.log('[HookRenderer] tryRender called, wasmReady:', wasmReady);
-        if (!wasmReady) {
-            console.log('[HookRenderer] wasm not ready yet, skipping render');
+        if (!wasmReady)
             return;
-        }
         setLoading(true);
         setError(null);
         setElement(null);
         try {
             const path = hookPath || 'http://localhost:8002/hooks/client/get-client.jsx';
-            console.log('[HookRenderer] Loading hook:', path);
             if (!loaderRef.current)
                 throw new Error('hook loader not initialized');
             const ctx = createHookContext(path);
-            console.log('[HookRenderer] HookContext created for:', path);
             const el = await loaderRef.current.loadAndExecuteHook(path, ctx);
-            console.log('[HookRenderer] Hook executed successfully');
             setElement(el);
-            if (renderCssIntoDom) {
-                console.log('[HookRenderer] Triggering renderCssIntoDom');
+            if (renderCssIntoDom)
                 renderCssIntoDom();
-            }
         }
         catch (e) {
             console.error('[HookRenderer] Error loading/executing hook:', e);
@@ -220,13 +212,17 @@ export const HookRenderer = ({ host, hookPath, onElement, requestRender, renderC
     }, [createHookContext, hookPath, wasmReady, renderCssIntoDom]);
     useEffect(() => { void tryRender(); }, [tryRender]);
     useEffect(() => {
-        console.log('[HookRenderer] mounted, onElement present:', !!onElement);
         if (onElement) {
-            console.log('[HookRenderer] Registering container div');
             onElement('div', { style: { height: '100%', display: 'flex', flexDirection: 'column' } });
+            if (renderCssIntoDom) {
+                try {
+                    renderCssIntoDom();
+                }
+                catch (e) { }
+            }
         }
-    }, [onElement]);
-    return (_jsxs("div", { style: { height: '100%', display: 'flex', flexDirection: 'column' }, children: [!wasmReady && !wasmError && _jsx("div", { children: "Initializing WASM transpiler..." }), wasmError && _jsxs("div", { style: { color: 'orange' }, children: [_jsx("strong", { style: { marginRight: '0.25rem' }, children: "Warning:" }), " ", wasmError] }), wasmReady && loading && _jsx("div", { children: "Loading hook..." }), error && _jsxs("div", { style: { color: 'red' }, children: [_jsx("strong", { style: { marginRight: '0.25rem' }, children: "Error:" }), " ", error] }), wasmReady && !loading && !error && element && (_jsx(ErrorBoundary, { onElement: onElement, children: _jsx("div", { style: { flex: 1 }, children: element }) }))] }));
+    }, [onElement, renderCssIntoDom]);
+    return (_jsxs("div", { style: { height: '100%', display: 'flex', flexDirection: 'column' }, children: [!wasmReady && !wasmError && _jsx("div", { children: "Initializing WASM transpiler..." }), wasmError && _jsxs("div", { style: { color: 'orange' }, children: [_jsx("strong", { style: { marginRight: '0.25rem' }, children: "Warning:" }), " ", wasmError] }), wasmReady && loading && _jsx("div", { children: "Loading hook..." }), error && _jsxs("div", { style: { color: 'red' }, children: [_jsx("strong", { style: { marginRight: '0.25rem' }, children: "Error:" }), " ", error] }), wasmReady && !loading && !error && element && (_jsx(ErrorBoundary, { onElement: registerUsageFromElement, children: _jsx("div", { style: { flex: 1 }, children: element }) }))] }));
 };
 export default HookRenderer;
 //# sourceMappingURL=HookRenderer.js.map

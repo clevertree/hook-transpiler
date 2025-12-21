@@ -1,7 +1,7 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { initTranspiler, HookRenderer, transpileCode } from '@clevertree/hook-transpiler';
-import { unifiedBridge, styleManager } from '@clevertree/themed-styler';
+import { unifiedBridge, styleManager, initThemedStyler, ensureDefaultsLoaded } from '@clevertree/themed-styler';
 
 async function main() {
   const wasmEl = document.getElementById('wasm-state');
@@ -9,27 +9,28 @@ async function main() {
     console.log('Test App: Starting...');
     wasmEl.textContent = 'Starting...';
     
-    // 1. Initialize Hook Transpiler WASM
-    console.log('Test App: Initializing transpiler...');
-    wasmEl.textContent = 'Initializing WASM...';
-    await initTranspiler();
+    // 1. Initialize WASMs
+    console.log('Test App: Initializing WASMs...');
+    wasmEl.textContent = 'Initializing WASMs...';
+    
+    await Promise.all([
+        initTranspiler(),
+        initThemedStyler()
+    ]);
+
+    await ensureDefaultsLoaded();
+    
     const version = globalThis.__hook_transpiler_version || 'unknown';
-    console.log('Test App: Transpiler ready:', version);
+    const stylerVersion = globalThis.__themedStylerVersion || 'unknown';
+    console.log('Test App: WASMs ready - Transpiler:', version, 'Styler:', stylerVersion);
     
-    wasmEl.textContent = `Ready (v${version})`;
-    
-    // Test direct transpilation
-    try {
-        console.log('Test App: Testing direct transpilation');
-        const code = 'const Test = () => <div>Hello</div>';
-        const res = await transpileCode(code, { filename: 'test.jsx' });
-        console.log('Test App: Transpilation test success, length:', res.length);
-    } catch (e) {
-        console.error('Test App: Transpilation test failed:', e);
-    }
+    wasmEl.textContent = `Ready (Transpiler: v${version}, Styler: v${stylerVersion})`;
     
     // 2. Themed Styler state
     document.getElementById('styler-state').textContent = 'Ready';
+    
+    // Start auto-sync for styles
+    styleManager.startAutoSync();
 
     // 3. Render the HookRenderer component
     console.log('Test App: Rendering component...');

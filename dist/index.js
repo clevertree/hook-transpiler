@@ -27,7 +27,6 @@ export async function initWasmTranspiler() {
         try {
             // Use the unified /wasm/ path for reliable loading in various environments
             wasmPath = new URL('/wasm/relay_hook_transpiler_bg.wasm', window.location.origin).toString();
-            console.log('[hook-transpiler] Using unified wasmPath:', wasmPath);
         }
         catch (e) {
             console.warn('[hook-transpiler] Failed to construct wasm path via URL, using fallback string');
@@ -41,7 +40,6 @@ export async function initWasmTranspiler() {
             await init({ module_or_path: buffer });
         }
         else {
-            console.log('[hook-transpiler] calling init with wasmUrl:', wasmUrl);
             // Pass as an object to avoid deprecation warning
             await init({ module_or_path: wasmUrl });
         }

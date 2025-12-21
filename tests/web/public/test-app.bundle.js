@@ -24757,7 +24757,7 @@ var init_relay_hook_transpiler = __esm({
   }
 });
 
-// node_modules/yaml/browser/dist/nodes/identity.js
+// ../../node_modules/yaml/browser/dist/nodes/identity.js
 function isCollection(node) {
   if (node && typeof node === "object")
     switch (node[NODE_TYPE]) {
@@ -24780,7 +24780,7 @@ function isNode(node) {
 }
 var ALIAS, DOC, MAP, PAIR, SCALAR, SEQ, NODE_TYPE, isAlias, isDocument, isMap, isPair, isScalar, isSeq, hasAnchor;
 var init_identity = __esm({
-  "node_modules/yaml/browser/dist/nodes/identity.js"() {
+  "../../node_modules/yaml/browser/dist/nodes/identity.js"() {
     ALIAS = Symbol.for("yaml.alias");
     DOC = Symbol.for("yaml.document");
     MAP = Symbol.for("yaml.map");
@@ -24798,7 +24798,7 @@ var init_identity = __esm({
   }
 });
 
-// node_modules/yaml/browser/dist/visit.js
+// ../../node_modules/yaml/browser/dist/visit.js
 function visit(node, visitor) {
   const visitor_ = initVisitor(visitor);
   if (isDocument(node)) {
@@ -24940,7 +24940,7 @@ function replaceNode(key2, path2, node) {
 }
 var BREAK, SKIP, REMOVE;
 var init_visit = __esm({
-  "node_modules/yaml/browser/dist/visit.js"() {
+  "../../node_modules/yaml/browser/dist/visit.js"() {
     init_identity();
     BREAK = Symbol("break visit");
     SKIP = Symbol("skip children");
@@ -24954,10 +24954,10 @@ var init_visit = __esm({
   }
 });
 
-// node_modules/yaml/browser/dist/doc/directives.js
+// ../../node_modules/yaml/browser/dist/doc/directives.js
 var escapeChars, escapeTagName, Directives;
 var init_directives = __esm({
-  "node_modules/yaml/browser/dist/doc/directives.js"() {
+  "../../node_modules/yaml/browser/dist/doc/directives.js"() {
     init_identity();
     init_visit();
     escapeChars = {
@@ -25124,7 +25124,7 @@ var init_directives = __esm({
   }
 });
 
-// node_modules/yaml/browser/dist/doc/anchors.js
+// ../../node_modules/yaml/browser/dist/doc/anchors.js
 function anchorIsValid(anchor) {
   if (/[\x00-\x19\s,[\]{}]/.test(anchor)) {
     const sa = JSON.stringify(anchor);
@@ -25183,13 +25183,13 @@ function createNodeAnchors(doc, prefix) {
   };
 }
 var init_anchors = __esm({
-  "node_modules/yaml/browser/dist/doc/anchors.js"() {
+  "../../node_modules/yaml/browser/dist/doc/anchors.js"() {
     init_identity();
     init_visit();
   }
 });
 
-// node_modules/yaml/browser/dist/doc/applyReviver.js
+// ../../node_modules/yaml/browser/dist/doc/applyReviver.js
 function applyReviver(reviver, obj, key2, val) {
   if (val && typeof val === "object") {
     if (Array.isArray(val)) {
@@ -25233,11 +25233,11 @@ function applyReviver(reviver, obj, key2, val) {
   return reviver.call(obj, key2, val);
 }
 var init_applyReviver = __esm({
-  "node_modules/yaml/browser/dist/doc/applyReviver.js"() {
+  "../../node_modules/yaml/browser/dist/doc/applyReviver.js"() {
   }
 });
 
-// node_modules/yaml/browser/dist/nodes/toJS.js
+// ../../node_modules/yaml/browser/dist/nodes/toJS.js
 function toJS(value2, arg, ctx) {
   if (Array.isArray(value2))
     return value2.map((v, i) => toJS(v, String(i), ctx));
@@ -25260,15 +25260,15 @@ function toJS(value2, arg, ctx) {
   return value2;
 }
 var init_toJS = __esm({
-  "node_modules/yaml/browser/dist/nodes/toJS.js"() {
+  "../../node_modules/yaml/browser/dist/nodes/toJS.js"() {
     init_identity();
   }
 });
 
-// node_modules/yaml/browser/dist/nodes/Node.js
+// ../../node_modules/yaml/browser/dist/nodes/Node.js
 var NodeBase;
 var init_Node = __esm({
-  "node_modules/yaml/browser/dist/nodes/Node.js"() {
+  "../../node_modules/yaml/browser/dist/nodes/Node.js"() {
     init_applyReviver();
     init_identity();
     init_toJS();
@@ -25305,7 +25305,7 @@ var init_Node = __esm({
   }
 });
 
-// node_modules/yaml/browser/dist/nodes/Alias.js
+// ../../node_modules/yaml/browser/dist/nodes/Alias.js
 function getAliasCount(doc, node, anchors) {
   if (isAlias(node)) {
     const source = node.resolve(doc);
@@ -25328,7 +25328,7 @@ function getAliasCount(doc, node, anchors) {
 }
 var Alias;
 var init_Alias = __esm({
-  "node_modules/yaml/browser/dist/nodes/Alias.js"() {
+  "../../node_modules/yaml/browser/dist/nodes/Alias.js"() {
     init_anchors();
     init_visit();
     init_identity();
@@ -25418,10 +25418,10 @@ var init_Alias = __esm({
   }
 });
 
-// node_modules/yaml/browser/dist/nodes/Scalar.js
+// ../../node_modules/yaml/browser/dist/nodes/Scalar.js
 var isScalarValue, Scalar;
 var init_Scalar = __esm({
-  "node_modules/yaml/browser/dist/nodes/Scalar.js"() {
+  "../../node_modules/yaml/browser/dist/nodes/Scalar.js"() {
     init_identity();
     init_Node();
     init_toJS();
@@ -25446,7 +25446,7 @@ var init_Scalar = __esm({
   }
 });
 
-// node_modules/yaml/browser/dist/doc/createNode.js
+// ../../node_modules/yaml/browser/dist/doc/createNode.js
 function findTagObject(value2, tagName, tags) {
   if (tagName) {
     const match = tags.filter((t) => t.tag === tagName);
@@ -25512,7 +25512,7 @@ function createNode(value2, tagName, ctx) {
 }
 var defaultTagPrefix;
 var init_createNode = __esm({
-  "node_modules/yaml/browser/dist/doc/createNode.js"() {
+  "../../node_modules/yaml/browser/dist/doc/createNode.js"() {
     init_Alias();
     init_identity();
     init_Scalar();
@@ -25520,7 +25520,7 @@ var init_createNode = __esm({
   }
 });
 
-// node_modules/yaml/browser/dist/nodes/Collection.js
+// ../../node_modules/yaml/browser/dist/nodes/Collection.js
 function collectionFromPath(schema4, path2, value2) {
   let v = value2;
   for (let i = path2.length - 1; i >= 0; --i) {
@@ -25545,7 +25545,7 @@ function collectionFromPath(schema4, path2, value2) {
 }
 var isEmptyPath, Collection;
 var init_Collection = __esm({
-  "node_modules/yaml/browser/dist/nodes/Collection.js"() {
+  "../../node_modules/yaml/browser/dist/nodes/Collection.js"() {
     init_createNode();
     init_identity();
     init_Node();
@@ -25660,7 +25660,7 @@ var init_Collection = __esm({
   }
 });
 
-// node_modules/yaml/browser/dist/stringify/stringifyComment.js
+// ../../node_modules/yaml/browser/dist/stringify/stringifyComment.js
 function indentComment(comment, indent) {
   if (/^\n+$/.test(comment))
     return comment.substring(1);
@@ -25668,13 +25668,13 @@ function indentComment(comment, indent) {
 }
 var stringifyComment, lineComment;
 var init_stringifyComment = __esm({
-  "node_modules/yaml/browser/dist/stringify/stringifyComment.js"() {
+  "../../node_modules/yaml/browser/dist/stringify/stringifyComment.js"() {
     stringifyComment = (str) => str.replace(/^(?!$)(?: $)?/gm, "#");
     lineComment = (str, indent, comment) => str.endsWith("\n") ? indentComment(comment, indent) : comment.includes("\n") ? "\n" + indentComment(comment, indent) : (str.endsWith(" ") ? "" : " ") + comment;
   }
 });
 
-// node_modules/yaml/browser/dist/stringify/foldFlowLines.js
+// ../../node_modules/yaml/browser/dist/stringify/foldFlowLines.js
 function foldFlowLines(text, indent, mode = "flow", { indentAtStart, lineWidth = 80, minContentWidth = 20, onFold, onOverflow } = {}) {
   if (!lineWidth || lineWidth < 0)
     return text;
@@ -25799,14 +25799,14 @@ function consumeMoreIndentedLines(text, i, indent) {
 }
 var FOLD_FLOW, FOLD_BLOCK, FOLD_QUOTED;
 var init_foldFlowLines = __esm({
-  "node_modules/yaml/browser/dist/stringify/foldFlowLines.js"() {
+  "../../node_modules/yaml/browser/dist/stringify/foldFlowLines.js"() {
     FOLD_FLOW = "flow";
     FOLD_BLOCK = "block";
     FOLD_QUOTED = "quoted";
   }
 });
 
-// node_modules/yaml/browser/dist/stringify/stringifyString.js
+// ../../node_modules/yaml/browser/dist/stringify/stringifyString.js
 function lineLengthOverLimit(str, lineWidth, indentLength) {
   if (!lineWidth || lineWidth < 0)
     return false;
@@ -26070,7 +26070,7 @@ function stringifyString(item, ctx, onComment, onChompKeep) {
 }
 var getFoldOptions, containsDocumentMarker, blockEndNewlines;
 var init_stringifyString = __esm({
-  "node_modules/yaml/browser/dist/stringify/stringifyString.js"() {
+  "../../node_modules/yaml/browser/dist/stringify/stringifyString.js"() {
     init_Scalar();
     init_foldFlowLines();
     getFoldOptions = (ctx, isBlock2) => ({
@@ -26087,7 +26087,7 @@ var init_stringifyString = __esm({
   }
 });
 
-// node_modules/yaml/browser/dist/stringify/stringify.js
+// ../../node_modules/yaml/browser/dist/stringify/stringify.js
 function createStringifyContext(doc, options2) {
   const opt = Object.assign({
     blockQuote: true,
@@ -26199,7 +26199,7 @@ function stringify(item, ctx, onComment, onChompKeep) {
 ${ctx.indent}${str}`;
 }
 var init_stringify = __esm({
-  "node_modules/yaml/browser/dist/stringify/stringify.js"() {
+  "../../node_modules/yaml/browser/dist/stringify/stringify.js"() {
     init_anchors();
     init_identity();
     init_stringifyComment();
@@ -26207,7 +26207,7 @@ var init_stringify = __esm({
   }
 });
 
-// node_modules/yaml/browser/dist/stringify/stringifyPair.js
+// ../../node_modules/yaml/browser/dist/stringify/stringifyPair.js
 function stringifyPair({ key: key2, value: value2 }, ctx, onComment, onChompKeep) {
   const { allNullValues, doc, indent, indentStep, options: { commentString, indentSeq, simpleKeys } } = ctx;
   let keyComment = isNode(key2) && key2.comment || null;
@@ -26330,7 +26330,7 @@ ${ctx.indent}`;
   return str;
 }
 var init_stringifyPair = __esm({
-  "node_modules/yaml/browser/dist/stringify/stringifyPair.js"() {
+  "../../node_modules/yaml/browser/dist/stringify/stringifyPair.js"() {
     init_identity();
     init_Scalar();
     init_stringify();
@@ -26338,18 +26338,18 @@ var init_stringifyPair = __esm({
   }
 });
 
-// node_modules/yaml/browser/dist/log.js
+// ../../node_modules/yaml/browser/dist/log.js
 function warn(logLevel, warning) {
   if (logLevel === "debug" || logLevel === "warn") {
     console.warn(warning);
   }
 }
 var init_log = __esm({
-  "node_modules/yaml/browser/dist/log.js"() {
+  "../../node_modules/yaml/browser/dist/log.js"() {
   }
 });
 
-// node_modules/yaml/browser/dist/schema/yaml-1.1/merge.js
+// ../../node_modules/yaml/browser/dist/schema/yaml-1.1/merge.js
 function addMergeToJSMap(ctx, map2, value2) {
   value2 = ctx && isAlias(value2) ? value2.resolve(ctx.doc) : value2;
   if (isSeq(value2))
@@ -26385,7 +26385,7 @@ function mergeValue(ctx, map2, value2) {
 }
 var MERGE_KEY, merge, isMergeKey;
 var init_merge = __esm({
-  "node_modules/yaml/browser/dist/schema/yaml-1.1/merge.js"() {
+  "../../node_modules/yaml/browser/dist/schema/yaml-1.1/merge.js"() {
     init_identity();
     init_Scalar();
     MERGE_KEY = "<<";
@@ -26403,7 +26403,7 @@ var init_merge = __esm({
   }
 });
 
-// node_modules/yaml/browser/dist/nodes/addPairToJSMap.js
+// ../../node_modules/yaml/browser/dist/nodes/addPairToJSMap.js
 function addPairToJSMap(ctx, map2, { key: key2, value: value2 }) {
   if (isNode(key2) && key2.addToJSMap)
     key2.addToJSMap(ctx, map2, value2);
@@ -26456,7 +26456,7 @@ function stringifyKey(key2, jsKey, ctx) {
   return JSON.stringify(jsKey);
 }
 var init_addPairToJSMap = __esm({
-  "node_modules/yaml/browser/dist/nodes/addPairToJSMap.js"() {
+  "../../node_modules/yaml/browser/dist/nodes/addPairToJSMap.js"() {
     init_log();
     init_merge();
     init_stringify();
@@ -26465,7 +26465,7 @@ var init_addPairToJSMap = __esm({
   }
 });
 
-// node_modules/yaml/browser/dist/nodes/Pair.js
+// ../../node_modules/yaml/browser/dist/nodes/Pair.js
 function createPair(key2, value2, ctx) {
   const k = createNode(key2, void 0, ctx);
   const v = createNode(value2, void 0, ctx);
@@ -26473,7 +26473,7 @@ function createPair(key2, value2, ctx) {
 }
 var Pair;
 var init_Pair = __esm({
-  "node_modules/yaml/browser/dist/nodes/Pair.js"() {
+  "../../node_modules/yaml/browser/dist/nodes/Pair.js"() {
     init_createNode();
     init_stringifyPair();
     init_addPairToJSMap();
@@ -26503,7 +26503,7 @@ var init_Pair = __esm({
   }
 });
 
-// node_modules/yaml/browser/dist/stringify/stringifyCollection.js
+// ../../node_modules/yaml/browser/dist/stringify/stringifyCollection.js
 function stringifyCollection(collection, ctx, options2) {
   const flow = ctx.inFlow ?? collection.flow;
   const stringify4 = flow ? stringifyFlowCollection : stringifyBlockCollection;
@@ -26638,14 +26638,14 @@ function addCommentBefore({ indent, options: { commentString } }, lines, comment
   }
 }
 var init_stringifyCollection = __esm({
-  "node_modules/yaml/browser/dist/stringify/stringifyCollection.js"() {
+  "../../node_modules/yaml/browser/dist/stringify/stringifyCollection.js"() {
     init_identity();
     init_stringify();
     init_stringifyComment();
   }
 });
 
-// node_modules/yaml/browser/dist/nodes/YAMLMap.js
+// ../../node_modules/yaml/browser/dist/nodes/YAMLMap.js
 function findPair(items, key2) {
   const k = isScalar(key2) ? key2.value : key2;
   for (const it of items) {
@@ -26660,7 +26660,7 @@ function findPair(items, key2) {
 }
 var YAMLMap;
 var init_YAMLMap = __esm({
-  "node_modules/yaml/browser/dist/nodes/YAMLMap.js"() {
+  "../../node_modules/yaml/browser/dist/nodes/YAMLMap.js"() {
     init_stringifyCollection();
     init_addPairToJSMap();
     init_Collection();
@@ -26787,10 +26787,10 @@ var init_YAMLMap = __esm({
   }
 });
 
-// node_modules/yaml/browser/dist/schema/common/map.js
+// ../../node_modules/yaml/browser/dist/schema/common/map.js
 var map;
 var init_map = __esm({
-  "node_modules/yaml/browser/dist/schema/common/map.js"() {
+  "../../node_modules/yaml/browser/dist/schema/common/map.js"() {
     init_identity();
     init_YAMLMap();
     map = {
@@ -26808,7 +26808,7 @@ var init_map = __esm({
   }
 });
 
-// node_modules/yaml/browser/dist/nodes/YAMLSeq.js
+// ../../node_modules/yaml/browser/dist/nodes/YAMLSeq.js
 function asItemIndex(key2) {
   let idx = isScalar(key2) ? key2.value : key2;
   if (idx && typeof idx === "string")
@@ -26817,7 +26817,7 @@ function asItemIndex(key2) {
 }
 var YAMLSeq;
 var init_YAMLSeq = __esm({
-  "node_modules/yaml/browser/dist/nodes/YAMLSeq.js"() {
+  "../../node_modules/yaml/browser/dist/nodes/YAMLSeq.js"() {
     init_createNode();
     init_stringifyCollection();
     init_Collection();
@@ -26923,10 +26923,10 @@ var init_YAMLSeq = __esm({
   }
 });
 
-// node_modules/yaml/browser/dist/schema/common/seq.js
+// ../../node_modules/yaml/browser/dist/schema/common/seq.js
 var seq;
 var init_seq = __esm({
-  "node_modules/yaml/browser/dist/schema/common/seq.js"() {
+  "../../node_modules/yaml/browser/dist/schema/common/seq.js"() {
     init_identity();
     init_YAMLSeq();
     seq = {
@@ -26944,10 +26944,10 @@ var init_seq = __esm({
   }
 });
 
-// node_modules/yaml/browser/dist/schema/common/string.js
+// ../../node_modules/yaml/browser/dist/schema/common/string.js
 var string;
 var init_string = __esm({
-  "node_modules/yaml/browser/dist/schema/common/string.js"() {
+  "../../node_modules/yaml/browser/dist/schema/common/string.js"() {
     init_stringifyString();
     string = {
       identify: (value2) => typeof value2 === "string",
@@ -26962,10 +26962,10 @@ var init_string = __esm({
   }
 });
 
-// node_modules/yaml/browser/dist/schema/common/null.js
+// ../../node_modules/yaml/browser/dist/schema/common/null.js
 var nullTag;
 var init_null = __esm({
-  "node_modules/yaml/browser/dist/schema/common/null.js"() {
+  "../../node_modules/yaml/browser/dist/schema/common/null.js"() {
     init_Scalar();
     nullTag = {
       identify: (value2) => value2 == null,
@@ -26979,10 +26979,10 @@ var init_null = __esm({
   }
 });
 
-// node_modules/yaml/browser/dist/schema/core/bool.js
+// ../../node_modules/yaml/browser/dist/schema/core/bool.js
 var boolTag;
 var init_bool = __esm({
-  "node_modules/yaml/browser/dist/schema/core/bool.js"() {
+  "../../node_modules/yaml/browser/dist/schema/core/bool.js"() {
     init_Scalar();
     boolTag = {
       identify: (value2) => typeof value2 === "boolean",
@@ -27002,7 +27002,7 @@ var init_bool = __esm({
   }
 });
 
-// node_modules/yaml/browser/dist/stringify/stringifyNumber.js
+// ../../node_modules/yaml/browser/dist/stringify/stringifyNumber.js
 function stringifyNumber({ format, minFractionDigits, tag: tag2, value: value2 }) {
   if (typeof value2 === "bigint")
     return String(value2);
@@ -27023,14 +27023,14 @@ function stringifyNumber({ format, minFractionDigits, tag: tag2, value: value2 }
   return n;
 }
 var init_stringifyNumber = __esm({
-  "node_modules/yaml/browser/dist/stringify/stringifyNumber.js"() {
+  "../../node_modules/yaml/browser/dist/stringify/stringifyNumber.js"() {
   }
 });
 
-// node_modules/yaml/browser/dist/schema/core/float.js
+// ../../node_modules/yaml/browser/dist/schema/core/float.js
 var floatNaN, floatExp, float;
 var init_float = __esm({
-  "node_modules/yaml/browser/dist/schema/core/float.js"() {
+  "../../node_modules/yaml/browser/dist/schema/core/float.js"() {
     init_Scalar();
     init_stringifyNumber();
     floatNaN = {
@@ -27070,7 +27070,7 @@ var init_float = __esm({
   }
 });
 
-// node_modules/yaml/browser/dist/schema/core/int.js
+// ../../node_modules/yaml/browser/dist/schema/core/int.js
 function intStringify(node, radix, prefix) {
   const { value: value2 } = node;
   if (intIdentify(value2) && value2 >= 0)
@@ -27079,7 +27079,7 @@ function intStringify(node, radix, prefix) {
 }
 var intIdentify, intResolve, intOct, int, intHex;
 var init_int = __esm({
-  "node_modules/yaml/browser/dist/schema/core/int.js"() {
+  "../../node_modules/yaml/browser/dist/schema/core/int.js"() {
     init_stringifyNumber();
     intIdentify = (value2) => typeof value2 === "bigint" || Number.isInteger(value2);
     intResolve = (str, offset, radix, { intAsBigInt }) => intAsBigInt ? BigInt(str) : parseInt(str.substring(offset), radix);
@@ -27112,10 +27112,10 @@ var init_int = __esm({
   }
 });
 
-// node_modules/yaml/browser/dist/schema/core/schema.js
+// ../../node_modules/yaml/browser/dist/schema/core/schema.js
 var schema;
 var init_schema = __esm({
-  "node_modules/yaml/browser/dist/schema/core/schema.js"() {
+  "../../node_modules/yaml/browser/dist/schema/core/schema.js"() {
     init_map();
     init_null();
     init_seq();
@@ -27139,13 +27139,13 @@ var init_schema = __esm({
   }
 });
 
-// node_modules/yaml/browser/dist/schema/json/schema.js
+// ../../node_modules/yaml/browser/dist/schema/json/schema.js
 function intIdentify2(value2) {
   return typeof value2 === "bigint" || Number.isInteger(value2);
 }
 var stringifyJSON, jsonScalars, jsonError, schema2;
 var init_schema2 = __esm({
-  "node_modules/yaml/browser/dist/schema/json/schema.js"() {
+  "../../node_modules/yaml/browser/dist/schema/json/schema.js"() {
     init_Scalar();
     init_map();
     init_seq();
@@ -27205,10 +27205,10 @@ var init_schema2 = __esm({
   }
 });
 
-// node_modules/yaml/browser/dist/schema/yaml-1.1/binary.js
+// ../../node_modules/yaml/browser/dist/schema/yaml-1.1/binary.js
 var binary;
 var init_binary = __esm({
-  "node_modules/yaml/browser/dist/schema/yaml-1.1/binary.js"() {
+  "../../node_modules/yaml/browser/dist/schema/yaml-1.1/binary.js"() {
     init_Scalar();
     init_stringifyString();
     binary = {
@@ -27265,7 +27265,7 @@ var init_binary = __esm({
   }
 });
 
-// node_modules/yaml/browser/dist/schema/yaml-1.1/pairs.js
+// ../../node_modules/yaml/browser/dist/schema/yaml-1.1/pairs.js
 function resolvePairs(seq2, onError) {
   if (isSeq(seq2)) {
     for (let i = 0; i < seq2.items.length; ++i) {
@@ -27325,7 +27325,7 @@ function createPairs(schema4, iterable, ctx) {
 }
 var pairs;
 var init_pairs = __esm({
-  "node_modules/yaml/browser/dist/schema/yaml-1.1/pairs.js"() {
+  "../../node_modules/yaml/browser/dist/schema/yaml-1.1/pairs.js"() {
     init_identity();
     init_Pair();
     init_Scalar();
@@ -27340,10 +27340,10 @@ var init_pairs = __esm({
   }
 });
 
-// node_modules/yaml/browser/dist/schema/yaml-1.1/omap.js
+// ../../node_modules/yaml/browser/dist/schema/yaml-1.1/omap.js
 var YAMLOMap, omap;
 var init_omap = __esm({
-  "node_modules/yaml/browser/dist/schema/yaml-1.1/omap.js"() {
+  "../../node_modules/yaml/browser/dist/schema/yaml-1.1/omap.js"() {
     init_identity();
     init_toJS();
     init_YAMLMap();
@@ -27416,7 +27416,7 @@ var init_omap = __esm({
   }
 });
 
-// node_modules/yaml/browser/dist/schema/yaml-1.1/bool.js
+// ../../node_modules/yaml/browser/dist/schema/yaml-1.1/bool.js
 function boolStringify({ value: value2, source }, ctx) {
   const boolObj = value2 ? trueTag : falseTag;
   if (source && boolObj.test.test(source))
@@ -27425,7 +27425,7 @@ function boolStringify({ value: value2, source }, ctx) {
 }
 var trueTag, falseTag;
 var init_bool2 = __esm({
-  "node_modules/yaml/browser/dist/schema/yaml-1.1/bool.js"() {
+  "../../node_modules/yaml/browser/dist/schema/yaml-1.1/bool.js"() {
     init_Scalar();
     trueTag = {
       identify: (value2) => value2 === true,
@@ -27446,10 +27446,10 @@ var init_bool2 = __esm({
   }
 });
 
-// node_modules/yaml/browser/dist/schema/yaml-1.1/float.js
+// ../../node_modules/yaml/browser/dist/schema/yaml-1.1/float.js
 var floatNaN2, floatExp2, float2;
 var init_float2 = __esm({
-  "node_modules/yaml/browser/dist/schema/yaml-1.1/float.js"() {
+  "../../node_modules/yaml/browser/dist/schema/yaml-1.1/float.js"() {
     init_Scalar();
     init_stringifyNumber();
     floatNaN2 = {
@@ -27492,7 +27492,7 @@ var init_float2 = __esm({
   }
 });
 
-// node_modules/yaml/browser/dist/schema/yaml-1.1/int.js
+// ../../node_modules/yaml/browser/dist/schema/yaml-1.1/int.js
 function intResolve2(str, offset, radix, { intAsBigInt }) {
   const sign = str[0];
   if (sign === "-" || sign === "+")
@@ -27526,7 +27526,7 @@ function intStringify2(node, radix, prefix) {
 }
 var intIdentify3, intBin, intOct2, int2, intHex2;
 var init_int2 = __esm({
-  "node_modules/yaml/browser/dist/schema/yaml-1.1/int.js"() {
+  "../../node_modules/yaml/browser/dist/schema/yaml-1.1/int.js"() {
     init_stringifyNumber();
     intIdentify3 = (value2) => typeof value2 === "bigint" || Number.isInteger(value2);
     intBin = {
@@ -27567,10 +27567,10 @@ var init_int2 = __esm({
   }
 });
 
-// node_modules/yaml/browser/dist/schema/yaml-1.1/set.js
+// ../../node_modules/yaml/browser/dist/schema/yaml-1.1/set.js
 var YAMLSet, set;
 var init_set = __esm({
-  "node_modules/yaml/browser/dist/schema/yaml-1.1/set.js"() {
+  "../../node_modules/yaml/browser/dist/schema/yaml-1.1/set.js"() {
     init_identity();
     init_Pair();
     init_YAMLMap();
@@ -27654,7 +27654,7 @@ var init_set = __esm({
   }
 });
 
-// node_modules/yaml/browser/dist/schema/yaml-1.1/timestamp.js
+// ../../node_modules/yaml/browser/dist/schema/yaml-1.1/timestamp.js
 function parseSexagesimal(str, asBigInt) {
   const sign = str[0];
   const parts = sign === "-" || sign === "+" ? str.substring(1) : str;
@@ -27690,7 +27690,7 @@ function stringifySexagesimal(node) {
 }
 var intTime, floatTime, timestamp;
 var init_timestamp = __esm({
-  "node_modules/yaml/browser/dist/schema/yaml-1.1/timestamp.js"() {
+  "../../node_modules/yaml/browser/dist/schema/yaml-1.1/timestamp.js"() {
     init_stringifyNumber();
     intTime = {
       identify: (value2) => typeof value2 === "bigint" || Number.isInteger(value2),
@@ -27739,10 +27739,10 @@ var init_timestamp = __esm({
   }
 });
 
-// node_modules/yaml/browser/dist/schema/yaml-1.1/schema.js
+// ../../node_modules/yaml/browser/dist/schema/yaml-1.1/schema.js
 var schema3;
 var init_schema3 = __esm({
-  "node_modules/yaml/browser/dist/schema/yaml-1.1/schema.js"() {
+  "../../node_modules/yaml/browser/dist/schema/yaml-1.1/schema.js"() {
     init_map();
     init_null();
     init_seq();
@@ -27782,7 +27782,7 @@ var init_schema3 = __esm({
   }
 });
 
-// node_modules/yaml/browser/dist/schema/tags.js
+// ../../node_modules/yaml/browser/dist/schema/tags.js
 function getTags(customTags, schemaName, addMergeTag) {
   const schemaTags = schemas.get(schemaName);
   if (schemaTags && !customTags) {
@@ -27819,7 +27819,7 @@ function getTags(customTags, schemaName, addMergeTag) {
 }
 var schemas, tagsByName, coreKnownTags;
 var init_tags = __esm({
-  "node_modules/yaml/browser/dist/schema/tags.js"() {
+  "../../node_modules/yaml/browser/dist/schema/tags.js"() {
     init_map();
     init_null();
     init_seq();
@@ -27874,10 +27874,10 @@ var init_tags = __esm({
   }
 });
 
-// node_modules/yaml/browser/dist/schema/Schema.js
+// ../../node_modules/yaml/browser/dist/schema/Schema.js
 var sortMapEntriesByKey, Schema;
 var init_Schema = __esm({
-  "node_modules/yaml/browser/dist/schema/Schema.js"() {
+  "../../node_modules/yaml/browser/dist/schema/Schema.js"() {
     init_identity();
     init_map();
     init_seq();
@@ -27905,7 +27905,7 @@ var init_Schema = __esm({
   }
 });
 
-// node_modules/yaml/browser/dist/stringify/stringifyDocument.js
+// ../../node_modules/yaml/browser/dist/stringify/stringifyDocument.js
 function stringifyDocument(doc, options2) {
   const lines = [];
   let hasDirectives = options2.directives === true;
@@ -27976,14 +27976,14 @@ function stringifyDocument(doc, options2) {
   return lines.join("\n") + "\n";
 }
 var init_stringifyDocument = __esm({
-  "node_modules/yaml/browser/dist/stringify/stringifyDocument.js"() {
+  "../../node_modules/yaml/browser/dist/stringify/stringifyDocument.js"() {
     init_identity();
     init_stringify();
     init_stringifyComment();
   }
 });
 
-// node_modules/yaml/browser/dist/doc/Document.js
+// ../../node_modules/yaml/browser/dist/doc/Document.js
 function assertCollection(contents) {
   if (isCollection(contents))
     return true;
@@ -27991,7 +27991,7 @@ function assertCollection(contents) {
 }
 var Document;
 var init_Document = __esm({
-  "node_modules/yaml/browser/dist/doc/Document.js"() {
+  "../../node_modules/yaml/browser/dist/doc/Document.js"() {
     init_Alias();
     init_Collection();
     init_identity();
@@ -28291,10 +28291,10 @@ var init_Document = __esm({
   }
 });
 
-// node_modules/yaml/browser/dist/errors.js
+// ../../node_modules/yaml/browser/dist/errors.js
 var YAMLError, YAMLParseError, YAMLWarning, prettifyError;
 var init_errors = __esm({
-  "node_modules/yaml/browser/dist/errors.js"() {
+  "../../node_modules/yaml/browser/dist/errors.js"() {
     YAMLError = class extends Error {
       constructor(name, pos, code, message) {
         super();
@@ -28352,7 +28352,7 @@ ${pointer}
   }
 });
 
-// node_modules/yaml/browser/dist/compose/resolve-props.js
+// ../../node_modules/yaml/browser/dist/compose/resolve-props.js
 function resolveProps(tokens, { flow, indicator, next, offset, onError, parentIndent, startOnNewline }) {
   let spaceBefore = false;
   let atNewline = startOnNewline;
@@ -28479,11 +28479,11 @@ function resolveProps(tokens, { flow, indicator, next, offset, onError, parentIn
   };
 }
 var init_resolve_props = __esm({
-  "node_modules/yaml/browser/dist/compose/resolve-props.js"() {
+  "../../node_modules/yaml/browser/dist/compose/resolve-props.js"() {
   }
 });
 
-// node_modules/yaml/browser/dist/compose/util-contains-newline.js
+// ../../node_modules/yaml/browser/dist/compose/util-contains-newline.js
 function containsNewline(key2) {
   if (!key2)
     return null;
@@ -28519,11 +28519,11 @@ function containsNewline(key2) {
   }
 }
 var init_util_contains_newline = __esm({
-  "node_modules/yaml/browser/dist/compose/util-contains-newline.js"() {
+  "../../node_modules/yaml/browser/dist/compose/util-contains-newline.js"() {
   }
 });
 
-// node_modules/yaml/browser/dist/compose/util-flow-indent-check.js
+// ../../node_modules/yaml/browser/dist/compose/util-flow-indent-check.js
 function flowIndentCheck(indent, fc, onError) {
   if (fc?.type === "flow-collection") {
     const end = fc.end[0];
@@ -28534,12 +28534,12 @@ function flowIndentCheck(indent, fc, onError) {
   }
 }
 var init_util_flow_indent_check = __esm({
-  "node_modules/yaml/browser/dist/compose/util-flow-indent-check.js"() {
+  "../../node_modules/yaml/browser/dist/compose/util-flow-indent-check.js"() {
     init_util_contains_newline();
   }
 });
 
-// node_modules/yaml/browser/dist/compose/util-map-includes.js
+// ../../node_modules/yaml/browser/dist/compose/util-map-includes.js
 function mapIncludes(ctx, items, search) {
   const { uniqueKeys } = ctx.options;
   if (uniqueKeys === false)
@@ -28548,12 +28548,12 @@ function mapIncludes(ctx, items, search) {
   return items.some((pair) => isEqual(pair.key, search));
 }
 var init_util_map_includes = __esm({
-  "node_modules/yaml/browser/dist/compose/util-map-includes.js"() {
+  "../../node_modules/yaml/browser/dist/compose/util-map-includes.js"() {
     init_identity();
   }
 });
 
-// node_modules/yaml/browser/dist/compose/resolve-block-map.js
+// ../../node_modules/yaml/browser/dist/compose/resolve-block-map.js
 function resolveBlockMap({ composeNode: composeNode2, composeEmptyNode: composeEmptyNode2 }, ctx, bm, onError, tag2) {
   const NodeClass = tag2?.nodeClass ?? YAMLMap;
   const map2 = new NodeClass(ctx.schema);
@@ -28649,7 +28649,7 @@ function resolveBlockMap({ composeNode: composeNode2, composeEmptyNode: composeE
 }
 var startColMsg;
 var init_resolve_block_map = __esm({
-  "node_modules/yaml/browser/dist/compose/resolve-block-map.js"() {
+  "../../node_modules/yaml/browser/dist/compose/resolve-block-map.js"() {
     init_Pair();
     init_YAMLMap();
     init_resolve_props();
@@ -28660,7 +28660,7 @@ var init_resolve_block_map = __esm({
   }
 });
 
-// node_modules/yaml/browser/dist/compose/resolve-block-seq.js
+// ../../node_modules/yaml/browser/dist/compose/resolve-block-seq.js
 function resolveBlockSeq({ composeNode: composeNode2, composeEmptyNode: composeEmptyNode2 }, ctx, bs, onError, tag2) {
   const NodeClass = tag2?.nodeClass ?? YAMLSeq;
   const seq2 = new NodeClass(ctx.schema);
@@ -28702,14 +28702,14 @@ function resolveBlockSeq({ composeNode: composeNode2, composeEmptyNode: composeE
   return seq2;
 }
 var init_resolve_block_seq = __esm({
-  "node_modules/yaml/browser/dist/compose/resolve-block-seq.js"() {
+  "../../node_modules/yaml/browser/dist/compose/resolve-block-seq.js"() {
     init_YAMLSeq();
     init_resolve_props();
     init_util_flow_indent_check();
   }
 });
 
-// node_modules/yaml/browser/dist/compose/resolve-end.js
+// ../../node_modules/yaml/browser/dist/compose/resolve-end.js
 function resolveEnd(end, offset, reqSpace, onError) {
   let comment = "";
   if (end) {
@@ -28746,11 +28746,11 @@ function resolveEnd(end, offset, reqSpace, onError) {
   return { comment, offset };
 }
 var init_resolve_end = __esm({
-  "node_modules/yaml/browser/dist/compose/resolve-end.js"() {
+  "../../node_modules/yaml/browser/dist/compose/resolve-end.js"() {
   }
 });
 
-// node_modules/yaml/browser/dist/compose/resolve-flow-collection.js
+// ../../node_modules/yaml/browser/dist/compose/resolve-flow-collection.js
 function resolveFlowCollection({ composeNode: composeNode2, composeEmptyNode: composeEmptyNode2 }, ctx, fc, onError, tag2) {
   const isMap2 = fc.start.source === "{";
   const fcName = isMap2 ? "flow map" : "flow sequence";
@@ -28930,7 +28930,7 @@ function resolveFlowCollection({ composeNode: composeNode2, composeEmptyNode: co
 }
 var blockMsg, isBlock;
 var init_resolve_flow_collection = __esm({
-  "node_modules/yaml/browser/dist/compose/resolve-flow-collection.js"() {
+  "../../node_modules/yaml/browser/dist/compose/resolve-flow-collection.js"() {
     init_identity();
     init_Pair();
     init_YAMLMap();
@@ -28944,7 +28944,7 @@ var init_resolve_flow_collection = __esm({
   }
 });
 
-// node_modules/yaml/browser/dist/compose/compose-collection.js
+// ../../node_modules/yaml/browser/dist/compose/compose-collection.js
 function resolveCollection(CN2, ctx, token, onError, tagName, tag2) {
   const coll = token.type === "block-map" ? resolveBlockMap(CN2, ctx, token, onError, tag2) : token.type === "block-seq" ? resolveBlockSeq(CN2, ctx, token, onError, tag2) : resolveFlowCollection(CN2, ctx, token, onError, tag2);
   const Coll = coll.constructor;
@@ -28996,7 +28996,7 @@ function composeCollection(CN2, ctx, token, props, onError) {
   return node;
 }
 var init_compose_collection = __esm({
-  "node_modules/yaml/browser/dist/compose/compose-collection.js"() {
+  "../../node_modules/yaml/browser/dist/compose/compose-collection.js"() {
     init_identity();
     init_Scalar();
     init_YAMLMap();
@@ -29007,7 +29007,7 @@ var init_compose_collection = __esm({
   }
 });
 
-// node_modules/yaml/browser/dist/compose/resolve-block-scalar.js
+// ../../node_modules/yaml/browser/dist/compose/resolve-block-scalar.js
 function resolveBlockScalar(ctx, scalar, onError) {
   const start = scalar.offset;
   const header = parseBlockScalarHeader(scalar, ctx.options.strict, onError);
@@ -29181,12 +29181,12 @@ function splitLines(source) {
   return lines;
 }
 var init_resolve_block_scalar = __esm({
-  "node_modules/yaml/browser/dist/compose/resolve-block-scalar.js"() {
+  "../../node_modules/yaml/browser/dist/compose/resolve-block-scalar.js"() {
     init_Scalar();
   }
 });
 
-// node_modules/yaml/browser/dist/compose/resolve-flow-scalar.js
+// ../../node_modules/yaml/browser/dist/compose/resolve-flow-scalar.js
 function resolveFlowScalar(scalar, strict, onError) {
   const { offset, type, source, end } = scalar;
   let _type;
@@ -29363,7 +29363,7 @@ function parseCharCode(source, offset, length, onError) {
 }
 var escapeCodes;
 var init_resolve_flow_scalar = __esm({
-  "node_modules/yaml/browser/dist/compose/resolve-flow-scalar.js"() {
+  "../../node_modules/yaml/browser/dist/compose/resolve-flow-scalar.js"() {
     init_Scalar();
     init_resolve_end();
     escapeCodes = {
@@ -29402,7 +29402,7 @@ var init_resolve_flow_scalar = __esm({
   }
 });
 
-// node_modules/yaml/browser/dist/compose/compose-scalar.js
+// ../../node_modules/yaml/browser/dist/compose/compose-scalar.js
 function composeScalar(ctx, token, tagToken, onError) {
   const { value: value2, type, comment, range } = token.type === "block-scalar" ? resolveBlockScalar(ctx, token, onError) : resolveFlowScalar(token, ctx.options.strict, onError);
   const tagName = tagToken ? ctx.directives.tagName(tagToken.source, (msg) => onError(tagToken, "TAG_RESOLVE_FAILED", msg)) : null;
@@ -29473,7 +29473,7 @@ function findScalarTagByTest({ atKey, directives, schema: schema4 }, value2, tok
   return tag2;
 }
 var init_compose_scalar = __esm({
-  "node_modules/yaml/browser/dist/compose/compose-scalar.js"() {
+  "../../node_modules/yaml/browser/dist/compose/compose-scalar.js"() {
     init_identity();
     init_Scalar();
     init_resolve_block_scalar();
@@ -29481,7 +29481,7 @@ var init_compose_scalar = __esm({
   }
 });
 
-// node_modules/yaml/browser/dist/compose/util-empty-scalar-position.js
+// ../../node_modules/yaml/browser/dist/compose/util-empty-scalar-position.js
 function emptyScalarPosition(offset, before, pos) {
   if (before) {
     pos ?? (pos = before.length);
@@ -29505,11 +29505,11 @@ function emptyScalarPosition(offset, before, pos) {
   return offset;
 }
 var init_util_empty_scalar_position = __esm({
-  "node_modules/yaml/browser/dist/compose/util-empty-scalar-position.js"() {
+  "../../node_modules/yaml/browser/dist/compose/util-empty-scalar-position.js"() {
   }
 });
 
-// node_modules/yaml/browser/dist/compose/compose-node.js
+// ../../node_modules/yaml/browser/dist/compose/compose-node.js
 function composeNode(ctx, token, props, onError) {
   const atKey = ctx.atKey;
   const { spaceBefore, comment, anchor, tag: tag2 } = props;
@@ -29597,7 +29597,7 @@ function composeAlias({ options: options2 }, { offset, source, end }, onError) {
 }
 var CN;
 var init_compose_node = __esm({
-  "node_modules/yaml/browser/dist/compose/compose-node.js"() {
+  "../../node_modules/yaml/browser/dist/compose/compose-node.js"() {
     init_Alias();
     init_identity();
     init_compose_collection();
@@ -29608,7 +29608,7 @@ var init_compose_node = __esm({
   }
 });
 
-// node_modules/yaml/browser/dist/compose/compose-doc.js
+// ../../node_modules/yaml/browser/dist/compose/compose-doc.js
 function composeDoc(options2, directives, { offset, start, value: value2, end }, onError) {
   const opts = Object.assign({ _directives: directives }, options2);
   const doc = new Document(void 0, opts);
@@ -29641,7 +29641,7 @@ function composeDoc(options2, directives, { offset, start, value: value2, end },
   return doc;
 }
 var init_compose_doc = __esm({
-  "node_modules/yaml/browser/dist/compose/compose-doc.js"() {
+  "../../node_modules/yaml/browser/dist/compose/compose-doc.js"() {
     init_Document();
     init_compose_node();
     init_resolve_end();
@@ -29649,7 +29649,7 @@ var init_compose_doc = __esm({
   }
 });
 
-// node_modules/yaml/browser/dist/compose/composer.js
+// ../../node_modules/yaml/browser/dist/compose/composer.js
 function getErrorPos(src) {
   if (typeof src === "number")
     return [src, src + 1];
@@ -29685,7 +29685,7 @@ function parsePrelude(prelude) {
 }
 var Composer;
 var init_composer = __esm({
-  "node_modules/yaml/browser/dist/compose/composer.js"() {
+  "../../node_modules/yaml/browser/dist/compose/composer.js"() {
     init_directives();
     init_Document();
     init_errors();
@@ -29851,9 +29851,9 @@ ${end.comment}` : end.comment;
   }
 });
 
-// node_modules/yaml/browser/dist/parse/cst-scalar.js
+// ../../node_modules/yaml/browser/dist/parse/cst-scalar.js
 var init_cst_scalar = __esm({
-  "node_modules/yaml/browser/dist/parse/cst-scalar.js"() {
+  "../../node_modules/yaml/browser/dist/parse/cst-scalar.js"() {
     init_resolve_block_scalar();
     init_resolve_flow_scalar();
     init_errors();
@@ -29861,13 +29861,13 @@ var init_cst_scalar = __esm({
   }
 });
 
-// node_modules/yaml/browser/dist/parse/cst-stringify.js
+// ../../node_modules/yaml/browser/dist/parse/cst-stringify.js
 var init_cst_stringify = __esm({
-  "node_modules/yaml/browser/dist/parse/cst-stringify.js"() {
+  "../../node_modules/yaml/browser/dist/parse/cst-stringify.js"() {
   }
 });
 
-// node_modules/yaml/browser/dist/parse/cst-visit.js
+// ../../node_modules/yaml/browser/dist/parse/cst-visit.js
 function visit2(cst, visitor) {
   if ("type" in cst && cst.type === "document")
     cst = { start: cst.start, value: cst.value };
@@ -29899,7 +29899,7 @@ function _visit(path2, item, visitor) {
 }
 var BREAK2, SKIP2, REMOVE2;
 var init_cst_visit = __esm({
-  "node_modules/yaml/browser/dist/parse/cst-visit.js"() {
+  "../../node_modules/yaml/browser/dist/parse/cst-visit.js"() {
     BREAK2 = Symbol("break visit");
     SKIP2 = Symbol("skip children");
     REMOVE2 = Symbol("remove item");
@@ -29928,7 +29928,7 @@ var init_cst_visit = __esm({
   }
 });
 
-// node_modules/yaml/browser/dist/parse/cst.js
+// ../../node_modules/yaml/browser/dist/parse/cst.js
 function tokenType(source) {
   switch (source) {
     case BOM:
@@ -29990,7 +29990,7 @@ function tokenType(source) {
 }
 var BOM, DOCUMENT, FLOW_END, SCALAR2;
 var init_cst = __esm({
-  "node_modules/yaml/browser/dist/parse/cst.js"() {
+  "../../node_modules/yaml/browser/dist/parse/cst.js"() {
     init_cst_scalar();
     init_cst_stringify();
     init_cst_visit();
@@ -30001,7 +30001,7 @@ var init_cst = __esm({
   }
 });
 
-// node_modules/yaml/browser/dist/parse/lexer.js
+// ../../node_modules/yaml/browser/dist/parse/lexer.js
 function isEmpty(ch) {
   switch (ch) {
     case void 0:
@@ -30016,7 +30016,7 @@ function isEmpty(ch) {
 }
 var hexDigits, tagChars, flowIndicatorChars, invalidAnchorChars, isNotAnchorChar, Lexer;
 var init_lexer = __esm({
-  "node_modules/yaml/browser/dist/parse/lexer.js"() {
+  "../../node_modules/yaml/browser/dist/parse/lexer.js"() {
     init_cst();
     hexDigits = new Set("0123456789ABCDEFabcdef");
     tagChars = new Set("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-#;/?:@&=+$_.!~*'()");
@@ -30575,10 +30575,10 @@ var init_lexer = __esm({
   }
 });
 
-// node_modules/yaml/browser/dist/parse/line-counter.js
+// ../../node_modules/yaml/browser/dist/parse/line-counter.js
 var LineCounter;
 var init_line_counter = __esm({
-  "node_modules/yaml/browser/dist/parse/line-counter.js"() {
+  "../../node_modules/yaml/browser/dist/parse/line-counter.js"() {
     LineCounter = class {
       constructor() {
         this.lineStarts = [];
@@ -30605,7 +30605,7 @@ var init_line_counter = __esm({
   }
 });
 
-// node_modules/yaml/browser/dist/parse/parser.js
+// ../../node_modules/yaml/browser/dist/parse/parser.js
 function includesToken(list, type) {
   for (let i = 0; i < list.length; ++i)
     if (list[i].type === type)
@@ -30691,7 +30691,7 @@ function fixFlowSeqItems(fc) {
 }
 var Parser;
 var init_parser = __esm({
-  "node_modules/yaml/browser/dist/parse/parser.js"() {
+  "../../node_modules/yaml/browser/dist/parse/parser.js"() {
     init_cst();
     init_lexer();
     Parser = class {
@@ -31465,7 +31465,7 @@ var init_parser = __esm({
   }
 });
 
-// node_modules/yaml/browser/dist/public-api.js
+// ../../node_modules/yaml/browser/dist/public-api.js
 function parseOptions(options2) {
   const prettyErrors = options2.prettyErrors !== false;
   const lineCounter = options2.lineCounter || prettyErrors && new LineCounter() || null;
@@ -31510,7 +31510,7 @@ function parse(src, reviver, options2) {
   return doc.toJS(Object.assign({ reviver: _reviver }, options2));
 }
 var init_public_api = __esm({
-  "node_modules/yaml/browser/dist/public-api.js"() {
+  "../../node_modules/yaml/browser/dist/public-api.js"() {
     init_composer();
     init_Document();
     init_errors();
@@ -31521,9 +31521,9 @@ var init_public_api = __esm({
   }
 });
 
-// node_modules/yaml/browser/dist/index.js
+// ../../node_modules/yaml/browser/dist/index.js
 var init_dist = __esm({
-  "node_modules/yaml/browser/dist/index.js"() {
+  "../../node_modules/yaml/browser/dist/index.js"() {
     init_composer();
     init_Document();
     init_Schema();
@@ -31543,18 +31543,18 @@ var init_dist = __esm({
   }
 });
 
-// node_modules/yaml/browser/index.js
+// ../../node_modules/yaml/browser/index.js
 var init_browser = __esm({
-  "node_modules/yaml/browser/index.js"() {
+  "../../node_modules/yaml/browser/index.js"() {
     init_dist();
     init_dist();
   }
 });
 
-// node_modules/@clevertree/themed-styler/dist/theme.js
+// ../../node_modules/@clevertree/themed-styler/dist/theme.js
 var themeYaml;
 var init_theme = __esm({
-  "node_modules/@clevertree/themed-styler/dist/theme.js"() {
+  "../../node_modules/@clevertree/themed-styler/dist/theme.js"() {
     themeYaml = `themes:
   default:
     name: "Default Theme"
@@ -31666,7 +31666,7 @@ default_theme: default
   }
 });
 
-// node_modules/@clevertree/themed-styler/dist/styleManager.js
+// ../../node_modules/@clevertree/themed-styler/dist/styleManager.js
 var styleManager_exports = {};
 __export(styleManager_exports, {
   default: () => styleManager_default,
@@ -31820,7 +31820,7 @@ function onChange(cb) {
 }
 var import_react5, styleEl, syncInterval, lastSnapshotJson, debounceTimer, forceRenderNext, emitter, isDevMode, styleManager_default;
 var init_styleManager = __esm({
-  "node_modules/@clevertree/themed-styler/dist/styleManager.js"() {
+  "../../node_modules/@clevertree/themed-styler/dist/styleManager.js"() {
     init_unifiedBridge();
     import_react5 = __toESM(require_react(), 1);
     styleEl = null;
@@ -31845,7 +31845,7 @@ var init_styleManager = __esm({
   }
 });
 
-// node_modules/@clevertree/themed-styler/dist/themedStylerBridge.js
+// ../../node_modules/@clevertree/themed-styler/dist/themedStylerBridge.js
 function registerUsage(tag2, props, hierarchy) {
   const cls = props ? props.className || props.class || "" : "";
   const classes = typeof cls === "string" && cls.trim().length ? cls.split(/\s+/).map((c) => c.trim()).filter(Boolean) : [];
@@ -32014,7 +32014,7 @@ function getRnStyles(selector, classes = []) {
 }
 var usage, themes, currentTheme, _defaults_loaded, themedStylerBridge_default;
 var init_themedStylerBridge = __esm({
-  "node_modules/@clevertree/themed-styler/dist/themedStylerBridge.js"() {
+  "../../node_modules/@clevertree/themed-styler/dist/themedStylerBridge.js"() {
     init_browser();
     init_theme();
     usage = {
@@ -32042,10 +32042,10 @@ var init_themedStylerBridge = __esm({
   }
 });
 
-// node_modules/@clevertree/themed-styler/dist/unifiedBridge.js
+// ../../node_modules/@clevertree/themed-styler/dist/unifiedBridge.js
 var unifiedBridge, unifiedBridge_default;
 var init_unifiedBridge = __esm({
-  "node_modules/@clevertree/themed-styler/dist/unifiedBridge.js"() {
+  "../../node_modules/@clevertree/themed-styler/dist/unifiedBridge.js"() {
     init_themedStylerBridge();
     unifiedBridge = {
       // Transpile API: wraps global hook-transpiler function if present
@@ -32076,6 +32076,279 @@ var init_unifiedBridge = __esm({
       loadThemesFromYamlText
     };
     unifiedBridge_default = unifiedBridge;
+  }
+});
+
+// ../../node_modules/@clevertree/themed-styler/wasm/themed_styler.js
+var themed_styler_exports = {};
+__export(themed_styler_exports, {
+  default: () => themed_styler_default,
+  get_default_state_json: () => get_default_state_json,
+  get_rn_styles: () => get_rn_styles,
+  get_theme_list_json: () => get_theme_list_json,
+  get_version: () => get_version2,
+  initSync: () => initSync2,
+  register_theme_json: () => register_theme_json,
+  render_css_for_web: () => render_css_for_web,
+  set_theme_json: () => set_theme_json
+});
+function getStringFromWasm02(ptr, len) {
+  ptr = ptr >>> 0;
+  return decodeText2(ptr, len);
+}
+function getUint8ArrayMemory02() {
+  if (cachedUint8ArrayMemory02 === null || cachedUint8ArrayMemory02.byteLength === 0) {
+    cachedUint8ArrayMemory02 = new Uint8Array(wasm2.memory.buffer);
+  }
+  return cachedUint8ArrayMemory02;
+}
+function passStringToWasm02(arg, malloc, realloc) {
+  if (realloc === void 0) {
+    const buf = cachedTextEncoder2.encode(arg);
+    const ptr2 = malloc(buf.length, 1) >>> 0;
+    getUint8ArrayMemory02().subarray(ptr2, ptr2 + buf.length).set(buf);
+    WASM_VECTOR_LEN2 = buf.length;
+    return ptr2;
+  }
+  let len = arg.length;
+  let ptr = malloc(len, 1) >>> 0;
+  const mem = getUint8ArrayMemory02();
+  let offset = 0;
+  for (; offset < len; offset++) {
+    const code = arg.charCodeAt(offset);
+    if (code > 127)
+      break;
+    mem[ptr + offset] = code;
+  }
+  if (offset !== len) {
+    if (offset !== 0) {
+      arg = arg.slice(offset);
+    }
+    ptr = realloc(ptr, len, len = offset + arg.length * 3, 1) >>> 0;
+    const view = getUint8ArrayMemory02().subarray(ptr + offset, ptr + len);
+    const ret = cachedTextEncoder2.encodeInto(arg, view);
+    offset += ret.written;
+    ptr = realloc(ptr, len, offset, 1) >>> 0;
+  }
+  WASM_VECTOR_LEN2 = offset;
+  return ptr;
+}
+function decodeText2(ptr, len) {
+  numBytesDecoded2 += len;
+  if (numBytesDecoded2 >= MAX_SAFARI_DECODE_BYTES2) {
+    cachedTextDecoder2 = new TextDecoder("utf-8", { ignoreBOM: true, fatal: true });
+    cachedTextDecoder2.decode();
+    numBytesDecoded2 = len;
+  }
+  return cachedTextDecoder2.decode(getUint8ArrayMemory02().subarray(ptr, ptr + len));
+}
+function get_default_state_json() {
+  let deferred1_0;
+  let deferred1_1;
+  try {
+    const ret = wasm2.get_default_state_json();
+    deferred1_0 = ret[0];
+    deferred1_1 = ret[1];
+    return getStringFromWasm02(ret[0], ret[1]);
+  } finally {
+    wasm2.__wbindgen_free(deferred1_0, deferred1_1, 1);
+  }
+}
+function get_rn_styles(state_json, selector, classes_json) {
+  let deferred4_0;
+  let deferred4_1;
+  try {
+    const ptr0 = passStringToWasm02(state_json, wasm2.__wbindgen_malloc, wasm2.__wbindgen_realloc);
+    const len0 = WASM_VECTOR_LEN2;
+    const ptr1 = passStringToWasm02(selector, wasm2.__wbindgen_malloc, wasm2.__wbindgen_realloc);
+    const len1 = WASM_VECTOR_LEN2;
+    const ptr2 = passStringToWasm02(classes_json, wasm2.__wbindgen_malloc, wasm2.__wbindgen_realloc);
+    const len2 = WASM_VECTOR_LEN2;
+    const ret = wasm2.get_rn_styles(ptr0, len0, ptr1, len1, ptr2, len2);
+    deferred4_0 = ret[0];
+    deferred4_1 = ret[1];
+    return getStringFromWasm02(ret[0], ret[1]);
+  } finally {
+    wasm2.__wbindgen_free(deferred4_0, deferred4_1, 1);
+  }
+}
+function get_theme_list_json(state_json) {
+  let deferred2_0;
+  let deferred2_1;
+  try {
+    const ptr0 = passStringToWasm02(state_json, wasm2.__wbindgen_malloc, wasm2.__wbindgen_realloc);
+    const len0 = WASM_VECTOR_LEN2;
+    const ret = wasm2.get_theme_list_json(ptr0, len0);
+    deferred2_0 = ret[0];
+    deferred2_1 = ret[1];
+    return getStringFromWasm02(ret[0], ret[1]);
+  } finally {
+    wasm2.__wbindgen_free(deferred2_0, deferred2_1, 1);
+  }
+}
+function get_version2() {
+  let deferred1_0;
+  let deferred1_1;
+  try {
+    const ret = wasm2.get_version();
+    deferred1_0 = ret[0];
+    deferred1_1 = ret[1];
+    return getStringFromWasm02(ret[0], ret[1]);
+  } finally {
+    wasm2.__wbindgen_free(deferred1_0, deferred1_1, 1);
+  }
+}
+function register_theme_json(state_json, theme_json) {
+  let deferred3_0;
+  let deferred3_1;
+  try {
+    const ptr0 = passStringToWasm02(state_json, wasm2.__wbindgen_malloc, wasm2.__wbindgen_realloc);
+    const len0 = WASM_VECTOR_LEN2;
+    const ptr1 = passStringToWasm02(theme_json, wasm2.__wbindgen_malloc, wasm2.__wbindgen_realloc);
+    const len1 = WASM_VECTOR_LEN2;
+    const ret = wasm2.register_theme_json(ptr0, len0, ptr1, len1);
+    deferred3_0 = ret[0];
+    deferred3_1 = ret[1];
+    return getStringFromWasm02(ret[0], ret[1]);
+  } finally {
+    wasm2.__wbindgen_free(deferred3_0, deferred3_1, 1);
+  }
+}
+function render_css_for_web(state_json) {
+  let deferred2_0;
+  let deferred2_1;
+  try {
+    const ptr0 = passStringToWasm02(state_json, wasm2.__wbindgen_malloc, wasm2.__wbindgen_realloc);
+    const len0 = WASM_VECTOR_LEN2;
+    const ret = wasm2.render_css_for_web(ptr0, len0);
+    deferred2_0 = ret[0];
+    deferred2_1 = ret[1];
+    return getStringFromWasm02(ret[0], ret[1]);
+  } finally {
+    wasm2.__wbindgen_free(deferred2_0, deferred2_1, 1);
+  }
+}
+function set_theme_json(state_json, theme_name) {
+  let deferred3_0;
+  let deferred3_1;
+  try {
+    const ptr0 = passStringToWasm02(state_json, wasm2.__wbindgen_malloc, wasm2.__wbindgen_realloc);
+    const len0 = WASM_VECTOR_LEN2;
+    const ptr1 = passStringToWasm02(theme_name, wasm2.__wbindgen_malloc, wasm2.__wbindgen_realloc);
+    const len1 = WASM_VECTOR_LEN2;
+    const ret = wasm2.set_theme_json(ptr0, len0, ptr1, len1);
+    deferred3_0 = ret[0];
+    deferred3_1 = ret[1];
+    return getStringFromWasm02(ret[0], ret[1]);
+  } finally {
+    wasm2.__wbindgen_free(deferred3_0, deferred3_1, 1);
+  }
+}
+async function __wbg_load2(module, imports) {
+  if (typeof Response === "function" && module instanceof Response) {
+    if (typeof WebAssembly.instantiateStreaming === "function") {
+      try {
+        return await WebAssembly.instantiateStreaming(module, imports);
+      } catch (e) {
+        const validResponse = module.ok && EXPECTED_RESPONSE_TYPES2.has(module.type);
+        if (validResponse && module.headers.get("Content-Type") !== "application/wasm") {
+          console.warn("`WebAssembly.instantiateStreaming` failed because your server does not serve Wasm with `application/wasm` MIME type. Falling back to `WebAssembly.instantiate` which is slower. Original error:\n", e);
+        } else {
+          throw e;
+        }
+      }
+    }
+    const bytes = await module.arrayBuffer();
+    return await WebAssembly.instantiate(bytes, imports);
+  } else {
+    const instance = await WebAssembly.instantiate(module, imports);
+    if (instance instanceof WebAssembly.Instance) {
+      return { instance, module };
+    } else {
+      return instance;
+    }
+  }
+}
+function __wbg_get_imports2() {
+  const imports = {};
+  imports.wbg = {};
+  imports.wbg.__wbindgen_init_externref_table = function() {
+    const table = wasm2.__wbindgen_externrefs;
+    const offset = table.grow(4);
+    table.set(0, void 0);
+    table.set(offset + 0, void 0);
+    table.set(offset + 1, null);
+    table.set(offset + 2, true);
+    table.set(offset + 3, false);
+  };
+  return imports;
+}
+function __wbg_finalize_init2(instance, module) {
+  wasm2 = instance.exports;
+  __wbg_init2.__wbindgen_wasm_module = module;
+  cachedUint8ArrayMemory02 = null;
+  wasm2.__wbindgen_start();
+  return wasm2;
+}
+function initSync2(module) {
+  if (wasm2 !== void 0)
+    return wasm2;
+  if (typeof module !== "undefined") {
+    if (Object.getPrototypeOf(module) === Object.prototype) {
+      ({ module } = module);
+    } else {
+      console.warn("using deprecated parameters for `initSync()`; pass a single object instead");
+    }
+  }
+  const imports = __wbg_get_imports2();
+  if (!(module instanceof WebAssembly.Module)) {
+    module = new WebAssembly.Module(module);
+  }
+  const instance = new WebAssembly.Instance(module, imports);
+  return __wbg_finalize_init2(instance, module);
+}
+async function __wbg_init2(module_or_path) {
+  if (wasm2 !== void 0)
+    return wasm2;
+  if (typeof module_or_path !== "undefined") {
+    if (Object.getPrototypeOf(module_or_path) === Object.prototype) {
+      ({ module_or_path } = module_or_path);
+    } else {
+      console.warn("using deprecated parameters for the initialization function; pass a single object instead");
+    }
+  }
+  if (typeof module_or_path === "undefined") {
+    module_or_path = new URL("themed_styler_bg.wasm", import.meta.url);
+  }
+  const imports = __wbg_get_imports2();
+  if (typeof module_or_path === "string" || typeof Request === "function" && module_or_path instanceof Request || typeof URL === "function" && module_or_path instanceof URL) {
+    module_or_path = fetch(module_or_path);
+  }
+  const { instance, module } = await __wbg_load2(await module_or_path, imports);
+  return __wbg_finalize_init2(instance, module);
+}
+var wasm2, cachedUint8ArrayMemory02, cachedTextDecoder2, MAX_SAFARI_DECODE_BYTES2, numBytesDecoded2, cachedTextEncoder2, WASM_VECTOR_LEN2, EXPECTED_RESPONSE_TYPES2, themed_styler_default;
+var init_themed_styler = __esm({
+  "../../node_modules/@clevertree/themed-styler/wasm/themed_styler.js"() {
+    cachedUint8ArrayMemory02 = null;
+    cachedTextDecoder2 = new TextDecoder("utf-8", { ignoreBOM: true, fatal: true });
+    cachedTextDecoder2.decode();
+    MAX_SAFARI_DECODE_BYTES2 = 2146435072;
+    numBytesDecoded2 = 0;
+    cachedTextEncoder2 = new TextEncoder();
+    if (!("encodeInto" in cachedTextEncoder2)) {
+      cachedTextEncoder2.encodeInto = function(arg, view) {
+        const buf = cachedTextEncoder2.encode(arg);
+        view.set(buf);
+        return {
+          read: arg.length,
+          written: buf.length
+        };
+      };
+    }
+    WASM_VECTOR_LEN2 = 0;
+    EXPECTED_RESPONSE_TYPES2 = /* @__PURE__ */ new Set(["basic", "cors", "default"]);
+    themed_styler_default = __wbg_init2;
   }
 });
 
@@ -32827,7 +33100,7 @@ var HookLoader = class {
     try {
       diag.phase = "fetch";
       const hookUrl = `${this.protocol}://${this.host}${hookPath}`;
-      console.log(`[HookLoader] Fetching hook from: ${hookUrl}`);
+      console.debug(`[HookLoader] Fetching hook from: ${hookUrl}`);
       const requestHeaders = this.buildRequestHeaders(context);
       const fetchOptions = Object.keys(requestHeaders).length ? { headers: requestHeaders } : void 0;
       let response;
@@ -32839,7 +33112,7 @@ var HookLoader = class {
         console.error("[HookLoader] Fetch failed, got error immediately:", fetchErr);
         throw fetchErr;
       }
-      console.log(`[HookLoader] Received hook code (${code.length} chars), status: ${response.status}`);
+      console.debug(`[HookLoader] Received hook code (${code.length} chars)`);
       diag.fetch = {
         status: response.status,
         ok: response.ok,
@@ -32858,7 +33131,7 @@ var HookLoader = class {
       const shouldTranspile = !!this.transpiler || looksLikeTsOrJsx(code, hookPath);
       if (shouldTranspile) {
         try {
-          console.log(`[HookLoader] Transpiling ${hookPath}`);
+          console.debug(`[HookLoader] Transpiling ${hookPath}`);
           if (this.transpiler) {
             finalCode = await this.transpiler(code, hookPath);
             this.logTranspileResult(hookPath, finalCode);
@@ -32870,7 +33143,7 @@ var HookLoader = class {
               // Web uses dynamic import
             );
           }
-          console.log(`[HookLoader] Transpilation complete (${finalCode.length} chars)`);
+          console.debug(`[HookLoader] Transpilation complete (${finalCode.length} chars)`);
         } catch (err) {
           const msg = err?.message || String(err);
           console.warn("[HookLoader] JSX transpilation failed", { hookPath, error: msg });
@@ -32882,16 +33155,16 @@ var HookLoader = class {
         }
       }
       diag.phase = "import";
-      console.log(`[HookLoader] Executing hook module`);
+      console.debug(`[HookLoader] Executing hook module`);
       try {
         const mod = await this.moduleLoader.executeModule(finalCode, hookPath, context, hookUrl);
         if (!mod || typeof mod.default !== "function") {
           throw new Error("Hook module does not export a default function");
         }
         diag.phase = "exec";
-        console.log(`[HookLoader] Calling hook function`);
+        console.debug(`[HookLoader] Calling hook function`);
         const element = await mod.default(context);
-        console.log(`[HookLoader] Hook executed successfully`);
+        console.debug(`[HookLoader] Hook executed successfully`);
         return element;
       } catch (execErr) {
         console.error("[HookLoader] Hook execution error:", execErr);
@@ -38074,7 +38347,7 @@ var HookRenderer = ({ host, hookPath, onElement, requestRender: requestRender2, 
       }, [path2]);
       if (loading2)
         return (0, import_jsx_runtime4.jsx)("div", { children: "Loading file..." });
-      return (0, import_jsx_runtime4.jsx)(FileRenderer, { content, contentType, onElement });
+      return (0, import_jsx_runtime4.jsx)(FileRenderer, { content, contentType, onElement: registerUsageFromElement });
     };
     const registerThemesFromYaml = async (path2) => {
       try {
@@ -38089,7 +38362,7 @@ var HookRenderer = ({ host, hookPath, onElement, requestRender: requestRender2, 
       }
     };
     const builtinModules = {
-      "@clevertree/markdown": { MarkdownRenderer: (props) => (0, import_jsx_runtime4.jsx)(MarkdownRenderer, { onElement, overrides: markdownOverrides, ...props }) },
+      "@clevertree/markdown": { MarkdownRenderer: (props) => (0, import_jsx_runtime4.jsx)(MarkdownRenderer, { onElement: registerUsageFromElement, overrides: markdownOverrides, ...props }) },
       "@clevertree/theme": {
         registerThemeStyles: (name, defs) => {
           if (registerTheme2)
@@ -38130,28 +38403,20 @@ var HookRenderer = ({ host, hookPath, onElement, requestRender: requestRender2, 
     };
   }, [normalizedHost, onElement, registerUsageFromElement, loadThemesFromYamlUrl2, renderCssIntoDom2, registerTheme2]);
   const tryRender = (0, import_react4.useCallback)(async () => {
-    console.log("[HookRenderer] tryRender called, wasmReady:", wasmReady);
-    if (!wasmReady) {
-      console.log("[HookRenderer] wasm not ready yet, skipping render");
+    if (!wasmReady)
       return;
-    }
     setLoading(true);
     setError(null);
     setElement(null);
     try {
       const path2 = hookPath || "http://localhost:8002/hooks/client/get-client.jsx";
-      console.log("[HookRenderer] Loading hook:", path2);
       if (!loaderRef.current)
         throw new Error("hook loader not initialized");
       const ctx = createHookContext(path2);
-      console.log("[HookRenderer] HookContext created for:", path2);
       const el = await loaderRef.current.loadAndExecuteHook(path2, ctx);
-      console.log("[HookRenderer] Hook executed successfully");
       setElement(el);
-      if (renderCssIntoDom2) {
-        console.log("[HookRenderer] Triggering renderCssIntoDom");
+      if (renderCssIntoDom2)
         renderCssIntoDom2();
-      }
     } catch (e) {
       console.error("[HookRenderer] Error loading/executing hook:", e);
       const message = e?.message || String(e);
@@ -38169,13 +38434,17 @@ ${stack}` : message;
     void tryRender();
   }, [tryRender]);
   (0, import_react4.useEffect)(() => {
-    console.log("[HookRenderer] mounted, onElement present:", !!onElement);
     if (onElement) {
-      console.log("[HookRenderer] Registering container div");
       onElement("div", { style: { height: "100%", display: "flex", flexDirection: "column" } });
+      if (renderCssIntoDom2) {
+        try {
+          renderCssIntoDom2();
+        } catch (e) {
+        }
+      }
     }
-  }, [onElement]);
-  return (0, import_jsx_runtime4.jsxs)("div", { style: { height: "100%", display: "flex", flexDirection: "column" }, children: [!wasmReady && !wasmError && (0, import_jsx_runtime4.jsx)("div", { children: "Initializing WASM transpiler..." }), wasmError && (0, import_jsx_runtime4.jsxs)("div", { style: { color: "orange" }, children: [(0, import_jsx_runtime4.jsx)("strong", { style: { marginRight: "0.25rem" }, children: "Warning:" }), " ", wasmError] }), wasmReady && loading && (0, import_jsx_runtime4.jsx)("div", { children: "Loading hook..." }), error && (0, import_jsx_runtime4.jsxs)("div", { style: { color: "red" }, children: [(0, import_jsx_runtime4.jsx)("strong", { style: { marginRight: "0.25rem" }, children: "Error:" }), " ", error] }), wasmReady && !loading && !error && element && (0, import_jsx_runtime4.jsx)(ErrorBoundary_default, { onElement, children: (0, import_jsx_runtime4.jsx)("div", { style: { flex: 1 }, children: element }) })] });
+  }, [onElement, renderCssIntoDom2]);
+  return (0, import_jsx_runtime4.jsxs)("div", { style: { height: "100%", display: "flex", flexDirection: "column" }, children: [!wasmReady && !wasmError && (0, import_jsx_runtime4.jsx)("div", { children: "Initializing WASM transpiler..." }), wasmError && (0, import_jsx_runtime4.jsxs)("div", { style: { color: "orange" }, children: [(0, import_jsx_runtime4.jsx)("strong", { style: { marginRight: "0.25rem" }, children: "Warning:" }), " ", wasmError] }), wasmReady && loading && (0, import_jsx_runtime4.jsx)("div", { children: "Loading hook..." }), error && (0, import_jsx_runtime4.jsxs)("div", { style: { color: "red" }, children: [(0, import_jsx_runtime4.jsx)("strong", { style: { marginRight: "0.25rem" }, children: "Error:" }), " ", error] }), wasmReady && !loading && !error && element && (0, import_jsx_runtime4.jsx)(ErrorBoundary_default, { onElement: registerUsageFromElement, children: (0, import_jsx_runtime4.jsx)("div", { style: { flex: 1 }, children: element }) })] });
 };
 
 // ../../dist/index.js
@@ -38190,11 +38459,10 @@ async function initWasmTranspiler() {
     return;
   }
   try {
-    const { default: init, transpile_jsx: transpile_jsx2, get_version: get_version2, run_self_test: run_self_test2 } = await Promise.resolve().then(() => (init_relay_hook_transpiler(), relay_hook_transpiler_exports));
+    const { default: init, transpile_jsx: transpile_jsx2, get_version: get_version3, run_self_test: run_self_test2 } = await Promise.resolve().then(() => (init_relay_hook_transpiler(), relay_hook_transpiler_exports));
     let wasmPath;
     try {
       wasmPath = new URL("/wasm/relay_hook_transpiler_bg.wasm", window.location.origin).toString();
-      console.log("[hook-transpiler] Using unified wasmPath:", wasmPath);
     } catch (e) {
       console.warn("[hook-transpiler] Failed to construct wasm path via URL, using fallback string");
       wasmPath = "/wasm/relay_hook_transpiler_bg.wasm";
@@ -38205,13 +38473,12 @@ async function initWasmTranspiler() {
       const buffer = await fs2.readFile(new URL(wasmUrl));
       await init({ module_or_path: buffer });
     } else {
-      console.log("[hook-transpiler] calling init with wasmUrl:", wasmUrl);
       await init({ module_or_path: wasmUrl });
     }
     const transpileFn = (code, filename, isTypescript) => {
       return transpile_jsx2(code, filename || "module.tsx", isTypescript);
     };
-    const version = get_version2 ? get_version2() : "wasm";
+    const version = get_version3 ? get_version3() : "wasm";
     globalThis.__hook_transpiler_version = version;
     globalThis.__hook_transpile_jsx = transpileFn;
     globalThis.__hook_wasm_self_test = run_self_test2;
@@ -38224,10 +38491,10 @@ async function initTranspiler() {
   return initWasmTranspiler();
 }
 
-// node_modules/@clevertree/themed-styler/dist/themedPrimitives.js
+// ../../node_modules/@clevertree/themed-styler/dist/themedPrimitives.js
 var import_jsx_runtime6 = __toESM(require_jsx_runtime(), 1);
 
-// node_modules/@clevertree/themed-styler/dist/components/TSDiv.js
+// ../../node_modules/@clevertree/themed-styler/dist/components/TSDiv.js
 var import_jsx_runtime5 = __toESM(require_jsx_runtime(), 1);
 var import_react6 = __toESM(require_react(), 1);
 init_unifiedBridge();
@@ -38256,16 +38523,52 @@ var TSDiv = import_react6.default.forwardRef(({ component, tag: tag2 = "div", cl
   return (0, import_jsx_runtime5.jsx)(ResolvedComponent, { ref, className, style, ...rest, children });
 });
 
-// node_modules/@clevertree/themed-styler/dist/utils/themedStyled.js
+// ../../node_modules/@clevertree/themed-styler/dist/utils/themedStyled.js
 var import_react7 = __toESM(require_react(), 1);
 
-// node_modules/@clevertree/themed-styler/dist/utils/themedMapper.js
+// ../../node_modules/@clevertree/themed-styler/dist/utils/themedMapper.js
 init_unifiedBridge();
 
-// node_modules/@clevertree/themed-styler/dist/index.js
+// ../../node_modules/@clevertree/themed-styler/dist/index.js
 init_themedStylerBridge();
 init_styleManager();
 init_unifiedBridge();
+
+// ../../node_modules/@clevertree/themed-styler/wasm/themed_styler_bg.wasm
+var themed_styler_bg_default = "./themed_styler_bg-QUKJ7XLI.wasm";
+
+// ../../node_modules/@clevertree/themed-styler/dist/index.js
+async function initWasmThemedStyler() {
+  const g2 = globalThis;
+  if (g2.__themedStylerRenderCss && g2.__themedStylerGetRn) {
+    return;
+  }
+  try {
+    const stylerMod = await Promise.resolve().then(() => (init_themed_styler(), themed_styler_exports));
+    const init = stylerMod.default;
+    await init({ module_or_path: new URL(themed_styler_bg_default, import.meta.url) });
+    g2.__themedStylerRenderCss = (snap2, themes2) => {
+      const state = {
+        ...themes2,
+        used_classes: snap2.classes,
+        used_tags: snap2.tags,
+        used_tag_classes: snap2.tagClasses,
+        used_selectors: snap2.selectors
+      };
+      return stylerMod.render_css_for_web(JSON.stringify(state));
+    };
+    g2.__themedStylerGetRn = (selector, classes, themes2) => {
+      const res = stylerMod.get_rn_styles(JSON.stringify(themes2), selector, JSON.stringify(classes));
+      return res ? JSON.parse(res) : {};
+    };
+    console.log("[themed-styler] WASM styler ready");
+  } catch (e) {
+    console.warn("[themed-styler] Failed to initialize WASM styler", e);
+  }
+}
+async function initThemedStyler() {
+  return initWasmThemedStyler();
+}
 
 // public/test-app.js
 var import_jsx_runtime7 = __toESM(require_jsx_runtime(), 1);
@@ -38274,21 +38577,19 @@ async function main() {
   try {
     console.log("Test App: Starting...");
     wasmEl.textContent = "Starting...";
-    console.log("Test App: Initializing transpiler...");
-    wasmEl.textContent = "Initializing WASM...";
-    await initTranspiler();
+    console.log("Test App: Initializing WASMs...");
+    wasmEl.textContent = "Initializing WASMs...";
+    await Promise.all([
+      initTranspiler(),
+      initThemedStyler()
+    ]);
+    await ensureDefaultsLoaded();
     const version = globalThis.__hook_transpiler_version || "unknown";
-    console.log("Test App: Transpiler ready:", version);
-    wasmEl.textContent = `Ready (v${version})`;
-    try {
-      console.log("Test App: Testing direct transpilation");
-      const code = "const Test = () => <div>Hello</div>";
-      const res = await transpileCode(code, { filename: "test.jsx" });
-      console.log("Test App: Transpilation test success, length:", res.length);
-    } catch (e) {
-      console.error("Test App: Transpilation test failed:", e);
-    }
+    const stylerVersion = globalThis.__themedStylerVersion || "unknown";
+    console.log("Test App: WASMs ready - Transpiler:", version, "Styler:", stylerVersion);
+    wasmEl.textContent = `Ready (Transpiler: v${version}, Styler: v${stylerVersion})`;
     document.getElementById("styler-state").textContent = "Ready";
+    styleManager_default.startAutoSync();
     console.log("Test App: Rendering component...");
     console.log("React version:", import_react8.default.version);
     if (!import_react8.default.useState) {
