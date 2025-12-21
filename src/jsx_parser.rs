@@ -385,6 +385,11 @@ fn is_jsx_start(ctx: &ParseContext) -> bool {
         return false;
     }
 
+    // Always treat </ as JSX start (closing tag)
+    if ctx.peek(1) == Some('/') {
+        return true;
+    }
+
     // Heuristic: if preceded by an alphanumeric character, it's likely a generic function call
     // e.g., useState<T> or f<T>. JSX tags are usually preceded by whitespace, operators, or brackets.
     if ctx.pos > 0 {
