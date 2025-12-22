@@ -13,14 +13,37 @@ readme = "README.md"
 keywords = ["jsx", "tsx", "transpiler", "wasm"]
 categories = ["wasm", "compilers", "development-tools"]
 exclude = [
+	# JavaScript/TypeScript and npm artifacts
 	"dist/**",
+	"pkg/**",
 	"wasm/**",
-	"scripts/**",
-	"node_modules/**",
-	"target/**",
+	"src/**/*.ts",
+	"src/**/*.tsx",
+	"src/**/*.js",
 	"package.json",
 	"package-lock.json",
 	"tsconfig.json",
+	"node_modules/**",
+	".npmignore",
+	
+	# Development and testing
+	"tests/**",
+	"scripts/**",
+	"docs/**",
+	"media/**",
+	"android/**",
+	"ios/**",
+	"target/**",
+	
+	# CI/CD and Git
+	".github/**",
+	".git/**",
+	".gitignore",
+	
+	# IDE and OS
+	".idea/**",
+	".vscode/**",
+	"*.tgz",
 ]
 
 [lib]
