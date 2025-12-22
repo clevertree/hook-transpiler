@@ -10,11 +10,9 @@ fn test_ts_type_annotations_off() {
         }
         <div>{greet(x)}</div>
     "#;
-    // Flag off: should NOT strip TS
-    let out = transpile_jsx_simple(src).expect("should transpile");
-    println!("OUTPUT (OFF):\n{}", out);
-    
-    assert!(out.contains("const x: string")); 
+    // Flag off: should reject TS type annotations
+    let err = transpile_jsx_simple(src);
+    assert!(err.is_err(), "JS mode should reject TS annotations");
 }
 
 #[test]

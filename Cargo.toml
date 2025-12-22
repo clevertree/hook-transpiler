@@ -1,6 +1,6 @@
 [package]
 name = "relay-hook-transpiler"
-version = "1.3.1"
+version = "1.3.2"
 edition = "2024"
 license = "MIT OR Apache-2.0"
 description = "Minimal JSX/TSX transpiler for Relay hooks with dynamic import() rewrite to context.helpers.loadModule and friendly errors"
@@ -10,7 +10,7 @@ documentation = "https://docs.rs/hook-transpiler"
 authors = ["Ari Asulin"]
 
 readme = "README.md"
-keywords = ["jsx", "tsx", "transpiler", "swc", "wasm"]
+keywords = ["jsx", "tsx", "transpiler", "wasm"]
 categories = ["wasm", "compilers", "development-tools"]
 exclude = [
 	"dist/**",

@@ -48,6 +48,12 @@
         android:layout_height="wrap_content"
         android:text="Render UI" />
 
+    <Button
+        android:id="@+id/btn_test_repro"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Test Repro Issue" />
+
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"

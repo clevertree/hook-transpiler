@@ -281,7 +281,7 @@ pub fn transpile(
         // and is bound per-module with the calling filename context.
         // No additional wrapping needed - it's already set up by the runtime.
         
-        // Post-process fix for SWC CJS edge-case that generates invalid LHS:
+        // Post-process fix for CJS edge-case that generates invalid LHS:
         // `0 && module.exports = {...};` → `0 && (module.exports = {...});`
         if opts.to_commonjs {
             use regex::Regex;

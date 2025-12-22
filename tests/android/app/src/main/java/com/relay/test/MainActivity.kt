@@ -35,7 +35,11 @@ class MainActivity : AppCompatActivity() {
             renderUI()
         }
 
-        NativeRenderer.initialize(this, jsContainer)
+        findViewById<Button>(R.id.btn_test_repro).setOnClickListener {
+            renderRepro()
+        }
+
+        AndroidRenderer.initialize(this, jsContainer)
         quickJSManager = QuickJSManager(this)
         quickJSManager?.initialize()
 
@@ -76,6 +80,17 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun renderRepro() {
+        android.util.Log.d("RustTranspiler", "Rendering Repro...")
+        try {
+            quickJSManager?.renderHook("repro-issue.jsx")
+            tvOutput.text = "Repro UI Render Triggered (Check Container Below)"
+        } catch (e: Exception) {
+            android.util.Log.e("RustTranspiler", "Repro UI Render Error", e)
+            tvOutput.text = "Repro UI Render Error: ${e.message}"
+        }
+    }
+
     private fun testTranspile() {
         val code = "const App = () => <div className='p-4'>Hello Android</div>;"
         val filename = "App.tsx"
@@ -84,7 +99,8 @@ class MainActivity : AppCompatActivity() {
             try {
                 android.util.Log.d("RustTranspiler", "Testing JNI...")
                 val version = RustTranspilerModule.nativeGetVersion()
-                val result = RustTranspilerModule.nativeTranspile(code, filename)
+                val isTypescript = filename.endsWith(".ts") || filename.endsWith(".tsx")
+                val result = RustTranspilerModule.nativeTranspile(code, filename, isTypescript)
                 android.util.Log.d("RustTranspiler", "JNI Result: $result")
                 tvOutput.text = "JNI (v$version):\n$result"
             } catch (e: Exception) {
@@ -95,7 +111,8 @@ class MainActivity : AppCompatActivity() {
             try {
                 android.util.Log.d("RustTranspiler", "Testing FFI...")
                 val version = RustFFI.INSTANCE.hook_transpiler_version()
-                val ptr = RustFFI.INSTANCE.hook_transpile_jsx(code, filename)
+                val isTypescript = filename.endsWith(".ts") || filename.endsWith(".tsx")
+                val ptr = RustFFI.INSTANCE.hook_transpile_jsx(code, filename, isTypescript)
                 if (ptr != null) {
                     val result = ptr.getString(0)
                     RustFFI.INSTANCE.hook_transpiler_free_string(ptr)

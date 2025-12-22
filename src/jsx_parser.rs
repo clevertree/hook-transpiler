@@ -56,15 +56,17 @@ impl ParseContext {
 
 /// Main transpiler entry point
 pub fn transpile_jsx(source: &str, opts: &TranspileOptions) -> Result<String> {
-    let source_len = source.len();
+    if !opts.is_typescript {
+        // Strict JavaScript mode: No TypeScript allowed
+        // We'll run a quick check for TS-only syntax
+        check_for_typescript_syntax(source)?;
+    }
+
     let source = if opts.is_typescript {
-        strip_typescript(source)
+        strip_typescript(source)?
     } else {
         source.to_string()
     };
-    if source.len() == 512 && source_len > 512 {
-        return Err(anyhow!("Truncation detected! Source starts with: {}", &source[..50]));
-    }
 
     let mut ctx = ParseContext::new(source, opts.is_typescript);
     let mut output = String::new();
@@ -158,10 +160,7 @@ pub fn transpile_jsx(source: &str, opts: &TranspileOptions) -> Result<String> {
     Ok(output)
 }
 
-pub fn strip_typescript(source: &str) -> String {
-    if source.len() == 512 {
-        // This is the suspicious length
-    }
+pub fn strip_typescript(source: &str) -> Result<String> {
     let mut ctx = ParseContext::new(source.to_string(), true);
     let mut output = String::new();
     
@@ -297,7 +296,7 @@ pub fn strip_typescript(source: &str) -> String {
             let saved_pos = ctx.pos;
             ctx.advance();
             ctx.skip_whitespace();
-            if let Some(next_c) = ctx.current_char() {
+            if let Some(_) = ctx.current_char() {
                 // Heuristic: if it looks like a type, skip it.
                 let type_start = ctx.pos;
                 let mut word = String::new();
@@ -313,7 +312,7 @@ pub fn strip_typescript(source: &str) -> String {
                     _ => false
                 };
                 
-                let is_type = is_builtin || (word.len() > 0 && word.chars().next().unwrap().is_uppercase()) || next_c == '{' || next_c == '[';
+                let is_type = is_builtin || (word.len() > 0 && word.chars().next().unwrap().is_uppercase());
                 
                 if is_type {
                     // It looks like a type! Skip until terminator
@@ -359,7 +358,159 @@ pub fn strip_typescript(source: &str) -> String {
     if source.len() > 0 && output.len() == 0 {
          // This would be weird
     }
-    output
+    Ok(output)
+}
+
+fn check_for_typescript_syntax(source: &str) -> Result<()> {
+    let mut ctx = ParseContext::new(source.to_string(), false);
+    
+    while ctx.pos < ctx.source.len() {
+        let ch = match ctx.current_char() {
+            Some(c) => c,
+            None => break,
+        };
+        
+        // Handle strings to skip them
+        if ch == '"' || ch == '\'' || ch == '`' {
+            let quote = ch;
+            ctx.advance();
+            while let Some(c) = ctx.current_char() {
+                ctx.advance();
+                if c == '\\' {
+                    ctx.advance();
+                } else if c == quote {
+                    break;
+                }
+            }
+            continue;
+        }
+        
+        // Handle comments
+        if ch == '/' {
+            if ctx.peek(1) == Some('/') {
+                while let Some(c) = ctx.current_char() {
+                    ctx.advance();
+                    if c == '\n' { break; }
+                }
+                continue;
+            } else if ctx.peek(1) == Some('*') {
+                while let Some(c) = ctx.current_char() {
+                    ctx.advance();
+                    if c == '*' && ctx.current_char() == Some('/') {
+                        ctx.advance();
+                        break;
+                    }
+                }
+                continue;
+            }
+        }
+
+        // Handle keywords
+        if ch.is_alphabetic() {
+            let start = ctx.pos;
+            while let Some(c) = ctx.current_char() {
+                if c.is_alphanumeric() || c == '_' {
+                    ctx.advance();
+                } else {
+                    break;
+                }
+            }
+            let word = ctx.slice(start, ctx.pos);
+            if word == "type" {
+                // Distinguish between `type Foo =` (TS) and property names like `type:` inside objects/JSX text.
+                let mut looks_like_type_alias = false;
+                let saved = ctx.pos;
+                ctx.skip_whitespace();
+                if let Some(c) = ctx.current_char() {
+                    if c.is_alphabetic() {
+                        while let Some(c2) = ctx.current_char() {
+                            if c2.is_alphanumeric() || c2 == '_' { ctx.advance(); } else { break; }
+                        }
+                        ctx.skip_whitespace();
+                        if ctx.current_char() == Some('=') {
+                            looks_like_type_alias = true;
+                        }
+                    }
+                }
+                ctx.pos = saved;
+                if looks_like_type_alias {
+                    return Err(anyhow!("Unexpected TypeScript syntax '{}' at position {}", word, start));
+                }
+                continue;
+            }
+            if word == "interface" || word == "enum" || word == "as" || 
+               word == "public" || word == "private" || word == "protected" || word == "readonly" {
+                return Err(anyhow!("Unexpected TypeScript syntax '{}' at position {}", word, start));
+            }
+            continue;
+        }
+
+        // Check for type annotations (colon but NOT object literal/destructuring)
+        if ch == ':' {
+            let saved_pos = ctx.pos;
+            // A colon is TS if it's NOT in an object literal or destructuring.
+            // This is hard to detect perfectly without a full parser.
+            // But we can look at the preceding context or following.
+            // Actually, in JS, a colon only appears in:
+            // 1. { key: value }
+            // 2. label: statement
+            // 3. ternary ? true : false
+            // 4. switch case:
+            
+            // Heuristic: If it's followed by a type-looking thing and NOT followed by something that looks like an object value or ternary branch.
+            // Let's simplify: if it looks like ': string', ': number', etc.
+            ctx.advance();
+            ctx.skip_whitespace();
+            if ctx.current_char().is_some() {
+                let mut word = String::new();
+                while let Some(c) = ctx.current_char() {
+                    if c.is_alphanumeric() || c == '_' {
+                        word.push(c);
+                        ctx.advance();
+                    } else { break; }
+                }
+
+                let is_builtin = matches!(word.as_str(),
+                    "string" | "number" | "boolean" | "any" | "void" | "unknown" | "never" | "object"
+                );
+
+                // Check the next non-whitespace character to reduce false positives (e.g. JSX text like "Status: Ready")
+                let mut peek_pos = ctx.pos;
+                while let Some(c) = ctx.source.get(peek_pos) {
+                    if c.is_whitespace() { peek_pos += 1; continue; }
+                    break;
+                }
+                let next_non_ws = ctx.source.get(peek_pos).copied();
+                let type_terminated = matches!(next_non_ws, Some(',') | Some(';') | Some('=') | Some(')') | Some('>') | Some('{') | Some('}') | Some('|') | Some('&'));
+
+                if (is_builtin || (!word.is_empty() && word.chars().next().unwrap().is_uppercase())) && type_terminated {
+                     return Err(anyhow!("Unexpected TypeScript type annotation at position {}", saved_pos));
+                }
+            }
+            ctx.pos = saved_pos;
+        }
+
+        // Handle generics (e.g., <T>)
+        if ch == '<' && !is_jsx_start(&ctx) {
+             // If it's not JSX and it's < something >, it might be a generic
+             let saved_pos = ctx.pos;
+             ctx.advance();
+             let mut word = String::new();
+             while let Some(c) = ctx.current_char() {
+                 if c.is_alphanumeric() || c == '_' {
+                     word.push(c);
+                     ctx.advance();
+                 } else { break; }
+             }
+             if word.len() > 0 && ctx.current_char() == Some('>') {
+                  return Err(anyhow!("Unexpected TypeScript generic at position {}", saved_pos));
+             }
+             ctx.pos = saved_pos;
+        }
+
+        ctx.advance();
+    }
+    Ok(())
 }
 
 fn skip_type_at_pos(ctx: &mut ParseContext) {
@@ -429,8 +580,17 @@ fn is_jsx_start(ctx: &ParseContext) -> bool {
                     break;
                 }
             }
-            match ctx.peek(j) {
-                Some('>') | Some('/') => true,
+            let peek_j = ctx.peek(j);
+            let res = match peek_j {
+                Some('>') => {
+                    // Heuristic: if followed by '(', it's likely a generic arrow function <T>(x: T) => ...
+                    if ctx.peek(j + 1) == Some('(') {
+                        false
+                    } else {
+                        true
+                    }
+                }
+                Some('/') => true,
                 Some(c) if c.is_alphabetic() => {
                     // Check if it's an attribute name or part of a type
                     // Heuristic: attributes are usually followed by = or another attribute or >
@@ -441,7 +601,8 @@ fn is_jsx_start(ctx: &ParseContext) -> bool {
                     // If we see something like <User | or <User & or <User [, it's a generic
                     false
                 }
-            }
+            };
+            res
         }
         Some('>') | Some('/') => true,
         _ => false,
@@ -822,6 +983,65 @@ mod tests {
         let output = transpile_jsx(input, &TranspileOptions::default()).unwrap();
         assert!(output.contains("className: \"foo\""));
         assert!(output.contains("id: \"bar\""));
+    }
+
+    #[test]
+    fn test_destructuring_fix() {
+        let src = r#"
+export default function () {
+  const theme = {
+    colors: { primary: '#2196F3' }
+  };
+  const { colors: { primary } } = theme;
+  return <div style={{ color: primary }} />;
+}
+"#;
+        let out = transpile_jsx(src, &TranspileOptions { is_typescript: true }).expect("Should transpile correctly");
+        assert!(out.contains("const { colors: { primary } } = theme;"), "Destructuring should be preserved");
+    }
+
+    #[test]
+    fn test_generic_fix() {
+        let src = r#"const f = <T>(x: T) => x;"#;
+        let err = transpile_jsx(src, &TranspileOptions::default());
+        assert!(err.is_err(), "JS mode should reject TS generics");
+
+        let out = transpile_jsx(src, &TranspileOptions { is_typescript: true }).expect("Should transpile correctly in TS mode");
+        assert!(!out.contains("__hook_jsx_runtime.jsx"), "Should NOT transpile generic as JSX");
+    }
+
+    #[test]
+    fn test_ts_mode_stripping() {
+        let src = r#"
+interface User { name: string; }
+const user: User = { name: "Ari" };
+const f = <T>(x: T): T => x;
+const element = <div user={user as any} />;"#;
+        let out = transpile_jsx(src, &TranspileOptions { is_typescript: true }).expect("Should transpile correctly");
+        assert!(!out.contains("interface User"), "Should strip interface");
+        assert!(!out.contains(": User"), "Should strip type annotation");
+        assert!(!out.contains("<T>"), "Should strip generic");
+        assert!(!out.contains("as any"), "Should strip 'as any'");
+        assert!(out.contains("__hook_jsx_runtime.jsx"), "Should transpile JSX");
+    }
+
+    #[test]
+    fn test_js_mode_rejections() {
+        let src_interface = "interface User { name: string; }";
+        let err = transpile_jsx(src_interface, &TranspileOptions { is_typescript: false });
+        assert!(err.is_err(), "Should reject interface in JS mode");
+
+        let src_type = "type MyNum = number;";
+        let err = transpile_jsx(src_type, &TranspileOptions { is_typescript: false });
+        assert!(err.is_err(), "Should reject type in JS mode");
+
+        let src_annotation = "const x: number = 5;";
+        let err = transpile_jsx(src_annotation, &TranspileOptions { is_typescript: false });
+        assert!(err.is_err(), "Should reject type annotation in JS mode");
+
+        let src_destructuring = "const { colors: { primary } } = theme;";
+        let out = transpile_jsx(src_destructuring, &TranspileOptions { is_typescript: false }).expect("Should allow destructuring");
+        assert!(out.contains("const { colors: { primary } } = theme;"), "Should preserve destructuring in JS mode");
     }
 
     #[test]

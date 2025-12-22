@@ -45,7 +45,7 @@ export class ES6ImportHandler {
         this.executionContext = ctx;
     }
     /**
-     * Default transpiler using SWC if available
+     * Default transpiler
      */
     async defaultTranspiler(code, filename) {
         // Will be provided by caller or use fallback

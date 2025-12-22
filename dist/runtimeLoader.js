@@ -562,7 +562,7 @@ try {
  * @returns Transpiled code
  */
 export async function transpileCode(code, options, _toCommonJs = false) {
-    // STRICT MODE: Disable SWC/Babel/server fallbacks.
+    // STRICT MODE: Disable Babel/server fallbacks.
     // Only use the new Rust crate WASM binding if available on the page.
     // The web app must load the crate and expose globalThis.__hook_transpile_jsx(source, filename) => string
     const filename = options.filename || 'module.tsx';

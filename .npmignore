@@ -1,0 +1,21 @@
+# Ignore development and source files
+tests/
+docs/
+media/
+scripts/
+pkg/
+target/
+Cargo.toml
+Cargo.lock
+package-lock.json
+tsconfig.json
+
+# Exclude test artifacts inside dist
+/dist/**/*.test.*
+/dist/**/__tests__/**
+/dist/**/tests/**
+
+# IDE and misc
+.vscode/
+.idea/
+*.tgz

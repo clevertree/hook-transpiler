@@ -1,8 +1,10 @@
+import { transpileCode } from './runtimeLoader.js';
 export { WebModuleLoader, AndroidModuleLoader, transpileCode, createHookReact, looksLikeTsOrJsx, HookLoader, } from './runtimeLoader.js';
-export { HookRenderer } from './components/HookRenderer.js';
-export { ErrorBoundary } from './components/ErrorBoundary.js';
-export { MarkdownRenderer } from './components/MarkdownRenderer.js';
-export { FileRenderer } from './components/FileRenderer.js';
+export { HookRenderer } from './components/web/HookRenderer.js';
+export { HookApp } from './components/web/HookApp.js';
+export { ErrorBoundary } from './components/web/ErrorBoundary.js';
+export { MarkdownRenderer } from './components/web/MarkdownRenderer.js';
+export { FileRenderer } from './components/web/FileRenderer.js';
 export { ES6ImportHandler } from './es6ImportHandler.js';
 export { buildPeerUrl, buildRepoHeaders } from './urlBuilder.js';
 // WASM-based transpiler for web - Android uses native JSI binding instead
@@ -58,6 +60,19 @@ export async function initWasmTranspiler() {
 }
 export async function initTranspiler() {
     return initWasmTranspiler();
+}
+// Convenience init wrapper for web clients.
+export async function initWeb() {
+    return initWasmTranspiler();
+}
+// Unified transpile helper that prefers the global WASM binding.
+export async function transpileHook(code, filename = 'module.jsx', isTypescript = false) {
+    const g = globalThis;
+    if (typeof g.__hook_transpile_jsx === 'function') {
+        return g.__hook_transpile_jsx(code, filename, isTypescript);
+    }
+    // Fallback to JS-based transpileCode (slower, but keeps clients working without glue)
+    return transpileCode(code, { filename, isTypescript });
 }
 export async function runSelfCheck() {
     try {

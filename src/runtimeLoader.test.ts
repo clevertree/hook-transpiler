@@ -89,7 +89,7 @@ describe('runtimeLoader - JSX Automatic Runtime', () => {
     test('handles .map() scenario with numeric items as keys', () => {
         const jsxFactory = createJsxFactory(mockReact)
 
-        // Simulate what SWC produces: items.map((item) => _jsx("div", { children: item }, item))
+        // Simulate what the transpiler produces: items.map((item) => _jsx("div", { children: item }, item))
         const items = [1, 2, 3]
         const elements = items.map((item) =>
             jsxFactory('div', { children: item }, item)

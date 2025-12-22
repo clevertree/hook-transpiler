@@ -5,6 +5,6 @@ public class RustTranspilerModule {
         System.loadLibrary("relay_hook_transpiler");
     }
 
-    public static native String nativeTranspile(String code, String filename);
+    public static native String nativeTranspile(String code, String filename, boolean isTypescript);
     public static native String nativeGetVersion();
 }

@@ -43,7 +43,7 @@ export declare class ES6ImportHandler {
      */
     setExecutionContext(ctx: any): void;
     /**
-     * Default transpiler using SWC if available
+     * Default transpiler
      */
     private defaultTranspiler;
     /**

@@ -23,7 +23,7 @@
   "exclude": [
     "node_modules",
     "dist",
-    "src/runtimeLoader.test.ts"
+    "src/**/*.test.ts"
   ],
   "ts-node": {
     "compilerOptions": {

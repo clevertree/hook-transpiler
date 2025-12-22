@@ -1,4 +1,4 @@
-use relay_hook_transpiler::{transpile_jsx_simple, TranspileOptions, transpile_jsx_with_options};
+use relay_hook_transpiler::transpile_jsx_simple;
 
 #[test]
 fn test_home_jsx() {

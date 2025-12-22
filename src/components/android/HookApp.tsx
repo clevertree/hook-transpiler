@@ -1,0 +1,67 @@
+import React, { useCallback, useMemo, useState } from 'react'
+import HookRenderer, { type HookRendererProps } from './HookRenderer.js'
+import { registerUsage, getUsageSnapshot, registerTheme, getThemePayload } from '../../themeRegistry.js'
+import { installWebApiShims } from '../../android/webApiShims.js'
+
+type Status = { loading: boolean; error?: string | null; hookPath: string }
+
+export interface HookAppProps extends Partial<HookRendererProps> {
+    host?: string
+    hookPath?: string
+    onStatus?: (status: Status) => void
+}
+
+const DEFAULT_HOST = 'http://localhost:8002'
+const DEFAULT_HOOK = '/hooks/client/get-client.jsx'
+
+export const HookApp: React.FC<HookAppProps> = ({ host = DEFAULT_HOST, hookPath = DEFAULT_HOOK, onStatus, ...rest }) => {
+    const [status, setStatus] = useState<Status>({ loading: true, error: null, hookPath })
+
+    const handleStatus = useCallback((next: Status) => {
+        setStatus(next)
+        if (onStatus) onStatus(next)
+    }, [onStatus])
+
+    // Install basic Web API shims (URL/URLSearchParams/timers verification).
+    // Note: fetch is already native in Android QuickJSManager
+    try { installWebApiShims() } catch { /* surface via onStatus/onError later */ }
+
+    const onElement = useCallback((tag: string, props?: any) => {
+        registerUsage(tag, props)
+        if (rest.onElement) rest.onElement(tag, props)
+    }, [rest])
+
+    const registerThemeStyles = useCallback((name: string, defs?: any) => {
+        registerTheme(name, defs)
+        if (rest.registerTheme) rest.registerTheme(name, defs)
+    }, [rest])
+
+    const hookRendererProps = useMemo<HookRendererProps>(() => ({
+        host,
+        hookPath,
+        onElement,
+        registerTheme: registerThemeStyles,
+        ...rest,
+    }), [host, hookPath, onElement, registerThemeStyles, rest])
+
+    const handleLoading = useCallback(() => handleStatus({ loading: true, error: null, hookPath }), [handleStatus, hookPath])
+    const handleError = useCallback((err: string | null) => handleStatus({ loading: false, error: err, hookPath }), [handleStatus, hookPath])
+    const handleReady = useCallback(() => handleStatus({ loading: false, error: null, hookPath }), [handleStatus, hookPath])
+
+    return (
+        <HookRenderer
+            {...hookRendererProps}
+            onElement={onElement}
+            registerTheme={registerThemeStyles}
+            onError={(msg?: string) => handleError(msg || null)}
+            onLoading={handleLoading}
+            onReady={() => {
+                handleReady()
+                getUsageSnapshot()
+                getThemePayload()
+            }}
+        />
+    )
+}
+
+export default HookApp

@@ -38,6 +38,9 @@ mod android_jni;
 mod ffi;
 pub use ffi::*;
 
+#[cfg(target_vendor = "apple")]
+mod ios_ffi;
+
 #[cfg(test)]
 mod tests {
     use super::*;

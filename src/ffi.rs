@@ -11,7 +11,8 @@ pub extern "C" fn hook_transpiler_version() -> *const c_char {
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn hook_transpile_jsx(
     code: *const c_char,
-    filename: *const c_char,
+    _filename: *const c_char,
+    is_typescript: bool,
 ) -> *mut c_char {
     if code.is_null() {
         return ptr::null_mut();
@@ -22,16 +23,6 @@ pub unsafe extern "C" fn hook_transpile_jsx(
         Err(_) => return ptr::null_mut(),
     };
 
-    let file_str = if filename.is_null() {
-        "module.tsx"
-    } else {
-        match unsafe { CStr::from_ptr(filename).to_str() } {
-            Ok(s) => s,
-            Err(_) => "module.tsx",
-        }
-    };
-
-    let is_typescript = file_str.ends_with(".ts") || file_str.ends_with(".tsx");
     let opts = TranspileOptions { is_typescript };
 
     match transpile_jsx_with_options(code_str, &opts) {

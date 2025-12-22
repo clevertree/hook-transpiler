@@ -1,42 +1,37 @@
-import React, { useState, useEffect } from 'react';
-
-const ListItem = ({ item }) => (
-  <div className="p-2 bg-gray-100 rounded mb-2">
-    <span className="font-bold text-blue-500">{item.name}</span>
-    {item.tags && (
-      <div className="flex-row gap-2 mt-1">
-        {item.tags.map(tag => (
-          <span key={tag} className="text-sm bg-blue-500 text-white p-1 rounded">{tag}</span>
-        ))}
-      </div>
-    )}
-  </div>
-);
-
-export default function(context) {
-  return <TestHook />;
-}
-
-function TestHook() {
-  const [items, setItems] = useState([
-    { id: 1, name: 'Android Item 1', tags: (['native', 'jni']) },
-    { id: 2, name: 'Android Item 2', tags: (['ffi']) },
-    { id: 3, name: 'Android Item 3' }
-  ]);
+module.exports.default = function (context) {
+  const theme = {
+    colors: {
+      primary: '#2196F3',
+      secondary: '#FF9800',
+      background: '#F5F5F5',
+      text: '#333'
+    },
+    spacing: {
+      small: 8,
+      medium: 16,
+      large: 24
+    }
+  };
 
   return (
-    <div className="p-4 bg-white rounded shadow-lg">
-      <span className="text-lg font-bold mb-4">Android UI Test</span>
-      
-      <div>
-        {items.map(item => (
-          <ListItem key={item.id} item={item} />
-        ))}
-      </div>
-
-      <div className="mt-4 p-2 bg-gray-100 rounded">
-        <span>This is rendered via Act/QuickJS</span>
-      </div>
+    <div style={{
+      padding: theme.spacing.medium,
+      backgroundColor: theme.colors.background
+    }}>
+      <text text="Test Hook Loaded" style={{
+        fontSize: 24,
+        color: theme.colors.primary,
+        marginBottom: theme.spacing.small
+      }} />
+      <text text="With Theme Object" style={{
+        fontSize: 16,
+        color: theme.colors.text,
+        marginBottom: theme.spacing.small
+      }} />
+      <text text="Theme Integrated" style={{
+        fontSize: 14,
+        color: theme.colors.secondary
+      }} />
     </div>
   );
 }

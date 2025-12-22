@@ -12,15 +12,11 @@ import com.relay.client.ThemedStylerModule
 import java.io.BufferedReader
 import java.io.InputStreamReader
 
-enum class RuntimeMode(val mode: String) {
-    REACT("react"),
-    ACT("act");
+// Android uses ACT library exclusively (has full renderer)
+// REACT mode is for web only
 
-    companion object {
-        fun fromString(value: String?): RuntimeMode? {
-            return values().firstOrNull { it.mode == value?.lowercase() }
-        }
-    }
+interface TranspileCallback {
+    fun transpile(code: String, filename: String): String
 }
 
 class QuickJSManager(private val context: Context) {
@@ -32,12 +28,10 @@ class QuickJSManager(private val context: Context) {
     private val gson = Gson()
     private val mainHandler = Handler(Looper.getMainLooper())
     private var quickJs: QuickJs? = null
-    private var runtimeMode: RuntimeMode = RuntimeMode.ACT
     private var lastAsset: String? = "test-hook.jsx"
     private var lastProps: Map<String, Any> = emptyMap()
     private var themesJson: String = "{}"
     var userMessageHandler: ((String, Boolean) -> Unit)? = null
-    var runtimeChangedHandler: ((RuntimeMode) -> Unit)? = null
 
     fun initialize() {
         loadThemes()
@@ -46,7 +40,8 @@ class QuickJSManager(private val context: Context) {
 
     private fun loadThemes() {
         try {
-            val yaml = readAssetFile("theme.yaml")
+            // Read theme.yaml if present (ignored when absent)
+            readAssetFile("theme.yaml")
             // Simple hack to convert yaml to json-like themes for the styler if needed
             // But usually the styler wants a specific JSON format.
             // For now, let's just use a hardcoded basic theme if we can't parse YAML easily
@@ -78,50 +73,60 @@ class QuickJSManager(private val context: Context) {
 
     fun getThemesJson(): String = themesJson
 
-    fun setRuntimeMode(mode: RuntimeMode) {
-        if (mode == runtimeMode) return
-        runtimeMode = mode
-        runtimeChangedHandler?.invoke(runtimeMode)
-        resetEngine()
-        renderHook(lastAsset ?: "test-hook.jsx", lastProps)
-    }
-
     private fun resetEngine() {
         quickJs?.close()
         quickJs = null
         activeManager = this
 
         quickJs = QuickJs.create().also { engine ->
-            Log.i(TAG, "Starting QuickJS engine (runtime=${runtimeMode.mode})")
+            Log.i(TAG, "Starting QuickJS engine with ACT runtime")
             installNativeFunctions(engine)
             installConsole(engine)
-            installNativeBridge(engine)
-            installRenderer(engine)
-            NativeRenderer.setQuickJsEngine(engine)
+            installAndroidBridge(engine)
+            // installRenderer(engine) // Removed: Using act.js bundled renderer
+            AndroidRenderer.setQuickJsEngine(engine)
             loadRuntime(engine)
             injectVersions(engine)
-            runtimeChangedHandler?.invoke(runtimeMode)
             Log.i(TAG, "QuickJS engine initialized")
         }
     }
 
     private fun loadRuntime(engine: QuickJs) {
-        when (runtimeMode) {
-            RuntimeMode.REACT -> {
-                loadAsset(engine, "react.production.min.js")
-                engine.evaluate(
-                    "globalThis.React = (typeof React !== 'undefined') ? React : {}; globalThis.__runtime = { mode: 'react' };",
-                    "react_runtime.js"
-                )
-            }
-            RuntimeMode.ACT -> {
-                loadAsset(engine, "act.js")
-                engine.evaluate(
-                    "globalThis.__runtime = { mode: 'act' };",
-                    "act_runtime.js"
-                )
-            }
-        }
+        // Load ACT runtime from npm package (@clevertree/act) bundled for Android
+        loadAsset(engine, "act-android.bundle.js")
+        // act-android.bundle.js sets globalThis.Act and globalThis.React
+        
+        engine.evaluate(
+            "globalThis.__runtime = { mode: 'act' };",
+            "act_runtime.js"
+        )
+        
+        // Define require for basic modules
+        engine.evaluate("""
+            globalThis.require = function(moduleName) {
+                if (moduleName === 'react') {
+                    return { default: globalThis.React };
+                }
+                if (moduleName === 'react/jsx-runtime') {
+                    return globalThis.__hook_jsx_runtime || {
+                        jsx: function(type, props) { return globalThis.React.createElement(type, props); },
+                        jsxs: function(type, props) { return globalThis.React.createElement(type, props); },
+                        Fragment: 'div'
+                    };
+                }
+                throw new Error('Module not found: ' + moduleName);
+            };
+        """, "require_shim.js")
+        
+        loadAsset(engine, "hook-renderer.js")
+        engine.evaluate(
+            "globalThis.HookTranspilerAndroid = (typeof HookTranspilerAndroid !== 'undefined') ? HookTranspilerAndroid : {};" +
+                    "globalThis.HookRenderer = HookTranspilerAndroid.HookRenderer;" +
+                    "globalThis.HookApp = HookTranspilerAndroid.HookApp;" +
+                    "globalThis.installWebApiShims = HookTranspilerAndroid.installWebApiShims;" +
+                    "globalThis.ThemedStyler = (typeof ThemedStyler !== 'undefined') ? ThemedStyler : {};",
+            "hook_renderer_globals.js"
+        )
     }
 
     private fun injectVersions(engine: QuickJs) {
@@ -171,58 +176,172 @@ class QuickJSManager(private val context: Context) {
         lastProps = props
         val engine = quickJs ?: return
 
-        NativeRenderer.clearAll()
-        engine.evaluate("globalThis.__last_module__ = null; delete globalThis.__hook_props;", "reset_globals")
-
-        val propsJson = gson.toJson(props)
-        engine.evaluate("globalThis.__hook_props = ${propsJson};", "props_${asset}")
-
-        val source = readAssetFile(asset)
-        if (source.isEmpty()) return
-
-        Log.i(TAG, "Transpiling and rendering $asset ...")
-        var transpiled = try { 
-            RustTranspilerModule.nativeTranspile(source, asset) 
-        } catch (e: Exception) {
-            Log.e(TAG, "Transpile failed for $asset", e)
+        AndroidRenderer.clearAll()
+        
+        Log.i(TAG, "Loading hook from asset: $asset")
+        
+        // Load the actual hook file from assets
+        var hookCode = readAssetFile(asset)
+        if (hookCode.isEmpty()) {
+            val errorMsg = "Failed to load hook file: $asset"
+            Log.e(TAG, errorMsg)
+            showError(engine, errorMsg)
             return
         }
         
-        transpiled = applyHookRewrite(transpiled)
-        Log.d(TAG, "Transpiled and rewritten code for $asset:\n$transpiled")
+        // Rewrite hook code to use CommonJS module.exports instead of ES6 export
+        hookCode = applyHookRewrite(hookCode)
+        
+        Log.i(TAG, "Loaded hook code, size=${hookCode.length}")
+        
+        val renderScript = """
+            (function(){
+                try {
+                    // Verify ACT runtime is available
+                    if (!globalThis.Act || typeof Act.render !== 'function') {
+                        throw new Error('ACT runtime not available. Check act-android.bundle.js loaded correctly.');
+                    }
+                    
+                    console.log('[HookRenderer] Transpiling hook code');
+                    
+                    // Get the hook code (will be substituted by Kotlin)
+                    var hookCode = ${gson.toJson(hookCode)};
+                    
+                    // Transpile using the native transpiler callback
+                    if (!globalThis.__transpileSync) {
+                        throw new Error('Transpiler not available (__transpileSync not found).');
+                    }
+                    
+                    var transpiled = globalThis.__transpileSync.transpile(hookCode, '$asset');
+                    console.log('[HookRenderer] Transpilation successful, output size=' + transpiled.length);
+                    console.log('[HookRenderer] Module execution starting with proper scope');
+                    
+                    // Create proper module execution context with variable scoping
+                    // Based on quickJsContext.ts pattern - ensures local variables accessible in eval()
+                    (function() {
+                        // Create CommonJS module context
+                        var module = { exports: {} };
+                        var exports = module.exports;
+                        
+                        // Ensure React and runtime globals are available in local scope
+                        var React = globalThis.React;
+                        var __runtime = globalThis.__runtime;
+                        var __hook_jsx_runtime = globalThis.__hook_jsx_runtime;
+                        var __hook_props = globalThis.__hook_props || {};
+                        
+                        // Execute transpiled code in this context
+                        // eval() with direct code preserves function-local scope for declared variables
+                        eval(transpiled);
+                        
+                        // Store result in global for rendering
+                        globalThis.__last_module__ = module.exports;
+                        globalThis.__last_error__ = null;
+                    })();
+                    
+                    console.log('[HookRenderer] Module execution complete');
+                    
+                    // Get the exported hook component
+                    var HookComponent = globalThis.__last_module__.default;
+                    if (typeof HookComponent !== 'function') {
+                        throw new Error('Hook must export default function, got: ' + typeof HookComponent);
+                    }
+                    
+                    // Validate Act is available before rendering
+                    if (!Act || typeof Act.render !== 'function') {
+                        throw new Error('Act.render is not available or not a function. ACT runtime may not be properly initialized.');
+                    }
+                    
+                    // Render using ACT runtime
+                    var renderResult = Act.render(HookComponent, {});
+                    console.log('[HookRenderer] Act.render completed');
+                    
+                    console.log('[HookRenderer] Hook rendered successfully');
+                } catch(e) {
+                    var errMsg = '[HookRenderer] ERROR: ' + (e.message || String(e));
+                    if (e.stack) {
+                        errMsg += '\n' + e.stack;
+                    }
+                    console.error(errMsg);
 
-        try {
-            val wrappedCode = "(function() { var exports = {}; var module = { exports: exports }; $transpiled; globalThis.__last_module__ = module.exports; })();"
-            engine.evaluate(wrappedCode, asset)
-            val renderScript = when (runtimeMode) {
-                RuntimeMode.ACT -> """
-                    (function(){
-                        try {
-                            var c=(globalThis.__last_module__ && globalThis.__last_module__.default)||null;
-                            if(c && globalThis.Act && Act.render){
-                                Act.render(c, globalThis.__hook_props||{});
-                            }
-                        } catch(e) {
-                            console.error('Act render error: ' + (e.message || String(e)));
+                    // Render a friendly error UI so the user sees something instead of a gray box.
+                    try {
+                        var message = (e && e.message) ? e.message : 'Unknown error while rendering hook';
+                        var details = (e && e.stack) ? e.stack : 'No stack available';
+                        
+                        // Create a simple error display as a fallback
+                        var errorComponent = {
+                            type: 'scroll',
+                            props: { width: 'match_parent', height: 'match_parent', padding: 16, backgroundColor: '#fff3e0' },
+                            children: [
+                                { type: 'text', props: { text: '⚠️ Rendering Failed', fontSize: 20, color: '#e65100', fontWeight: 'bold', marginBottom: 12 } },
+                                { type: 'text', props: { text: 'Error: ' + message, fontSize: 14, color: '#bf360c', marginBottom: 8 } },
+                                { type: 'text', props: { text: 'Stack:', fontSize: 12, color: '#ff6f00', fontWeight: 'bold', marginTop: 8, marginBottom: 4 } },
+                                { type: 'text', props: { text: details, fontSize: 11, color: '#666', fontFamily: 'monospace' } }
+                            ]
+                        };
+                        
+                        // Try to render the error UI
+                        if (Act && typeof Act.render === 'function') {
+                            Act.render(errorComponent);
+                            console.log('[HookRenderer] Error UI rendered');
+                        } else {
+                            console.error('[HookRenderer] Cannot render error UI: Act.render not available');
+                            // As last resort, at least log the error so it shows up in logcat
+                            console.error('RENDER ERROR: ' + message + '\n' + details);
                         }
-                    })();
-                """.trimIndent()
-                RuntimeMode.REACT -> """
-                    (function(){
-                        var mod = globalThis.__last_module__ || {};
-                        var c=(mod && mod.default) || null;
-                        if(!c && typeof mod === 'function') { c = mod; }
-                        if(c && typeof __renderHook === 'function'){
-                            __renderHook(c, globalThis.__hook_props||{});
-                        }
-                    })();
-                """.trimIndent()
-            }
-            engine.evaluate(renderScript, "render_${asset}")
-        } catch (e: Exception) {
-            Log.e(TAG, "Render failed for $asset", e)
+                    } catch(innerErr) {
+                        console.error('[HookRenderer] Failed to render error UI:', innerErr);
+                        console.error('Original error was:', e);
+                    }
+                }
+            })();
+        """.trimIndent()
+        
+        Log.d(TAG, "[HookRenderer] Evaluating render script for asset=$asset")
+        engine.evaluate(renderScript, "render_hook")
+        Log.d(TAG, "[HookRenderer] Render script evaluation complete, processing message queue")
+        
+        // Process the message queue synchronously to ensure all render operations complete
+        // before returning from renderHook
+        var attempts = 0
+        var hasMessages = true
+        while (hasMessages && attempts < 10) {
+            processMessageQueue(engine)
+            attempts++
+            Thread.sleep(10) // Brief delay to allow messages to queue
+            
+            // Check if there are more messages
+            val queueCheck = engine.evaluate("globalThis.__messageQueue.length") as? Double ?: 0.0
+            hasMessages = queueCheck > 0
         }
+        
+        Log.d(TAG, "[HookRenderer] Message queue drained after $attempts iterations")
+    }
 
+    private fun showError(engine: QuickJs, message: String) {
+        val escapedMsg = message.replace("\"", "\\\"").replace("\n", "\\n")
+        val errorScript = """
+            (function(){
+                if (!globalThis.Act || typeof Act.render !== 'function') {
+                    console.error('$escapedMsg');
+                    return;
+                }
+                
+                var ErrorComponent = function() {
+                    return React.createElement('scroll', { width: 'match_parent', height: 'match_parent' },
+                        React.createElement('text', { 
+                            padding: '16', 
+                            color: '#ff0000',
+                            text: '$escapedMsg'
+                        })
+                    );
+                };
+                
+                Act.render(ErrorComponent, {});
+            })();
+        """.trimIndent()
+        
+        engine.evaluate(errorScript, "error_display")
         processMessageQueue(engine)
     }
 
@@ -232,15 +351,31 @@ class QuickJSManager(private val context: Context) {
     }
 
     private fun installNativeFunctions(engine: QuickJs) {
+        engine.set("__transpileSync", TranspileCallback::class.java, object : TranspileCallback {
+            override fun transpile(code: String, filename: String): String {
+                val isTypescript = filename.endsWith(".ts") || filename.endsWith(".tsx")
+                return RustTranspilerModule.nativeTranspile(code, filename, isTypescript)
+            }
+        })
         engine.evaluate(
             """
             globalThis.__messageQueue = [];
             globalThis.__pushMessage = function(type, payload) {
                 globalThis.__messageQueue.push({ type: type, payload: payload });
             };
+            
+            // Logging
             globalThis.__nativeLog = function(level, message) {
                 globalThis.__pushMessage('log', { level: level, message: message });
             };
+            globalThis.__log = globalThis.__nativeLog;
+            
+            // Transpilation
+            globalThis.__nativeTranspile = function(code, filename) {
+                return globalThis.__transpileSync.transpile(code, filename);
+            };
+            
+            // View operations
             globalThis.__nativeCreateView = function(tag, type, propsJson) {
                 globalThis.__pushMessage('createView', { tag: tag, type: type, props: propsJson });
             };
@@ -260,7 +395,41 @@ class QuickJSManager(private val context: Context) {
                 globalThis.__pushMessage('clearViews', {});
             };
             globalThis.__nativeAddEventListener = function(tag, eventName) {
-                    globalThis.__pushMessage('addEventListener', { tag: tag, eventName: eventName });
+                globalThis.__pushMessage('addEventListener', { tag: tag, eventName: eventName });
+            };
+            
+            // Legacy aliases used by older renderer code
+            globalThis.__createView = globalThis.__nativeCreateView;
+            globalThis.__updateProps = globalThis.__nativeUpdateProps;
+            globalThis.__removeView = globalThis.__nativeRemoveView;
+            globalThis.__addChild = globalThis.__nativeAddChild;
+            globalThis.__removeChild = globalThis.__nativeRemoveChild;
+            globalThis.__clearViews = globalThis.__nativeClearViews;
+            globalThis.__addEventListener = globalThis.__nativeAddEventListener;
+            globalThis.__transpile = globalThis.__nativeTranspile;
+            
+            globalThis.fetch = function(url, options) {
+                return new Promise((resolve, reject) => {
+                    const id = Math.random().toString(36).substring(7);
+                    globalThis.__pendingFetches = globalThis.__pendingFetches || {};
+                    globalThis.__pendingFetches[id] = { resolve, reject };
+                    globalThis.__pushMessage('fetch', { url: url, options: options, id: id });
+                });
+            };
+
+            globalThis.__resolveFetch = function(id, ok, status, text) {
+                const p = globalThis.__pendingFetches && globalThis.__pendingFetches[id];
+                if (p) {
+                    delete globalThis.__pendingFetches[id];
+                    const headers = { get: function() { return null; } };
+                    p.resolve({
+                        ok: ok,
+                        status: status,
+                        headers: headers,
+                        text: function() { return Promise.resolve(text); },
+                        json: function() { return Promise.resolve(JSON.parse(text)); }
+                    });
+                }
             };
             """.trimIndent(),
             "native_stubs.js"
@@ -268,55 +437,100 @@ class QuickJSManager(private val context: Context) {
         processMessageQueue(engine)
     }
 
+    @Suppress("UNCHECKED_CAST")
     private fun processMessageQueue(engine: QuickJs) {
         val queueJson = engine.evaluate("(function() { var q = JSON.stringify(globalThis.__messageQueue); globalThis.__messageQueue = []; return q; })()") as? String ?: return
-        if (queueJson.isBlank() || queueJson == "[]") return
+        if (queueJson.isBlank() || queueJson == "[]") {
+            Log.d(TAG, "[ProcessQueue] Queue is empty")
+            return
+        }
+        
+        Log.d(TAG, "[ProcessQueue] Processing ${queueJson.length} bytes of messages")
         
         val listType = object : TypeToken<List<Map<String, Any>>>() {}.type
-        val messages: List<Map<String, Any>> = try { gson.fromJson(queueJson, listType) } catch (e: Exception) { return }
+        val messages: List<Map<String, Any>> = try { gson.fromJson(queueJson, listType) } catch (e: Exception) { 
+            Log.e(TAG, "[ProcessQueue] Failed to parse messages: ${e.message}")
+            return 
+        }
         
-        for (msg in messages) {
+        Log.d(TAG, "[ProcessQueue] Found ${messages.size} messages")
+        
+        for ((index, msg) in messages.withIndex()) {
             val msgType = msg["type"] as? String ?: continue
-            val payload = msg["payload"] as? Map<String, Any> ?: continue
+            val payload = (msg["payload"] as? Map<*, *>)
+                ?.mapNotNull { (k, v) -> (k as? String)?.let { it to v as Any } }
+                ?.toMap() ?: continue
+            
+            Log.d(TAG, "[ProcessQueue] Message $index: type=$msgType")
             
             mainHandler.post {
                 when (msgType) {
                     "log" -> {
-                        val level = payload["level"] as? String ?: "log"
+                        val level = (payload["level"] as? String)?.lowercase() ?: "log"
                         val message = payload["message"] as? String ?: ""
-                        Log.i(TAG, "[JS] $message")
+                        when (level) {
+                            "warn" -> Log.w(TAG, "[JS] $message")
+                            "error" -> Log.e(TAG, "[JS] $message")
+                            "debug" -> Log.d(TAG, "[JS] $message")
+                            else -> Log.i(TAG, "[JS] $message")
+                        }
                     }
                     "createView" -> {
                         val tag = (payload["tag"] as? Double)?.toInt() ?: return@post
                         val type = payload["type"] as? String ?: return@post
                         val propsJson = payload["props"] as? String ?: "{}"
-                        NativeBridge.createView(tag, type, parseProps(propsJson))
+                        Log.d(TAG, "[ProcessQueue] Creating view: tag=$tag, type=$type")
+                        AndroidBridge.createView(tag, type, parseProps(propsJson))
                     }
                     "updateProps" -> {
                         val tag = (payload["tag"] as? Double)?.toInt() ?: return@post
                         val propsJson = payload["props"] as? String ?: "{}"
-                        NativeBridge.updateProps(tag, parseProps(propsJson))
+                        Log.d(TAG, "[ProcessQueue] Updating props: tag=$tag")
+                        AndroidBridge.updateProps(tag, parseProps(propsJson))
                     }
                     "removeView" -> {
                         val tag = (payload["tag"] as? Double)?.toInt() ?: return@post
-                        NativeBridge.removeView(tag)
+                        Log.d(TAG, "[ProcessQueue] Removing view: tag=$tag")
+                        AndroidBridge.removeView(tag)
                     }
                     "addChild" -> {
                         val parent = (payload["parent"] as? Double)?.toInt() ?: return@post
                         val child = (payload["child"] as? Double)?.toInt() ?: return@post
                         val childIndex = (payload["index"] as? Double)?.toInt() ?: -1
-                        NativeBridge.addChild(parent, child, childIndex)
+                        Log.d(TAG, "[ProcessQueue] Adding child: parent=$parent, child=$child, index=$childIndex")
+                        AndroidBridge.addChild(parent, child, childIndex)
                     }
                     "removeChild" -> {
                         val parent = (payload["parent"] as? Double)?.toInt() ?: return@post
                         val child = (payload["child"] as? Double)?.toInt() ?: return@post
-                        NativeBridge.removeChild(parent, child)
+                        Log.d(TAG, "[ProcessQueue] Removing child: parent=$parent, child=$child")
+                        AndroidBridge.removeChild(parent, child)
                     }
-                    "clearViews" -> NativeRenderer.clearAll()
+                    "clearViews" -> {
+                        Log.d(TAG, "[ProcessQueue] Clearing views")
+                        AndroidRenderer.clearAll()
+                    }
                     "addEventListener" -> {
                         val tag = (payload["tag"] as? Double)?.toInt() ?: return@post
                         val eventName = payload["eventName"] as? String ?: return@post
-                        NativeRenderer.addEventListener(tag, eventName)
+                        Log.d(TAG, "[ProcessQueue] Adding event listener: tag=$tag, event=$eventName")
+                        AndroidRenderer.addEventListener(tag, eventName)
+                    }
+                    "fetch" -> {
+                        val url = payload["url"] as? String ?: return@post
+                        val id = payload["id"] as? String ?: return@post
+                        Thread {
+                            try {
+                                val result = java.net.URL(url).readText()
+                                mainHandler.post {
+                                    engine.evaluate("globalThis.__resolveFetch('$id', true, 200, ${gson.toJson(result)})")
+                                }
+                            } catch (e: Exception) {
+                                mainHandler.post {
+                                    engine.evaluate("globalThis.__resolveFetch('$id', false, 500, ${gson.toJson(e.message)})")
+                                }
+                            }
+                        }.start()
                     }
                 }
             }
@@ -325,131 +539,40 @@ class QuickJSManager(private val context: Context) {
 
     private fun installConsole(engine: QuickJs) {
         engine.evaluate(
-            "globalThis.console = { log: function() { globalThis.__nativeLog('log', Array.from(arguments).join(' ')); }, info: function() { globalThis.__nativeLog('info', Array.from(arguments).join(' ')); }, warn: function() { globalThis.__nativeLog('warn', Array.from(arguments).join(' ')); }, error: function() { globalThis.__nativeLog('error', Array.from(arguments).join(' ')); } };",
+            "globalThis.console = { log: function() { globalThis.__log('log', Array.from(arguments).join(' ')); }, info: function() { globalThis.__log('info', Array.from(arguments).join(' ')); }, warn: function() { globalThis.__log('warn', Array.from(arguments).join(' ')); }, error: function() { globalThis.__log('error', Array.from(arguments).join(' ')); } };",
             "console.js"
         )
     }
 
-    private fun installNativeBridge(engine: QuickJs) {
+    private fun installAndroidBridge(engine: QuickJs) {
         engine.evaluate(
             """
             (function(){
-                var jsxRuntime = {
-                    jsx: function(type, props){ 
-                        var children = (props && props.children) ? ([]).concat(props.children) : []; 
-                        return { type:type, props:props||{}, children:children}; 
-                    },
-                    jsxs: function(type, props){ return jsxRuntime.jsx(type, props); },
-                    Fragment: 'div'
-                };
-                globalThis.__hook_jsx_runtime = jsxRuntime;
+              var bridgeImpl = {
+                transpile: function(code, filename) { return globalThis.__nativeTranspile(code, filename); },
+                createView: function(tag, type, props) { globalThis.__nativeCreateView(tag, type, JSON.stringify(props || {})); },
+                updateProps: function(tag, props) { globalThis.__nativeUpdateProps(tag, JSON.stringify(props || {})); },
+                removeView: function(tag) { globalThis.__nativeRemoveView(tag); },
+                addChild: function(parent, child, index) { globalThis.__nativeAddChild(parent, child, index != null ? index : -1); },
+                removeChild: function(parent, child) { globalThis.__nativeRemoveChild(parent, child); },
+                clear: function() { globalThis.__nativeClearViews(); },
+                addEventListener: function(tag, eventName, callback) {
+                    if (!globalThis.__eventCallbacks) globalThis.__eventCallbacks = {};
+                    if (!globalThis.__eventCallbacks[tag]) globalThis.__eventCallbacks[tag] = {};
+                    globalThis.__eventCallbacks[tag][eventName] = callback;
+                    globalThis.__nativeAddEventListener(tag, eventName);
+                },
+                _triggerEvent: function(tag, eventName, data) {
+                    if (globalThis.__eventCallbacks && globalThis.__eventCallbacks[tag] && globalThis.__eventCallbacks[tag][eventName]) {
+                        globalThis.__eventCallbacks[tag][eventName](data);
+                    }
+                }
+              };
+              globalThis.bridge = bridgeImpl;
+              globalThis.nativeBridge = bridgeImpl; // legacy alias
             })();
             """.trimIndent(),
-            "jsx_runtime.js"
-        )
-        
-        engine.evaluate(
-            """
-            globalThis.nativeBridge = {
-              createView: function(tag, type, props) { globalThis.__nativeCreateView(tag, type, JSON.stringify(props || {})); },
-              updateProps: function(tag, props) { globalThis.__nativeUpdateProps(tag, JSON.stringify(props || {})); },
-              removeView: function(tag) { globalThis.__nativeRemoveView(tag); },
-              addChild: function(parent, child, index) { globalThis.__nativeAddChild(parent, child, index != null ? index : -1); },
-              removeChild: function(parent, child) { globalThis.__nativeRemoveChild(parent, child); },
-              addEventListener: function(tag, eventName, callback) {
-                  if (!globalThis.__eventCallbacks) globalThis.__eventCallbacks = {};
-                  if (!globalThis.__eventCallbacks[tag]) globalThis.__eventCallbacks[tag] = {};
-                  globalThis.__eventCallbacks[tag][eventName] = callback;
-                  globalThis.__nativeAddEventListener(tag, eventName);
-              },
-              _triggerEvent: function(tag, eventName, data) {
-                  if (globalThis.__eventCallbacks && globalThis.__eventCallbacks[tag] && globalThis.__eventCallbacks[tag][eventName]) {
-                      globalThis.__eventCallbacks[tag][eventName](data);
-                  }
-              }
-            };
-            """.trimIndent(),
-            "nativeBridge.js"
-        )
-    }
-
-    private fun installRenderer(engine: QuickJs) {
-        engine.evaluate(
-            """
-            (function(){
-                var __tagCounter = 1;
-                function nextTag(){ return __tagCounter++; }
-                function h(type, props){ var kids = Array.prototype.slice.call(arguments,2); return { type: type, props: props||{}, children: kids }; }
-                function normalizeType(t){ return (typeof t === 'function') ? 'div' : String(t).toLowerCase(); }
-                function mountNode(node, parentTag, index, parentType){
-                    var nb = globalThis.nativeBridge; if(!nb || node == null) return;
-                    console.log('[Renderer] mountNode type=' + (node && node.type) + ' isArray=' + Array.isArray(node) + ' node=' + JSON.stringify(node).substring(0,100));
-                    if(Array.isArray(node)){
-                        node.forEach(function(child, i) { mountNode(child, parentTag, index + i, parentType); });
-                        return;
-                    }
-                    if(typeof node === 'string' || typeof node === 'number'){
-                        var textVal = String(node);
-                        if(parentType === 'span' || parentType === 'text' || parentType === 'button'){
-                            nb.updateProps(parentTag, { text: textVal });
-                        } else {
-                            var t = nextTag();
-                            nb.createView(t, 'span', { text: textVal, width:'wrap_content', height:'wrap_content' });
-                            nb.addChild(parentTag, t, index);
-                        }
-                        return;
-                    }
-                    var isComponent = typeof node.type === 'function';
-                    if(isComponent){ 
-                        console.log('[Renderer] Executing component ' + (node.type.name || 'anonymous'));
-                        var nextNode = node.type(node.props||{});
-                        mountNode(nextNode, parentTag, index, parentType); 
-                        return; 
-                    }
-                    var type = normalizeType(node.type);
-                    var tag = nextTag();
-                    var props = Object.assign({}, node.props||{});
-                    nb.createView(tag, type, props);
-                    if(props && props.onClick){ nb.addEventListener(tag, 'click', props.onClick); }
-                    
-                    var kids = [];
-                    if (node.children) {
-                        kids = kids.concat(node.children);
-                    }
-                    if (node.props && node.props.children) {
-                        if (Array.isArray(node.props.children)) {
-                            kids = kids.concat(node.props.children);
-                        } else {
-                            kids.push(node.props.children);
-                        }
-                    }
-                    
-                    console.log('[Renderer] tag=' + tag + ' kids=' + kids.length);
-                    kids.forEach(function(child,i){ mountNode(child, tag, i, type); });
-                    nb.addChild(parentTag, tag, index);
-                }
-                function renderComponent(comp, props){
-                    var nb = globalThis.nativeBridge; if(!nb) { console.error('nativeBridge missing'); return; }
-                    var root = (typeof comp === 'function') ? comp(props||{}) : comp;
-                    if(Array.isArray(root)){
-                        root = { type: 'div', props: {}, children: root };
-                    }
-                    if(!root || !root.type){
-                        root = { type: 'div', props: (root && root.props) || {}, children: (root && root.children) || [] };
-                    }
-                    var rootProps = root.props || {};
-                    if(!rootProps.width) rootProps.width = 'match_parent';
-                    if(!rootProps.height) rootProps.height = 'match_parent';
-                    var rootTag = nextTag();
-                    nb.createView(rootTag, normalizeType(root.type), rootProps);
-                    nb.addChild(-1, rootTag, 0);
-                    (root.children||[]).forEach(function(child,i){ mountNode(child, rootTag, i, root.type); });
-                }
-                globalThis.__renderHook = renderComponent;
-                globalThis.h = h;
-            })();
-            """.trimIndent(),
-            "renderer.js"
+            "bridge.js"
         )
     }
 

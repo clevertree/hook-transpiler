@@ -11,7 +11,7 @@ export type InitInput = RequestInfo | URL | Response | BufferSource | WebAssembl
 
 export interface InitOutput {
   readonly memory: WebAssembly.Memory;
-  readonly hook_transpile_jsx: (a: number, b: number) => number;
+  readonly hook_transpile_jsx: (a: number, b: number, c: number) => number;
   readonly hook_transpiler_free_string: (a: number) => void;
   readonly hook_transpiler_version: () => number;
   readonly get_version: () => [number, number];

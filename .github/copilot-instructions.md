@@ -45,7 +45,7 @@ await import('./module.jsx')  →  await __hook_import('./module.jsx')
 5. **Rewrite static imports** (AFTER React transform to catch jsx-runtime)
 6. Rewrite dynamic imports
 7. Apply CommonJS conversion (if requested)
-8. Post-process regex fixes for SWC edge cases
+8. Post-process regex fixes for edge cases
 
 ## Testing
 Tests in `src/lib.rs`:
@@ -89,7 +89,7 @@ pub struct TranspileOptions {
 ## Common Errors
 
 ### "0 && module.exports = ..." in CommonJS output
-Expected SWC behavior. Post-process regex wraps in parens:
+Expected behavior. Post-process regex wraps in parens:
 ```
 0 && module.exports = X  →  0 && (module.exports = X)
 ```

@@ -66,7 +66,7 @@ export class ES6ImportHandler {
   }
 
   /**
-   * Default transpiler using SWC if available
+   * Default transpiler
    */
   private async defaultTranspiler(code: string, filename: string): Promise<string> {
     // Will be provided by caller or use fallback

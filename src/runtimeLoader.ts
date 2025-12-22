@@ -651,12 +651,12 @@ try {
 
       // Expose global import shim for transpiled code
       ; (globalThis as any).__currentModulePath = filename
-      ; (globalThis as any).__hook_import = importFn
-      ; (globalThis as any).__relay_meta = {
-        filename,
-        dirname: filename.substring(0, filename.lastIndexOf('/')),
-        url: fetchUrl || filename
-      }
+        ; (globalThis as any).__hook_import = importFn
+        ; (globalThis as any).__relay_meta = {
+          filename,
+          dirname: filename.substring(0, filename.lastIndexOf('/')),
+          url: fetchUrl || filename
+        }
 
       await fn(importFn, this.requireShim, module, exports, context)
 
@@ -710,7 +710,7 @@ export async function transpileCode(
   options: TransformOptions,
   _toCommonJs: boolean = false
 ): Promise<string> {
-  // STRICT MODE: Disable SWC/Babel/server fallbacks.
+  // STRICT MODE: Disable Babel/server fallbacks.
   // Only use the new Rust crate WASM binding if available on the page.
   // The web app must load the crate and expose globalThis.__hook_transpile_jsx(source, filename) => string
 
@@ -955,7 +955,7 @@ export function applyHookRewrite(code: string): string {
 
   let rewritten = code.replace(markdownRe, mkBuiltin('@clevertree/markdown', '{ MarkdownRenderer }'))
   rewritten = rewritten.replace(themeRe, mkBuiltin('@clevertree/theme', '{ registerThemesFromYaml }'))
-  
+
   rewritten = rewritten.replace(reactRe, (_m, named) => {
     let res = 'const React = (globalThis.__hook_react || globalThis.React);'
     if (named) res += ` const { ${named} } = React;`

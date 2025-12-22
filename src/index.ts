@@ -1,3 +1,5 @@
+import { transpileCode } from './runtimeLoader.js'
+
 export {
   type TransformOptions,
   type TransformResult,
@@ -16,10 +18,11 @@ export {
   HookLoader,
 } from './runtimeLoader.js'
 
-export { HookRenderer, type HookRendererProps } from './components/HookRenderer.js'
-export { ErrorBoundary } from './components/ErrorBoundary.js'
-export { MarkdownRenderer } from './components/MarkdownRenderer.js'
-export { FileRenderer } from './components/FileRenderer.js'
+export { HookRenderer, type HookRendererProps } from './components/web/HookRenderer.js'
+export { HookApp, type HookAppProps } from './components/web/HookApp.js'
+export { ErrorBoundary } from './components/web/ErrorBoundary.js'
+export { MarkdownRenderer } from './components/web/MarkdownRenderer.js'
+export { FileRenderer } from './components/web/FileRenderer.js'
 
 export { ES6ImportHandler, type ImportHandlerOptions } from './es6ImportHandler.js'
 export { buildPeerUrl, buildRepoHeaders } from './urlBuilder.js'
@@ -84,6 +87,21 @@ export async function initTranspiler(): Promise<void> {
   return initWasmTranspiler()
 }
 
+// Convenience init wrapper for web clients.
+export async function initWeb(): Promise<void> {
+  return initWasmTranspiler()
+}
+
+// Unified transpile helper that prefers the global WASM binding.
+export async function transpileHook(code: string, filename = 'module.jsx', isTypescript = false): Promise<any> {
+  const g: any = globalThis
+  if (typeof g.__hook_transpile_jsx === 'function') {
+    return g.__hook_transpile_jsx(code, filename, isTypescript)
+  }
+  // Fallback to JS-based transpileCode (slower, but keeps clients working without glue)
+  return transpileCode(code, { filename, isTypescript })
+}
+
 export async function runSelfCheck(): Promise<{ ok: boolean; version?: string; error?: string; wasmResults?: string[] }> {
   try {
     await initTranspiler()
@@ -103,7 +121,7 @@ export async function runSelfCheck(): Promise<{ ok: boolean; version?: string; e
 
     const testCode = 'const a = <div>Hello</div>'
     const result = await g.__hook_transpile_jsx(testCode, 'test.jsx')
-    
+
     let code = ''
     if (typeof result === 'string') {
       code = result

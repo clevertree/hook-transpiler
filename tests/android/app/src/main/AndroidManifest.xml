@@ -12,5 +12,8 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity
+            android:name=".JNITestActivity"
+            android:exported="true" />
     </application>
 </manifest>

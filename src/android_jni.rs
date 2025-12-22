@@ -1,7 +1,7 @@
 use crate::{TranspileOptions, transpile_jsx_with_options, version};
 use jni::JNIEnv;
 use jni::objects::{JClass, JString};
-use jni::sys::jstring;
+use jni::sys::{jstring, jboolean};
 
 fn android_logger(msg: String) {
     let tag = std::ffi::CString::new("RustTranspiler").unwrap();
@@ -45,8 +45,9 @@ pub extern "system" fn Java_com_relay_client_RustTranspilerModule_nativeTranspil
     class: JClass,
     code: JString,
     filename: JString,
+    is_typescript: jboolean,
 ) -> jstring {
-    Java_com_relay_pure_RustTranspilerModule_nativeTranspile(env, class, code, filename)
+    Java_com_relay_pure_RustTranspilerModule_nativeTranspile(env, class, code, filename, is_typescript)
 }
 
 #[unsafe(no_mangle)]
@@ -55,6 +56,7 @@ pub extern "system" fn Java_com_relay_pure_RustTranspilerModule_nativeTranspile(
     _class: JClass,
     code: JString,
     filename: JString,
+    is_typescript: jboolean,
 ) -> jstring {
     let source = match jstring_to_string(&mut env, code) {
         Some(val) => {
@@ -70,12 +72,10 @@ pub extern "system" fn Java_com_relay_pure_RustTranspilerModule_nativeTranspile(
         }
     };
 
-    let file = jstring_to_string(&mut env, filename).unwrap_or_else(|| "module.tsx".to_string());
-    // Only treat TS/TSX as TypeScript; plain JSX should bypass TS stripping
-    let is_typescript = file.ends_with(".ts") || file.ends_with(".tsx");
-
+    let _file = jstring_to_string(&mut env, filename).unwrap_or_else(|| "module.tsx".to_string());
+    
     let opts = TranspileOptions {
-        is_typescript,
+        is_typescript: is_typescript != 0,
     };
 
     let transpiled_res = transpile_jsx_with_options(&source, &opts);
