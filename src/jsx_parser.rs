@@ -8,22 +8,22 @@ use anyhow::{Result, anyhow};
 
 #[derive(Debug, Clone)]
 pub struct ParseContext {
-    pub source: String,
+    pub source: Vec<char>,
     pub pos: usize,
     pub is_typescript: bool,
 }
 
 impl ParseContext {
     pub fn new(source: String, is_typescript: bool) -> Self {
-        Self { source, pos: 0, is_typescript }
+        Self { source: source.chars().collect(), pos: 0, is_typescript }
     }
 
     pub fn current_char(&self) -> Option<char> {
-        self.source.chars().nth(self.pos)
+        self.source.get(self.pos).copied()
     }
 
     pub fn peek(&self, offset: usize) -> Option<char> {
-        self.source.chars().nth(self.pos + offset)
+        self.source.get(self.pos + offset).copied()
     }
 
     pub fn advance(&mut self) {
@@ -50,17 +50,21 @@ impl ParseContext {
     }
 
     pub fn slice(&self, start: usize, end: usize) -> String {
-        self.source.chars().skip(start).take(end - start).collect()
+        self.source[start..end].iter().collect()
     }
 }
 
 /// Main transpiler entry point
 pub fn transpile_jsx(source: &str, opts: &TranspileOptions) -> Result<String> {
+    let source_len = source.len();
     let source = if opts.is_typescript {
         strip_typescript(source)
     } else {
         source.to_string()
     };
+    if source.len() == 512 && source_len > 512 {
+        return Err(anyhow!("Truncation detected! Source starts with: {}", &source[..50]));
+    }
 
     let mut ctx = ParseContext::new(source, opts.is_typescript);
     let mut output = String::new();
@@ -155,6 +159,9 @@ pub fn transpile_jsx(source: &str, opts: &TranspileOptions) -> Result<String> {
 }
 
 pub fn strip_typescript(source: &str) -> String {
+    if source.len() == 512 {
+        // This is the suspicious length
+    }
     let mut ctx = ParseContext::new(source.to_string(), true);
     let mut output = String::new();
     
@@ -348,6 +355,10 @@ pub fn strip_typescript(source: &str) -> String {
         }
     }
     
+    let output = output;
+    if source.len() > 0 && output.len() == 0 {
+         // This would be weird
+    }
     output
 }
 
@@ -393,7 +404,7 @@ fn is_jsx_start(ctx: &ParseContext) -> bool {
     // Heuristic: if preceded by an alphanumeric character, it's likely a generic function call
     // e.g., useState<T> or f<T>. JSX tags are usually preceded by whitespace, operators, or brackets.
     if ctx.pos > 0 {
-        if let Some(prev) = ctx.source.chars().nth(ctx.pos - 1) {
+        if let Some(&prev) = ctx.source.get(ctx.pos - 1) {
             if prev.is_alphanumeric() || prev == '_' || prev == '$' {
                 return false;
             }
@@ -697,7 +708,7 @@ fn parse_children(ctx: &mut ParseContext, parent_tag: &str) -> Result<Vec<String
         // If we haven't moved, we're at end of input without proper closing
         if ctx.pos == text_start {
             if ctx.pos >= ctx.source.len() {
-                return Err(anyhow!("Unexpected end of input while parsing children"));
+                return Err(anyhow!("Unexpected end of input while parsing children for tag <{}>. Current position: {}, Total length: {}", parent_tag, ctx.pos, ctx.source.len()));
             }
             break;
         }

@@ -42,6 +42,12 @@
         android:layout_height="wrap_content"
         android:text="Test Styler" />
 
+    <Button
+        android:id="@+id/btn_render_ui"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Render UI" />
+
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -59,4 +65,18 @@
             android:fontFamily="monospace"
             android:text="Ready." />
     </ScrollView>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="UI Render Container:"
+        android:layout_marginTop="16dp" />
+
+    <FrameLayout
+        android:id="@+id/js_container"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="2"
+        android:background="#eeeeee"
+        android:layout_marginTop="8dp" />
 </LinearLayout>

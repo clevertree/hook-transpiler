@@ -3,6 +3,18 @@ use jni::JNIEnv;
 use jni::objects::{JClass, JString};
 use jni::sys::jstring;
 
+fn android_logger(msg: String) {
+    let tag = std::ffi::CString::new("RustTranspiler").unwrap();
+    let msg = std::ffi::CString::new(msg).unwrap();
+    unsafe {
+        __android_log_print(3, tag.as_ptr(), msg.as_ptr());
+    }
+}
+
+unsafe extern "C" {
+    fn __android_log_print(prio: i32, tag: *const libc::c_char, fmt: *const libc::c_char, ...);
+}
+
 fn jstring_to_string(env: &mut JNIEnv, input: JString) -> Option<String> {
     if input.is_null() {
         return None;
@@ -29,13 +41,26 @@ fn new_jstring(env: &mut JNIEnv, value: &str) -> jstring {
 /// JNI bridge exposed to Android (via RustTranspilerModule)
 #[unsafe(no_mangle)]
 pub extern "system" fn Java_com_relay_client_RustTranspilerModule_nativeTranspile(
+    env: JNIEnv,
+    class: JClass,
+    code: JString,
+    filename: JString,
+) -> jstring {
+    Java_com_relay_pure_RustTranspilerModule_nativeTranspile(env, class, code, filename)
+}
+
+#[unsafe(no_mangle)]
+pub extern "system" fn Java_com_relay_pure_RustTranspilerModule_nativeTranspile(
     mut env: JNIEnv,
     _class: JClass,
     code: JString,
     filename: JString,
 ) -> jstring {
     let source = match jstring_to_string(&mut env, code) {
-        Some(val) => val,
+        Some(val) => {
+            android_logger(format!("nativeTranspile: source len = {}", val.len()));
+            val
+        },
         None => {
             let _ = env.throw_new(
                 "java/lang/IllegalArgumentException",
@@ -46,16 +71,24 @@ pub extern "system" fn Java_com_relay_client_RustTranspilerModule_nativeTranspil
     };
 
     let file = jstring_to_string(&mut env, filename).unwrap_or_else(|| "module.tsx".to_string());
-    let is_typescript = file.ends_with(".ts") || file.ends_with(".tsx") || file.ends_with(".jsx");
+    // Only treat TS/TSX as TypeScript; plain JSX should bypass TS stripping
+    let is_typescript = file.ends_with(".ts") || file.ends_with(".tsx");
 
     let opts = TranspileOptions {
         is_typescript,
     };
 
-    match transpile_jsx_with_options(&source, &opts) {
-        Ok(output) => new_jstring(&mut env, &output),
+    let transpiled_res = transpile_jsx_with_options(&source, &opts);
+    match transpiled_res {
+        Ok(output) => {
+            android_logger(format!("nativeTranspile: output len = {}", output.len()));
+            new_jstring(&mut env, &output)
+        },
         Err(err) => {
-            let msg = format!("{}. Source: {}", err, source);
+            // Don't include the full source in the error message as it can be very long
+            // The source is already available in the calling code
+            let msg = format!("{}", err);
+            android_logger(format!("nativeTranspile error: {}", msg));
             let _ = env.throw_new("java/lang/RuntimeException", msg);
             std::ptr::null_mut()
         }
@@ -64,6 +97,14 @@ pub extern "system" fn Java_com_relay_client_RustTranspilerModule_nativeTranspil
 
 #[unsafe(no_mangle)]
 pub extern "system" fn Java_com_relay_client_RustTranspilerModule_nativeGetVersion(
+    env: JNIEnv,
+    class: JClass,
+) -> jstring {
+    Java_com_relay_pure_RustTranspilerModule_nativeGetVersion(env, class)
+}
+
+#[unsafe(no_mangle)]
+pub extern "system" fn Java_com_relay_pure_RustTranspilerModule_nativeGetVersion(
     mut env: JNIEnv,
     _class: JClass,
 ) -> jstring {

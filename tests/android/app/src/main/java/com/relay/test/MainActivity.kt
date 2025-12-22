@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.widget.Button
 import android.widget.RadioButton
 import android.widget.TextView
+import android.widget.FrameLayout
 import androidx.appcompat.app.AppCompatActivity
 import com.relay.client.*
 import com.sun.jna.Pointer
@@ -11,6 +12,8 @@ import com.sun.jna.Pointer
 class MainActivity : AppCompatActivity() {
     private lateinit var tvOutput: TextView
     private lateinit var radioJni: RadioButton
+    private lateinit var jsContainer: FrameLayout
+    private var quickJSManager: QuickJSManager? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -18,6 +21,7 @@ class MainActivity : AppCompatActivity() {
 
         tvOutput = findViewById(R.id.tv_output)
         radioJni = findViewById(R.id.radio_jni)
+        jsContainer = findViewById(R.id.js_container)
 
         findViewById<Button>(R.id.btn_test_transpile).setOnClickListener {
             testTranspile()
@@ -26,6 +30,14 @@ class MainActivity : AppCompatActivity() {
         findViewById<Button>(R.id.btn_test_styler).setOnClickListener {
             testStyler()
         }
+
+        findViewById<Button>(R.id.btn_render_ui).setOnClickListener {
+            renderUI()
+        }
+
+        NativeRenderer.initialize(this, jsContainer)
+        quickJSManager = QuickJSManager(this)
+        quickJSManager?.initialize()
 
         tvOutput.postDelayed({
             radioJni.isChecked = true
@@ -46,6 +58,22 @@ class MainActivity : AppCompatActivity() {
             findViewById<RadioButton>(R.id.radio_ffi).isChecked = true
             testStyler()
         }, 7000)
+
+        tvOutput.postDelayed({
+            radioJni.isChecked = true
+            renderUI()
+        }, 9000)
+    }
+
+    private fun renderUI() {
+        android.util.Log.d("RustTranspiler", "Rendering UI...")
+        try {
+            quickJSManager?.renderHook("test-hook.jsx")
+            tvOutput.text = "UI Render Triggered (Check Container Below)"
+        } catch (e: Exception) {
+            android.util.Log.e("RustTranspiler", "UI Render Error", e)
+            tvOutput.text = "UI Render Error: ${e.message}"
+        }
     }
 
     private fun testTranspile() {

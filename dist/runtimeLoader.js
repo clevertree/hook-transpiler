@@ -816,6 +816,16 @@ export function applyHookRewrite(code) {
     rewritten = rewritten.replace(jsxRuntimeRe, (_m, a, b, c) => `const ${a} = (globalThis.__hook_jsx_runtime?.jsx || globalThis.__jsx || (globalThis.__hook_react && globalThis.__hook_react.createElement) || (() => null)); ` +
         `const ${b} = (globalThis.__hook_jsx_runtime?.jsxs || globalThis.__jsxs || (globalThis.__hook_react && globalThis.__hook_react.createElement) || (() => null)); ` +
         `const ${c} = (globalThis.__hook_jsx_runtime?.Fragment || globalThis.__Fragment || (globalThis.__hook_react && globalThis.__hook_react.Fragment));`);
+    // Convert ES6 export default to CommonJS for Android/QuickJS compatibility
+    // Handle: export default function Name() { ... }
+    // Convert to: function Name() { ... }; module.exports.default = Name;
+    rewritten = rewritten.replace(/export\s+default\s+function\s+(\w+)\s*\(/g, (match, name) => {
+        return `function ${name}(`;
+    });
+    // Handle: export default ClassName or export default variableName (at end of file)
+    rewritten = rewritten.replace(/export\s+default\s+(\w+)\s*;?\s*$/m, (match, name) => {
+        return `module.exports.default = ${name};`;
+    });
     return rewritten;
 }
 /**

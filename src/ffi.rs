@@ -1,6 +1,5 @@
 use super::*;
-use std::ffi::{CStr, CString};
-use libc::c_char;
+use std::ffi::{CStr, CString, c_char};
 use std::ptr;
 
 #[unsafe(no_mangle)]

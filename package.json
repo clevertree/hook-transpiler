@@ -15,6 +15,7 @@
   },
   "files": [
     "dist",
+    "android",
     "wasm"
   ],
   "scripts": {
