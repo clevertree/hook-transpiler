@@ -23,11 +23,17 @@ export async function initHookTranspiler(wasmUrl) {
     const init = mod && mod.default;
     if (typeof init !== 'function')
         throw new Error('Invalid WASM wrapper: expected default init function');
-    await init(url);
+    // Pass options object to avoid deprecated init signature warning
+    await init({ module_or_path: url });
     const transpile = mod.transpile_jsx;
     if (typeof transpile !== 'function')
         throw new Error('WASM not exporting transpile_jsx');
     globalThis.__hook_transpile_jsx = transpile;
+    // Also expose the metadata version if available
+    const transpileWithMetadata = mod.transpile_jsx_with_metadata;
+    if (typeof transpileWithMetadata === 'function') {
+        globalThis.__hook_transpile_jsx_with_metadata = transpileWithMetadata;
+    }
     const version = mod.get_version ? mod.get_version() : 'unknown';
     globalThis.__hook_transpiler_version = version;
 }

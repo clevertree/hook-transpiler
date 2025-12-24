@@ -11,6 +11,21 @@ declare global {
     var __relay_builtins: Record<string, any> | undefined
     var __currentModulePath: string | undefined
     var __relay_meta: { filename: string; dirname: string; url: string } | undefined
+    var __relay_log_config: { dedupe?: boolean } | undefined
+    var __relay_log_once: Set<string> | undefined
+}
+
+// Lightweight logging helpers with optional de-duplication to avoid spam across multiple renders
+const __logConfig = (globalThis as any).__relay_log_config || { dedupe: true }
+    ; (globalThis as any).__relay_log_config = __logConfig
+const __logOnce: Set<string> = (globalThis as any).__relay_log_once || new Set<string>()
+    ; (globalThis as any).__relay_log_once = __logOnce
+function debugOnce(key: string, ...args: any[]): void {
+    try {
+        if (__logConfig?.dedupe && __logOnce.has(key)) return
+        __logOnce.add(key)
+        console.debug(...args)
+    } catch { }
 }
 
 export interface TransformOptions {
@@ -61,11 +76,11 @@ export class WebModuleLoader implements ModuleLoader {
             ; (window as any).__ctx__ = context
                 ; (window as any).__hook_import_with = async (spec: string, fromFile: string) => {
                     try {
-                        console.error('[WebModuleLoader] __hook_import_with call:', spec, 'from', fromFile)
+                        // console.debug('[WebModuleLoader] __hook_import_with call:', spec, 'from', fromFile)
                         const fn = (context && context.helpers && typeof context.helpers.loadModule === 'function') ? context.helpers.loadModule : null
                         if (!fn) throw new Error('__hook_import_with unavailable: helpers.loadModule not available')
                         const result = await fn(spec, fromFile)
-                        console.error('[WebModuleLoader] __hook_import_with resolved successfully for', spec, 'result keys:', Object.keys(result || {}))
+                        // debugOnce(`import-resolve:${spec}:${fromFile}`, '[WebModuleLoader] __hook_import_with resolved successfully for', spec, 'result keys:', Object.keys(result || {}))
                         return result
                     } catch (e) {
                         console.error('[WebModuleLoader] __hook_import_with failed for', spec, 'from', fromFile, 'error:', e instanceof Error ? e.message : e)
@@ -77,76 +92,75 @@ export class WebModuleLoader implements ModuleLoader {
             const __effectiveUrl = (fetchUrl || `${(globalThis as any).location?.origin || 'http://localhost'}${filename}`)
             const __codePatched = code.replace(/\bimport\.meta\.url\b/g, JSON.stringify(__effectiveUrl))
 
-            console.debug('[WebModuleLoader] executeModule: filename', filename, 'has export?', /\bexport\b/.test(code), 'has marker?', /\/\*__ESM__\*\//.test(code))
+            const mkJsxFactory = (React: any) => {
+                if (!React) return undefined
+                const elementType = (() => {
+                    try {
+                        if (React && typeof React.createElement === 'function') {
+                            const el = React.createElement('div', null)
+                            if (el && el.$$typeof) return el.$$typeof
+                        }
+                    } catch { }
+                    return Symbol.for('react.element')
+                })()
+                return (type: any, config: any, maybeKey: any) => {
+                    let key = null
+                    let ref = null
+                    let props: any = {}
+                    if (maybeKey !== undefined) {
+                        key = String(maybeKey)
+                    }
+                    if (config) {
+                        for (let propName in config) {
+                            if (propName === 'key') {
+                                key = String(config.key)
+                            } else if (propName === 'ref') {
+                                ref = config.ref
+                            } else {
+                                props[propName] = config[propName]
+                            }
+                        }
+                    }
+                    if (typeof type === 'string' && context.onElement) {
+                        try { context.onElement(type, props) } catch { }
+                    }
+                    return {
+                        '$$typeof': elementType,
+                        type,
+                        key,
+                        ref: ref || null,
+                        props
+                    }
+                }
+            }
+
+            // console.debug('[WebModuleLoader] executeModule: filename', filename, 'has export?', /\bexport\b/.test(code), 'has marker?', /\/\*__ESM__\*\//.test(code))
             const looksLikeESM = /\/\*__ESM__\*\//.test(code) || /\bexport\b/.test(code)
             if (looksLikeESM) {
                 try {
-                    console.error('[WebModuleLoader] Using ESM execution path for', filename)
+                    // debugOnce(`esm-path:${filename}`, '[WebModuleLoader] Using ESM execution path for', filename)
                     const dirname = filename.substring(0, filename.lastIndexOf('/') || 0)
                     const url = fetchUrl || `${(globalThis as any).location?.origin || 'http://localhost'}${filename}`
                         ; (globalThis as any).__relay_meta = { filename, dirname, url }
                     const blob = new Blob([perModuleAlias, __codePatched], { type: 'text/javascript' })
                     const blobUrl = URL.createObjectURL(blob)
                         ; (window as any).__hook_react = context.React
-
-                    const createJsxFactory = (React: any) => {
-                        if (!React) return undefined
-                        const elementType = (() => {
-                            try {
-                                if (React && typeof React.createElement === 'function') {
-                                    const el = React.createElement('div', null)
-                                    if (el && el.$$typeof) return el.$$typeof
-                                }
-                            } catch { }
-                            return Symbol.for('react.element')
-                        })()
-                        return (type: any, config: any, maybeKey: any) => {
-                            let key = null
-                            let ref = null
-                            let props: any = {}
-                            if (maybeKey !== undefined) {
-                                key = String(maybeKey)
-                            }
-                            if (config) {
-                                for (let propName in config) {
-                                    if (propName === 'key') {
-                                        key = String(config.key)
-                                    } else if (propName === 'ref') {
-                                        ref = config.ref
-                                    } else {
-                                        props[propName] = config[propName]
-                                    }
-                                }
-                            }
-                            if (typeof type === 'string' && context.onElement) {
-                                try { context.onElement(type, props) } catch { }
-                            }
-                            return {
-                                '$$typeof': elementType,
-                                type,
-                                key,
-                                ref: ref || null,
-                                props
-                            }
-                        }
-                    }
-                    const jsxFactory = createJsxFactory(context.React)
+                    const jsxFactory = mkJsxFactory(context.React)
                     const fragmentFactory = (context.React && (context.React.Fragment || (context.React as any).Fragment)) ? (context.React.Fragment || (context.React as any).Fragment) : undefined
-                        ; (window as any).__hook_jsx_runtime = { jsx: jsxFactory, jsxs: jsxFactory, Fragment: fragmentFactory }
-                        ; (window as any).__jsx = jsxFactory
-                        ; (window as any).__jsxs = jsxFactory
-                        ; (window as any).__Fragment = fragmentFactory
-                        ; (window as any).__hook_file_renderer = (context && context.FileRenderer) || null
+                    if (!(window as any).__hook_jsx_runtime) { (window as any).__hook_jsx_runtime = { jsx: jsxFactory, jsxs: jsxFactory, Fragment: fragmentFactory } }
+                    if (!(window as any).__jsx) { (window as any).__jsx = jsxFactory; (window as any).__jsxs = jsxFactory }
+                    if (!(window as any).__Fragment) { (window as any).__Fragment = fragmentFactory }
+                    ; (window as any).__hook_file_renderer = (context && context.FileRenderer) || null
                         ; (window as any).__hook_helpers = (context && context.helpers) || {}
 
                     await new Promise(resolve => setTimeout(resolve, 0))
                         ; (window as any).__currentModulePath = filename
                     const dynImport = new Function('u', 'return import(u)')
                     const ns = await dynImport(blobUrl)
-                    try {
-                        const keys = Object.keys(ns || {})
-                        console.debug('[WebModuleLoader] ESM module namespace keys:', keys, 'default type:', typeof (ns && ns.default))
-                    } catch { }
+                    // try {
+                    //     const keys = Object.keys(ns || {})
+                    //     debugOnce(`esm-ns:${filename}`, '[WebModuleLoader] ESM module namespace keys:', keys, 'default type:', typeof (ns && ns.default))
+                    // } catch { }
                     setTimeout(() => URL.revokeObjectURL(blobUrl), 1000)
                     const normalized = ns && ns.default ? { ...ns, default: ns.default } : ns
                     return normalized
@@ -222,42 +236,7 @@ try {
                 context
             )
 
-            const createJsxFactory2 = (React: any) => {
-                if (!React) return undefined
-                const elementType = (() => {
-                    try {
-                        if (React && typeof React.createElement === 'function') {
-                            const el = React.createElement('div', null)
-                            if (el && el.$$typeof) return el.$$typeof
-                        }
-                    } catch { }
-                    return Symbol.for('react.element')
-                })()
-                return (type: any, config: any, maybeKey: any) => {
-                    let key = null
-                    let ref = null
-                    let props: any = {}
-                    if (maybeKey !== undefined) key = String(maybeKey)
-                    if (config) {
-                        for (let propName in config) {
-                            if (propName === 'key') key = String(config.key)
-                            else if (propName === 'ref') ref = config.ref
-                            else props[propName] = config[propName]
-                        }
-                    }
-                    if (typeof type === 'string' && context.onElement) {
-                        try { context.onElement(type, props) } catch { }
-                    }
-                    return {
-                        '$$typeof': elementType,
-                        type,
-                        key,
-                        ref: ref || null,
-                        props
-                    }
-                }
-            }
-            const jsxFactory2 = createJsxFactory2(context.React)
+            const jsxFactory2 = mkJsxFactory(context.React)
             const fragmentFactory = context.React?.Fragment
             if (!(globalThis as any).__hook_jsx_runtime) {
                 ; (globalThis as any).__hook_jsx_runtime = { jsx: jsxFactory2, jsxs: jsxFactory2, Fragment: fragmentFactory }
@@ -424,6 +403,12 @@ export function applyHookRewrite(code: string): string {
     const themedStylerRe = /import\s+\{\s*([^}]+)\s*\}\s+from\s+['"]@clevertree\/themed-styler['"];?/g
     const themedStylerDefaultRe = /import\s+(\w+)\s+from\s+['"]@clevertree\/themed-styler['"];?/g
     const themedStylerStarRe = /import\s*\*\s*as\s+(\w+)\s+from\s+['"]@clevertree\/themed-styler['"];?/g
+    const hookTranspilerRe = /import\s+\{\s*([^}]+)\s*\}\s+from\s+['"]@clevertree\/hook-transpiler['"];?/g
+    const hookTranspilerDefaultRe = /import\s+(\w+)\s+from\s+['"]@clevertree\/hook-transpiler['"];?/g
+    const hookTranspilerStarRe = /import\s*\*\s*as\s+(\w+)\s+from\s+['"]@clevertree\/hook-transpiler['"];?/g
+    const actRe = /import\s+\{\s*([^}]+)\s*\}\s+from\s+['"]@clevertree\/act['"];?/g
+    const actDefaultRe = /import\s+(\w+)\s+from\s+['"]@clevertree\/act['"];?/g
+    const actStarRe = /import\s*\*\s*as\s+(\w+)\s+from\s+['"]@clevertree\/act['"];?/g
     const metaRe = /import\s+(\w+)\s+from\s+['"]@clevertree\/meta['"];?/g
     const metaStarRe = /import\s*\*\s*as\s+(\w+)\s+from\s+['"]@clevertree\/meta['"];?/g
     const metaDestructureRe = /import\s+\{\s*([^}]+)\s*\}\s+from\s+['"]@clevertree\/meta['"];?/g
@@ -436,6 +421,12 @@ export function applyHookRewrite(code: string): string {
     rewritten = rewritten.replace(themedStylerRe, (_m, destructure) => mkPackage('@clevertree/themed-styler', `{ ${destructure} }`))
     rewritten = rewritten.replace(themedStylerDefaultRe, (_m, name) => `const ${name} = ((globalThis && globalThis.__relay_packages && globalThis.__relay_packages['@clevertree/themed-styler']?.default) || (globalThis && globalThis.__relay_packages && globalThis.__relay_packages['@clevertree/themed-styler']) || {});`)
     rewritten = rewritten.replace(themedStylerStarRe, (_m, name) => mkPackage('@clevertree/themed-styler', name))
+    rewritten = rewritten.replace(hookTranspilerRe, (_m, destructure) => mkPackage('@clevertree/hook-transpiler', `{ ${destructure} }`))
+    rewritten = rewritten.replace(hookTranspilerDefaultRe, (_m, name) => `const ${name} = ((globalThis && globalThis.__relay_packages && globalThis.__relay_packages['@clevertree/hook-transpiler']?.default) || (globalThis && globalThis.__relay_packages && globalThis.__relay_packages['@clevertree/hook-transpiler']) || {});`)
+    rewritten = rewritten.replace(hookTranspilerStarRe, (_m, name) => mkPackage('@clevertree/hook-transpiler', name))
+    rewritten = rewritten.replace(actRe, (_m, destructure) => mkPackage('@clevertree/act', `{ ${destructure} }`))
+    rewritten = rewritten.replace(actDefaultRe, (_m, name) => `const ${name} = ((globalThis && globalThis.__relay_packages && globalThis.__relay_packages['@clevertree/act']?.default) || (globalThis && globalThis.__relay_packages && globalThis.__relay_packages['@clevertree/act']) || {});`)
+    rewritten = rewritten.replace(actStarRe, (_m, name) => mkPackage('@clevertree/act', name))
     rewritten = rewritten.replace(reactRe, (_m, named) => {
         let res = 'const React = (globalThis.__hook_react || globalThis.React);'
         if (named) res += ` const { ${named} } = React;`
@@ -539,7 +530,7 @@ export class HookLoader {
     }
 
     async loadModule(modulePath: string, fromPath: string = '/hooks/client/get-client.jsx', context: HookContext): Promise<any> {
-        try { console.error('[HookLoader] loadModule called:', { modulePath, fromPath }) } catch { }
+        // try { console.debug('[HookLoader] loadModule called:', { modulePath, fromPath }) } catch { }
 
         // Normalize path early for consistent cache key
         const normalizedPath = this.normalizeToAbsolutePath(modulePath, fromPath)
@@ -547,18 +538,18 @@ export class HookLoader {
 
         // Check completed module cache first
         if (this.moduleCache.has(cacheKey)) {
-            console.error('[HookLoader] Module cache HIT:', cacheKey)
+            // console.debug('[HookLoader] Module cache HIT:', cacheKey)
             return this.moduleCache.get(cacheKey)
         }
 
         // Check if fetch is already in progress
         if (this.pendingFetches.has(cacheKey)) {
-            console.error('[HookLoader] Pending fetch HIT (avoiding duplicate):', cacheKey)
+            // console.debug('[HookLoader] Pending fetch HIT (avoiding duplicate):', cacheKey)
             return this.pendingFetches.get(cacheKey)!
         }
 
         // Start new fetch and cache the promise
-        console.error('[HookLoader] Starting NEW fetch:', cacheKey)
+        // console.debug('[HookLoader] Starting NEW fetch:', cacheKey)
         const fetchPromise = this._doLoadModule(normalizedPath, context, cacheKey)
         this.pendingFetches.set(cacheKey, fetchPromise)
 
@@ -600,21 +591,28 @@ export class HookLoader {
             let code: string | null = null
             let moduleUrl: string | null = null
             const attempts = buildAttempts(normalizedPath)
-            console.error('[HookLoader._doLoadModule] Fetch attempts:', { normalizedPath, attempts })
+            // console.debug('[HookLoader._doLoadModule] Fetch attempts:', { normalizedPath, attempts })
             for (const candidate of attempts) {
                 const url = `${this.protocol}://${this.host}${candidate}`
-                console.error('[HookLoader] Loop iteration for candidate:', candidate, 'total attempts:', attempts.length)
+                // console.debug('[HookLoader] Loop iteration for candidate:', candidate, 'total attempts:', attempts.length)
                 try {
-                    console.error('[HookLoader.loadModule] Trying:', url)
+                    // console.debug('[HookLoader.loadModule] Trying:', url)
                     const response = await fetch(url, fetchOptions)
-                    if (!response.ok) { lastErr = new Error(`ModuleLoadError: ${url} → ${response.status} ${response.statusText}`); console.error('[HookLoader.loadModule] Not OK, continuing'); continue }
+                    if (!response.ok) { lastErr = new Error(`ModuleLoadError: ${url} → ${response.status} ${response.statusText}`);
+                        // console.debug('[HookLoader.loadModule] Not OK, continuing');
+                         continue;
+                    }
                     const ct = (response.headers.get('content-type') || '').toLowerCase()
-                    if (ct.includes('text/html')) { lastErr = new Error(`ModuleLoadError: ${url} returned HTML (content-type=${ct})`); console.error('[HookLoader.loadModule] HTML response, continuing'); continue }
+                    if (ct.includes('text/html')) {
+                        lastErr = new Error(`ModuleLoadError: ${url} returned HTML (content-type=${ct})`);
+                        // console.debug('[HookLoader.loadModule] HTML response, continuing');
+                        continue;
+                    }
                     code = await response.text()
-                    console.error('[HookLoader.loadModule] Fetched', candidate, 'got', code.length, 'bytes')
+                    // console.debug('[HookLoader.loadModule] Fetched', candidate, 'got', code.length, 'bytes')
                     moduleUrl = url
-                    console.error('[HookLoader.loadModule] Success:', url, 'code length:', code.length)
-                    break
+                    // console.debug('[HookLoader.loadModule] Success:', url, 'code length:', code.length)
+                    break;
                 } catch (e) {
                     lastErr = e
                     console.error('[HookLoader.loadModule] Fetch error, continuing:', e)
@@ -622,7 +620,7 @@ export class HookLoader {
                 }
             }
             if (!code || !moduleUrl) throw lastErr || new Error(`ModuleLoadError: ${this.protocol}://${this.host}${normalizedPath}`)
-            console.error('[HookLoader.loadModule] After loop:', { codeLengthOrNull: code ? code.length : null, moduleUrl })
+            // console.debug('[HookLoader.loadModule] After loop:', { codeLengthOrNull: code ? code.length : null, moduleUrl })
 
             let preprocessedCode = code
             try {
@@ -656,10 +654,10 @@ export class HookLoader {
             let mod: any
             try {
                 mod = await this.moduleLoader.executeModule(finalCode, normalizedPath, context, moduleUrl, false)
-                try {
-                    const keys = Object.keys(mod || {})
-                    console.error('[HookLoader] Loaded module', normalizedPath, 'keys:', keys, 'default type:', typeof (mod && mod.default))
-                } catch { }
+                // try {
+                //     // const keys = Object.keys(mod || {})
+                //     // debugOnce(`loaded:${normalizedPath}`, '[HookLoader] Loaded module', normalizedPath, 'keys:', keys, 'default type:', typeof (mod && mod.default))
+                // } catch { }
             } catch (execErr) {
                 const execMsg = (execErr as any)?.message || String(execErr)
                 const syntaxMatch = execMsg.match(/Unexpected token|missing \)|SyntaxError/)
@@ -680,7 +678,7 @@ export class HookLoader {
         try {
             diag.phase = 'fetch'
             const hookUrl = `${this.protocol}://${this.host}${hookPath}`
-            console.debug(`[HookLoader] Fetching hook from: ${hookUrl}`)
+            // console.debug(`[HookLoader] Fetching hook from: ${hookUrl}`)
             const requestHeaders = this.buildRequestHeaders(context)
             const fetchOptions = Object.keys(requestHeaders).length ? { headers: requestHeaders } : undefined
             let response: Response
@@ -692,16 +690,16 @@ export class HookLoader {
                 console.error('[HookLoader] Fetch failed, got error immediately:', fetchErr)
                 throw fetchErr
             }
-            console.debug(`[HookLoader] Received hook code (${code.length} chars)`)
+            // console.debug(`[HookLoader] Received hook code (${code.length} chars)`)
             diag.fetch = { status: response.status, ok: response.ok, contentType: response.headers.get('content-type') }
             if (!response.ok) throw new Error(`ModuleLoadError: ${hookUrl} → ${response.status} ${response.statusText}`)
             const ct = (response.headers.get('content-type') || '').toLowerCase()
             if (ct.includes('text/html')) throw new Error(`ModuleLoadError: ${hookUrl} returned HTML (content-type=${ct})`)
             diag.codeLength = code.length
 
-            console.error(`[HookLoader] About to resolve static imports for ${hookPath}`)
+            // console.debug(`[HookLoader] About to resolve static imports for ${hookPath}`)
             code = await resolveStaticImports(code, hookPath, context)
-            console.error(`[HookLoader] Static imports resolved for ${hookPath}`)
+            // console.debug(`[HookLoader] Static imports resolved for ${hookPath}`)
 
             diag.phase = 'transform'
             let finalCode = code
@@ -709,14 +707,14 @@ export class HookLoader {
             const shouldTranspile = !!this.transpiler || looksLikeTsOrJsx(code, hookPath)
             if (shouldTranspile) {
                 try {
-                    console.debug(`[HookLoader] Transpiling ${hookPath}`)
+                    // console.debug(`[HookLoader] Transpiling ${hookPath}`)
                     if (this.transpiler) {
                         finalCode = await this.transpiler(code, hookPath)
                         this.logTranspileResult(hookPath, finalCode)
                     } else {
                         finalCode = await transpileCode(code, { filename: hookPath, hasJsxPragma: /@jsx\s+h/m.test(code) }, false)
                     }
-                    console.debug(`[HookLoader] Transpilation complete (${finalCode.length} chars)`)
+                    // console.debug(`[HookLoader] Transpilation complete (${finalCode.length} chars)`)
                 } catch (err) {
                     const msg = (err as any)?.message || String(err)
                     console.warn('[HookLoader] JSX transpilation failed', { hookPath, error: msg })
@@ -735,21 +733,21 @@ export class HookLoader {
                 const sample = finalCode.slice(0, 200)
                 const hasExport = /\bexport\b/.test(finalCode)
                 const hasMarker = /\/\*__ESM__\*\//.test(finalCode)
-                console.error('[HookLoader] Final code ESM hint:', { esmHint, hasExport, hasMarker, sample })
+                debugOnce(`final-hint:${hookPath}`, '[HookLoader] Final code ESM hint:', { esmHint, hasExport, hasMarker, sample })
             } catch { }
 
             diag.phase = 'import'
-            console.debug(`[HookLoader] Executing hook module`)
+            // console.debug(`[HookLoader] Executing hook module`)
             try {
                 const mod = await this.moduleLoader.executeModule(finalCode, hookPath, context, hookUrl, true)
                 if (!mod || typeof mod.default !== 'function') throw new Error('Hook module does not export a default function')
                 diag.phase = 'exec'
-                console.debug(`[HookLoader] Rendering hook component`)
+                // console.debug(`[HookLoader] Rendering hook component`)
                 const Comp: any = mod.default
                 const createEl = (context && context.createElement) || (context && context.React && context.React.createElement)
                 if (typeof createEl !== 'function') throw new Error('React createElement not available')
                 const element = createEl(Comp, context)
-                console.debug(`[HookLoader] Hook component element created`)
+                // console.debug(`[HookLoader] Hook component element created`)
                 return element
             } catch (execErr) {
                 console.error('[HookLoader] Hook execution error:', execErr)

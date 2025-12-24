@@ -696,7 +696,7 @@ try {
           try {
             if (this.transpiler) {
               finalCode = await this.transpiler(code, normalizedPath);
-              this.logTranspileResult(normalizedPath, finalCode);
+              // this.logTranspileResult(normalizedPath, finalCode);
             } else {
               finalCode = await transpileCode(
                 code,
@@ -758,7 +758,7 @@ try {
       try {
         diag.phase = "fetch";
         const hookUrl = `${this.protocol}://${this.host}${hookPath}`;
-        console.debug(`[HookLoader] Fetching hook from: ${hookUrl}`);
+        // console.debug(`[HookLoader] Fetching hook from: ${hookUrl}`);
         const requestHeaders = this.buildRequestHeaders(context);
         const fetchOptions = Object.keys(requestHeaders).length ? { headers: requestHeaders } : void 0;
         let response;
@@ -770,7 +770,7 @@ try {
           console.error("[HookLoader] Fetch failed, got error immediately:", fetchErr);
           throw fetchErr;
         }
-        console.debug(`[HookLoader] Received hook code (${code.length} chars)`);
+        // console.debug(`[HookLoader] Received hook code (${code.length} chars)`);
         diag.fetch = {
           status: response.status,
           ok: response.ok,
@@ -789,10 +789,10 @@ try {
         const shouldTranspile = !!this.transpiler || looksLikeTsOrJsx(code, hookPath);
         if (shouldTranspile) {
           try {
-            console.debug(`[HookLoader] Transpiling ${hookPath}`);
+            // console.debug(`[HookLoader] Transpiling ${hookPath}`);
             if (this.transpiler) {
               finalCode = await this.transpiler(code, hookPath);
-              this.logTranspileResult(hookPath, finalCode);
+              // this.logTranspileResult(hookPath, finalCode);
             } else {
               finalCode = await transpileCode(
                 code,
@@ -801,7 +801,7 @@ try {
                 // Web uses dynamic import
               );
             }
-            console.debug(`[HookLoader] Transpilation complete (${finalCode.length} chars)`);
+            // console.debug(`[HookLoader] Transpilation complete (${finalCode.length} chars)`);
           } catch (err) {
             const msg = err?.message || String(err);
             console.warn("[HookLoader] JSX transpilation failed", { hookPath, error: msg });
@@ -813,16 +813,16 @@ try {
           }
         }
         diag.phase = "import";
-        console.debug(`[HookLoader] Executing hook module`);
+        // console.debug(`[HookLoader] Executing hook module`);
         try {
           const mod = await this.moduleLoader.executeModule(finalCode, hookPath, context, hookUrl);
           if (!mod || typeof mod.default !== "function") {
             throw new Error("Hook module does not export a default function");
           }
           diag.phase = "exec";
-          console.debug(`[HookLoader] Calling hook function`);
+          // console.debug(`[HookLoader] Calling hook function`);
           const element = await mod.default(context);
-          console.debug(`[HookLoader] Hook executed successfully`);
+          // console.debug(`[HookLoader] Hook executed successfully`);
           return element;
         } catch (execErr) {
           console.error("[HookLoader] Hook execution error:", execErr);

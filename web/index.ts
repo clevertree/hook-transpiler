@@ -24,10 +24,18 @@ export async function initHookTranspiler(wasmUrl?: string): Promise<void> {
     }
     const init = mod && (mod as any).default
     if (typeof init !== 'function') throw new Error('Invalid WASM wrapper: expected default init function')
-    await init(url)
+    // Pass options object to avoid deprecated init signature warning
+    await init({ module_or_path: url })
     const transpile = (mod as any).transpile_jsx
     if (typeof transpile !== 'function') throw new Error('WASM not exporting transpile_jsx')
         ; (globalThis as any).__hook_transpile_jsx = transpile
+
+    // Also expose the metadata version if available
+    const transpileWithMetadata = (mod as any).transpile_jsx_with_metadata
+    if (typeof transpileWithMetadata === 'function') {
+        (globalThis as any).__hook_transpile_jsx_with_metadata = transpileWithMetadata
+    }
+
     const version = (mod as any).get_version ? (mod as any).get_version() : 'unknown'
         ; (globalThis as any).__hook_transpiler_version = version
 }
@@ -44,7 +52,7 @@ export async function preloadPackages(): Promise<void> {
 
     // Dynamically import packages without requiring them to be listed in tsconfig
     const packageNames = ['@clevertree/themed-styler', '@clevertree/hook-transpiler']
-    
+
     for (const pkgName of packageNames) {
         try {
             const pkg = await import(pkgName)

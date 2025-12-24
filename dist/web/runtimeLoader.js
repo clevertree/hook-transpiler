@@ -1,6 +1,20 @@
 /**
  * Unified Runtime Loader for Relay Hooks (Web)
  */
+// Lightweight logging helpers with optional de-duplication to avoid spam across multiple renders
+const __logConfig = globalThis.__relay_log_config || { dedupe: true };
+globalThis.__relay_log_config = __logConfig;
+const __logOnce = globalThis.__relay_log_once || new Set();
+globalThis.__relay_log_once = __logOnce;
+function debugOnce(key, ...args) {
+    try {
+        if (__logConfig?.dedupe && __logOnce.has(key))
+            return;
+        __logOnce.add(key);
+        console.debug(...args);
+    }
+    catch { }
+}
 export class WebModuleLoader {
     async executeModule(code, filename, context, fetchUrl, isMainHook = false) {
         const exports = {};
@@ -10,12 +24,12 @@ export class WebModuleLoader {
             window.__ctx__ = context;
             window.__hook_import_with = async (spec, fromFile) => {
                 try {
-                    console.error('[WebModuleLoader] __hook_import_with call:', spec, 'from', fromFile);
+                    // console.debug('[WebModuleLoader] __hook_import_with call:', spec, 'from', fromFile)
                     const fn = (context && context.helpers && typeof context.helpers.loadModule === 'function') ? context.helpers.loadModule : null;
                     if (!fn)
                         throw new Error('__hook_import_with unavailable: helpers.loadModule not available');
                     const result = await fn(spec, fromFile);
-                    console.error('[WebModuleLoader] __hook_import_with resolved successfully for', spec, 'result keys:', Object.keys(result || {}));
+                    // debugOnce(`import-resolve:${spec}:${fromFile}`, '[WebModuleLoader] __hook_import_with resolved successfully for', spec, 'result keys:', Object.keys(result || {}))
                     return result;
                 }
                 catch (e) {
@@ -26,83 +40,89 @@ export class WebModuleLoader {
             const perModuleAlias = `const __hook_import = (spec) => (globalThis.__hook_import_with ? globalThis.__hook_import_with(String(spec), ${JSON.stringify(filename)}) : Promise.reject(new Error('__hook_import_with not available')));\n`;
             const __effectiveUrl = (fetchUrl || `${globalThis.location?.origin || 'http://localhost'}${filename}`);
             const __codePatched = code.replace(/\bimport\.meta\.url\b/g, JSON.stringify(__effectiveUrl));
-            console.debug('[WebModuleLoader] executeModule: filename', filename, 'has export?', /\bexport\b/.test(code), 'has marker?', /\/\*__ESM__\*\//.test(code));
+            const mkJsxFactory = (React) => {
+                if (!React)
+                    return undefined;
+                const elementType = (() => {
+                    try {
+                        if (React && typeof React.createElement === 'function') {
+                            const el = React.createElement('div', null);
+                            if (el && el.$$typeof)
+                                return el.$$typeof;
+                        }
+                    }
+                    catch { }
+                    return Symbol.for('react.element');
+                })();
+                return (type, config, maybeKey) => {
+                    let key = null;
+                    let ref = null;
+                    let props = {};
+                    if (maybeKey !== undefined) {
+                        key = String(maybeKey);
+                    }
+                    if (config) {
+                        for (let propName in config) {
+                            if (propName === 'key') {
+                                key = String(config.key);
+                            }
+                            else if (propName === 'ref') {
+                                ref = config.ref;
+                            }
+                            else {
+                                props[propName] = config[propName];
+                            }
+                        }
+                    }
+                    if (typeof type === 'string' && context.onElement) {
+                        try {
+                            context.onElement(type, props);
+                        }
+                        catch { }
+                    }
+                    return {
+                        '$$typeof': elementType,
+                        type,
+                        key,
+                        ref: ref || null,
+                        props
+                    };
+                };
+            };
+            // console.debug('[WebModuleLoader] executeModule: filename', filename, 'has export?', /\bexport\b/.test(code), 'has marker?', /\/\*__ESM__\*\//.test(code))
             const looksLikeESM = /\/\*__ESM__\*\//.test(code) || /\bexport\b/.test(code);
             if (looksLikeESM) {
                 try {
-                    console.error('[WebModuleLoader] Using ESM execution path for', filename);
+                    // debugOnce(`esm-path:${filename}`, '[WebModuleLoader] Using ESM execution path for', filename)
                     const dirname = filename.substring(0, filename.lastIndexOf('/') || 0);
                     const url = fetchUrl || `${globalThis.location?.origin || 'http://localhost'}${filename}`;
                     globalThis.__relay_meta = { filename, dirname, url };
                     const blob = new Blob([perModuleAlias, __codePatched], { type: 'text/javascript' });
                     const blobUrl = URL.createObjectURL(blob);
                     window.__hook_react = context.React;
-                    const createJsxFactory = (React) => {
-                        if (!React)
-                            return undefined;
-                        const elementType = (() => {
-                            try {
-                                if (React && typeof React.createElement === 'function') {
-                                    const el = React.createElement('div', null);
-                                    if (el && el.$$typeof)
-                                        return el.$$typeof;
-                                }
-                            }
-                            catch { }
-                            return Symbol.for('react.element');
-                        })();
-                        return (type, config, maybeKey) => {
-                            let key = null;
-                            let ref = null;
-                            let props = {};
-                            if (maybeKey !== undefined) {
-                                key = String(maybeKey);
-                            }
-                            if (config) {
-                                for (let propName in config) {
-                                    if (propName === 'key') {
-                                        key = String(config.key);
-                                    }
-                                    else if (propName === 'ref') {
-                                        ref = config.ref;
-                                    }
-                                    else {
-                                        props[propName] = config[propName];
-                                    }
-                                }
-                            }
-                            if (typeof type === 'string' && context.onElement) {
-                                try {
-                                    context.onElement(type, props);
-                                }
-                                catch { }
-                            }
-                            return {
-                                '$$typeof': elementType,
-                                type,
-                                key,
-                                ref: ref || null,
-                                props
-                            };
-                        };
-                    };
-                    const jsxFactory = createJsxFactory(context.React);
+                    const jsxFactory = mkJsxFactory(context.React);
                     const fragmentFactory = (context.React && (context.React.Fragment || context.React.Fragment)) ? (context.React.Fragment || context.React.Fragment) : undefined;
-                    window.__hook_jsx_runtime = { jsx: jsxFactory, jsxs: jsxFactory, Fragment: fragmentFactory };
-                    window.__jsx = jsxFactory;
-                    window.__jsxs = jsxFactory;
-                    window.__Fragment = fragmentFactory;
+                    if (!window.__hook_jsx_runtime) {
+                        window.__hook_jsx_runtime = { jsx: jsxFactory, jsxs: jsxFactory, Fragment: fragmentFactory };
+                    }
+                    if (!window.__jsx) {
+                        window.__jsx = jsxFactory;
+                        window.__jsxs = jsxFactory;
+                    }
+                    if (!window.__Fragment) {
+                        window.__Fragment = fragmentFactory;
+                    }
+                    ;
                     window.__hook_file_renderer = (context && context.FileRenderer) || null;
                     window.__hook_helpers = (context && context.helpers) || {};
                     await new Promise(resolve => setTimeout(resolve, 0));
                     window.__currentModulePath = filename;
                     const dynImport = new Function('u', 'return import(u)');
                     const ns = await dynImport(blobUrl);
-                    try {
-                        const keys = Object.keys(ns || {});
-                        console.debug('[WebModuleLoader] ESM module namespace keys:', keys, 'default type:', typeof (ns && ns.default));
-                    }
-                    catch { }
+                    // try {
+                    //     const keys = Object.keys(ns || {})
+                    //     debugOnce(`esm-ns:${filename}`, '[WebModuleLoader] ESM module namespace keys:', keys, 'default type:', typeof (ns && ns.default))
+                    // } catch { }
                     setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
                     const normalized = ns && ns.default ? { ...ns, default: ns.default } : ns;
                     return normalized;
@@ -178,52 +198,7 @@ try {
                 }
                 return {};
             }, module, exports, context);
-            const createJsxFactory2 = (React) => {
-                if (!React)
-                    return undefined;
-                const elementType = (() => {
-                    try {
-                        if (React && typeof React.createElement === 'function') {
-                            const el = React.createElement('div', null);
-                            if (el && el.$$typeof)
-                                return el.$$typeof;
-                        }
-                    }
-                    catch { }
-                    return Symbol.for('react.element');
-                })();
-                return (type, config, maybeKey) => {
-                    let key = null;
-                    let ref = null;
-                    let props = {};
-                    if (maybeKey !== undefined)
-                        key = String(maybeKey);
-                    if (config) {
-                        for (let propName in config) {
-                            if (propName === 'key')
-                                key = String(config.key);
-                            else if (propName === 'ref')
-                                ref = config.ref;
-                            else
-                                props[propName] = config[propName];
-                        }
-                    }
-                    if (typeof type === 'string' && context.onElement) {
-                        try {
-                            context.onElement(type, props);
-                        }
-                        catch { }
-                    }
-                    return {
-                        '$$typeof': elementType,
-                        type,
-                        key,
-                        ref: ref || null,
-                        props
-                    };
-                };
-            };
-            const jsxFactory2 = createJsxFactory2(context.React);
+            const jsxFactory2 = mkJsxFactory(context.React);
             const fragmentFactory = context.React?.Fragment;
             if (!globalThis.__hook_jsx_runtime) {
                 ;
@@ -396,6 +371,12 @@ export function applyHookRewrite(code) {
     const themedStylerRe = /import\s+\{\s*([^}]+)\s*\}\s+from\s+['"]@clevertree\/themed-styler['"];?/g;
     const themedStylerDefaultRe = /import\s+(\w+)\s+from\s+['"]@clevertree\/themed-styler['"];?/g;
     const themedStylerStarRe = /import\s*\*\s*as\s+(\w+)\s+from\s+['"]@clevertree\/themed-styler['"];?/g;
+    const hookTranspilerRe = /import\s+\{\s*([^}]+)\s*\}\s+from\s+['"]@clevertree\/hook-transpiler['"];?/g;
+    const hookTranspilerDefaultRe = /import\s+(\w+)\s+from\s+['"]@clevertree\/hook-transpiler['"];?/g;
+    const hookTranspilerStarRe = /import\s*\*\s*as\s+(\w+)\s+from\s+['"]@clevertree\/hook-transpiler['"];?/g;
+    const actRe = /import\s+\{\s*([^}]+)\s*\}\s+from\s+['"]@clevertree\/act['"];?/g;
+    const actDefaultRe = /import\s+(\w+)\s+from\s+['"]@clevertree\/act['"];?/g;
+    const actStarRe = /import\s*\*\s*as\s+(\w+)\s+from\s+['"]@clevertree\/act['"];?/g;
     const metaRe = /import\s+(\w+)\s+from\s+['"]@clevertree\/meta['"];?/g;
     const metaStarRe = /import\s*\*\s*as\s+(\w+)\s+from\s+['"]@clevertree\/meta['"];?/g;
     const metaDestructureRe = /import\s+\{\s*([^}]+)\s*\}\s+from\s+['"]@clevertree\/meta['"];?/g;
@@ -408,6 +389,12 @@ export function applyHookRewrite(code) {
     rewritten = rewritten.replace(themedStylerRe, (_m, destructure) => mkPackage('@clevertree/themed-styler', `{ ${destructure} }`));
     rewritten = rewritten.replace(themedStylerDefaultRe, (_m, name) => `const ${name} = ((globalThis && globalThis.__relay_packages && globalThis.__relay_packages['@clevertree/themed-styler']?.default) || (globalThis && globalThis.__relay_packages && globalThis.__relay_packages['@clevertree/themed-styler']) || {});`);
     rewritten = rewritten.replace(themedStylerStarRe, (_m, name) => mkPackage('@clevertree/themed-styler', name));
+    rewritten = rewritten.replace(hookTranspilerRe, (_m, destructure) => mkPackage('@clevertree/hook-transpiler', `{ ${destructure} }`));
+    rewritten = rewritten.replace(hookTranspilerDefaultRe, (_m, name) => `const ${name} = ((globalThis && globalThis.__relay_packages && globalThis.__relay_packages['@clevertree/hook-transpiler']?.default) || (globalThis && globalThis.__relay_packages && globalThis.__relay_packages['@clevertree/hook-transpiler']) || {});`);
+    rewritten = rewritten.replace(hookTranspilerStarRe, (_m, name) => mkPackage('@clevertree/hook-transpiler', name));
+    rewritten = rewritten.replace(actRe, (_m, destructure) => mkPackage('@clevertree/act', `{ ${destructure} }`));
+    rewritten = rewritten.replace(actDefaultRe, (_m, name) => `const ${name} = ((globalThis && globalThis.__relay_packages && globalThis.__relay_packages['@clevertree/act']?.default) || (globalThis && globalThis.__relay_packages && globalThis.__relay_packages['@clevertree/act']) || {});`);
+    rewritten = rewritten.replace(actStarRe, (_m, name) => mkPackage('@clevertree/act', name));
     rewritten = rewritten.replace(reactRe, (_m, named) => {
         let res = 'const React = (globalThis.__hook_react || globalThis.React);';
         if (named)
@@ -500,25 +487,22 @@ export class HookLoader {
         return '/' + resolved.join('/');
     }
     async loadModule(modulePath, fromPath = '/hooks/client/get-client.jsx', context) {
-        try {
-            console.error('[HookLoader] loadModule called:', { modulePath, fromPath });
-        }
-        catch { }
+        // try { console.debug('[HookLoader] loadModule called:', { modulePath, fromPath }) } catch { }
         // Normalize path early for consistent cache key
         const normalizedPath = this.normalizeToAbsolutePath(modulePath, fromPath);
         const cacheKey = `${this.host}:${normalizedPath}`;
         // Check completed module cache first
         if (this.moduleCache.has(cacheKey)) {
-            console.error('[HookLoader] Module cache HIT:', cacheKey);
+            // console.debug('[HookLoader] Module cache HIT:', cacheKey)
             return this.moduleCache.get(cacheKey);
         }
         // Check if fetch is already in progress
         if (this.pendingFetches.has(cacheKey)) {
-            console.error('[HookLoader] Pending fetch HIT (avoiding duplicate):', cacheKey);
+            // console.debug('[HookLoader] Pending fetch HIT (avoiding duplicate):', cacheKey)
             return this.pendingFetches.get(cacheKey);
         }
         // Start new fetch and cache the promise
-        console.error('[HookLoader] Starting NEW fetch:', cacheKey);
+        // console.debug('[HookLoader] Starting NEW fetch:', cacheKey)
         const fetchPromise = this._doLoadModule(normalizedPath, context, cacheKey);
         this.pendingFetches.set(cacheKey, fetchPromise);
         try {
@@ -556,28 +540,28 @@ export class HookLoader {
             let code = null;
             let moduleUrl = null;
             const attempts = buildAttempts(normalizedPath);
-            console.error('[HookLoader._doLoadModule] Fetch attempts:', { normalizedPath, attempts });
+            // console.debug('[HookLoader._doLoadModule] Fetch attempts:', { normalizedPath, attempts })
             for (const candidate of attempts) {
                 const url = `${this.protocol}://${this.host}${candidate}`;
-                console.error('[HookLoader] Loop iteration for candidate:', candidate, 'total attempts:', attempts.length);
+                // console.debug('[HookLoader] Loop iteration for candidate:', candidate, 'total attempts:', attempts.length)
                 try {
-                    console.error('[HookLoader.loadModule] Trying:', url);
+                    // console.debug('[HookLoader.loadModule] Trying:', url)
                     const response = await fetch(url, fetchOptions);
                     if (!response.ok) {
                         lastErr = new Error(`ModuleLoadError: ${url} → ${response.status} ${response.statusText}`);
-                        console.error('[HookLoader.loadModule] Not OK, continuing');
+                        // console.debug('[HookLoader.loadModule] Not OK, continuing');
                         continue;
                     }
                     const ct = (response.headers.get('content-type') || '').toLowerCase();
                     if (ct.includes('text/html')) {
                         lastErr = new Error(`ModuleLoadError: ${url} returned HTML (content-type=${ct})`);
-                        console.error('[HookLoader.loadModule] HTML response, continuing');
+                        // console.debug('[HookLoader.loadModule] HTML response, continuing');
                         continue;
                     }
                     code = await response.text();
-                    console.error('[HookLoader.loadModule] Fetched', candidate, 'got', code.length, 'bytes');
+                    // console.debug('[HookLoader.loadModule] Fetched', candidate, 'got', code.length, 'bytes')
                     moduleUrl = url;
-                    console.error('[HookLoader.loadModule] Success:', url, 'code length:', code.length);
+                    // console.debug('[HookLoader.loadModule] Success:', url, 'code length:', code.length)
                     break;
                 }
                 catch (e) {
@@ -588,7 +572,7 @@ export class HookLoader {
             }
             if (!code || !moduleUrl)
                 throw lastErr || new Error(`ModuleLoadError: ${this.protocol}://${this.host}${normalizedPath}`);
-            console.error('[HookLoader.loadModule] After loop:', { codeLengthOrNull: code ? code.length : null, moduleUrl });
+            // console.debug('[HookLoader.loadModule] After loop:', { codeLengthOrNull: code ? code.length : null, moduleUrl })
             let preprocessedCode = code;
             try {
                 preprocessedCode = await resolveStaticImports(code, normalizedPath, context);
@@ -623,11 +607,10 @@ export class HookLoader {
             let mod;
             try {
                 mod = await this.moduleLoader.executeModule(finalCode, normalizedPath, context, moduleUrl, false);
-                try {
-                    const keys = Object.keys(mod || {});
-                    console.error('[HookLoader] Loaded module', normalizedPath, 'keys:', keys, 'default type:', typeof (mod && mod.default));
-                }
-                catch { }
+                // try {
+                //     // const keys = Object.keys(mod || {})
+                //     // debugOnce(`loaded:${normalizedPath}`, '[HookLoader] Loaded module', normalizedPath, 'keys:', keys, 'default type:', typeof (mod && mod.default))
+                // } catch { }
             }
             catch (execErr) {
                 const execMsg = execErr?.message || String(execErr);
@@ -649,7 +632,7 @@ export class HookLoader {
         try {
             diag.phase = 'fetch';
             const hookUrl = `${this.protocol}://${this.host}${hookPath}`;
-            console.debug(`[HookLoader] Fetching hook from: ${hookUrl}`);
+            // console.debug(`[HookLoader] Fetching hook from: ${hookUrl}`)
             const requestHeaders = this.buildRequestHeaders(context);
             const fetchOptions = Object.keys(requestHeaders).length ? { headers: requestHeaders } : undefined;
             let response;
@@ -662,7 +645,7 @@ export class HookLoader {
                 console.error('[HookLoader] Fetch failed, got error immediately:', fetchErr);
                 throw fetchErr;
             }
-            console.debug(`[HookLoader] Received hook code (${code.length} chars)`);
+            // console.debug(`[HookLoader] Received hook code (${code.length} chars)`)
             diag.fetch = { status: response.status, ok: response.ok, contentType: response.headers.get('content-type') };
             if (!response.ok)
                 throw new Error(`ModuleLoadError: ${hookUrl} → ${response.status} ${response.statusText}`);
@@ -670,16 +653,16 @@ export class HookLoader {
             if (ct.includes('text/html'))
                 throw new Error(`ModuleLoadError: ${hookUrl} returned HTML (content-type=${ct})`);
             diag.codeLength = code.length;
-            console.error(`[HookLoader] About to resolve static imports for ${hookPath}`);
+            // console.debug(`[HookLoader] About to resolve static imports for ${hookPath}`)
             code = await resolveStaticImports(code, hookPath, context);
-            console.error(`[HookLoader] Static imports resolved for ${hookPath}`);
+            // console.debug(`[HookLoader] Static imports resolved for ${hookPath}`)
             diag.phase = 'transform';
             let finalCode = code;
             const esmHint = /\bexport\s+default\b/.test(code) || /\bimport\s*\(/.test(code);
             const shouldTranspile = !!this.transpiler || looksLikeTsOrJsx(code, hookPath);
             if (shouldTranspile) {
                 try {
-                    console.debug(`[HookLoader] Transpiling ${hookPath}`);
+                    // console.debug(`[HookLoader] Transpiling ${hookPath}`)
                     if (this.transpiler) {
                         finalCode = await this.transpiler(code, hookPath);
                         this.logTranspileResult(hookPath, finalCode);
@@ -687,7 +670,7 @@ export class HookLoader {
                     else {
                         finalCode = await transpileCode(code, { filename: hookPath, hasJsxPragma: /@jsx\s+h/m.test(code) }, false);
                     }
-                    console.debug(`[HookLoader] Transpilation complete (${finalCode.length} chars)`);
+                    // console.debug(`[HookLoader] Transpilation complete (${finalCode.length} chars)`)
                 }
                 catch (err) {
                     const msg = err?.message || String(err);
@@ -707,23 +690,23 @@ export class HookLoader {
                 const sample = finalCode.slice(0, 200);
                 const hasExport = /\bexport\b/.test(finalCode);
                 const hasMarker = /\/\*__ESM__\*\//.test(finalCode);
-                console.error('[HookLoader] Final code ESM hint:', { esmHint, hasExport, hasMarker, sample });
+                debugOnce(`final-hint:${hookPath}`, '[HookLoader] Final code ESM hint:', { esmHint, hasExport, hasMarker, sample });
             }
             catch { }
             diag.phase = 'import';
-            console.debug(`[HookLoader] Executing hook module`);
+            // console.debug(`[HookLoader] Executing hook module`)
             try {
                 const mod = await this.moduleLoader.executeModule(finalCode, hookPath, context, hookUrl, true);
                 if (!mod || typeof mod.default !== 'function')
                     throw new Error('Hook module does not export a default function');
                 diag.phase = 'exec';
-                console.debug(`[HookLoader] Rendering hook component`);
+                // console.debug(`[HookLoader] Rendering hook component`)
                 const Comp = mod.default;
                 const createEl = (context && context.createElement) || (context && context.React && context.React.createElement);
                 if (typeof createEl !== 'function')
                     throw new Error('React createElement not available');
                 const element = createEl(Comp, context);
-                console.debug(`[HookLoader] Hook component element created`);
+                // console.debug(`[HookLoader] Hook component element created`)
                 return element;
             }
             catch (execErr) {

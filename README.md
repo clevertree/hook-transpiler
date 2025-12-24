@@ -58,6 +58,8 @@ const MyApp = () => (
 );
 ```
 
+If you omit `hookPath`, `HookRenderer` will issue an `OPTIONS` request to the provided `host` to discover the hook path. The response can provide the path via an `x-hook-path` (or `x-relay-hook-path`) header, or as JSON `{ hookPath: "/hooks/client/get-client.jsx" }`. When `hookPath` is supplied, no discovery `OPTIONS` call is made.
+
 #### WASM Loading & Bundler Configuration
 
 The WASM files are loaded dynamically by `initHookTranspiler()`. Here are key points for different bundlers:
@@ -188,6 +190,61 @@ import { assertTranspilerReady, HookRenderer } from '@clevertree/hook-transpiler
 - **`transpileCode(code, options)`**: Lower-level API for manual transpilation.
 - **`initHookTranspiler()` / `initTranspiler()`**: Initialize the WASM transpiler for web.
 - **`assertTranspilerReady()`** (Android): Verify native transpiler binding is available.
+
+## Import Handling & Metadata
+
+The transpiler provides both code output and import metadata to help the runtime safely rewrite special imports and resolve modules consistently across platforms.
+
+### WASM Exports
+- **`transpile_jsx(source, filename, is_typescript?)`**: Returns `{ code, error }`.
+- **`transpile_jsx_with_metadata(source, filename, is_typescript?)`**: Returns `{ code, metadata, error }`, where `metadata` includes:
+  - `imports`: Array of `{ source, kind, bindings }`
+    - `kind.type`: One of `Builtin` | `SpecialPackage` | `Module`
+    - `bindings`: Array of `{ binding_type, name, alias? }`
+      - `binding_type.type`: `Default` | `Named` | `Namespace`
+  - `has_jsx`: Whether the source contains JSX
+  - `has_dynamic_import`: Whether the source uses dynamic `import()`
+  - `version`: Transpiler version string
+
+### Special Package Rewriting
+The runtime rewrites imports for certain packages to platform-provided globals so hooks run without bundler-specific resolution:
+
+Recognized special packages:
+- `react`
+- `react-dom`
+- `@clevertree/meta`
+- `@clevertree/file-renderer`
+- `@clevertree/helpers`
+- `@clevertree/markdown`
+
+These are mapped to runtime globals (examples):
+- React automatic runtime helpers → `globalThis.__hook_jsx_runtime`
+- Module metadata (`filename`, `dirname`, `url`) → `globalThis.__relay_meta`
+
+Note: Do not add `import React from 'react'` in hooks. The transpiler uses the automatic JSX runtime and injects the necessary helpers.
+
+### Runtime Integration
+On web, the WASM init exposes both functions and the runtime will prefer metadata when available:
+
+```ts
+import { initHookTranspiler } from '@clevertree/hook-transpiler'
+
+await initHookTranspiler()
+
+// Provided by init:
+// globalThis.__hook_transpile_jsx
+// globalThis.__hook_transpile_jsx_with_metadata (if supported)
+
+const src = "import { dirname } from '@clevertree/meta'\n<div>Hello</div>"
+const res = globalThis.__hook_transpile_jsx_with_metadata
+  ? globalThis.__hook_transpile_jsx_with_metadata(src, 'example.jsx')
+  : globalThis.__hook_transpile_jsx(src, 'example.jsx')
+
+// res.code -> transpiled JS using automatic JSX runtime
+// res.metadata -> imports, feature flags, version
+```
+
+The runtime will always apply a lightweight import rewrite to special packages and JSX runtime helpers to ensure hooks execute consistently in production builds.
 
 ## Features
 

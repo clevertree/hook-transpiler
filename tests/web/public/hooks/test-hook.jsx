@@ -6,7 +6,7 @@ import { namespaceValue as nsValue, tags as nsTags } from "./ns-helper.js";
 const { items: seededItems, meta, mapNote } = sample;
 
 export default function TestHook(context = {}) {
-    console.log("[TestHook] Component function called");
+    // console.log("[TestHook] Component function called");
     const { env: { theme = "light" } = {} } = context;
     const [items, setItems] = useState(seededItems);
     const [{ lazyMessage, nestedMessage }, setLazyState] = useState({ lazyMessage: null, nestedMessage: null });
@@ -22,7 +22,7 @@ export default function TestHook(context = {}) {
             import("./dir/index.js")
         ])
             .then(([rel, abs, nested, dirIndex]) => {
-                console.log("[TestHook] Lazy imports resolved:", { rel: rel.default, abs: abs.default, nested: nested.default, dirIndex: dirIndex.default });
+                // console.log("[TestHook] Lazy imports resolved:", { rel: rel.default, abs: abs.default, nested: nested.default, dirIndex: dirIndex.default });
                 if (!active) return;
                 setLazyState({
                     lazyMessage: `${rel.default} + ${abs.default}`,

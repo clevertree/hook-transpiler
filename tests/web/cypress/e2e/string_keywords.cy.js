@@ -39,7 +39,8 @@ describe('String Keywords Transpilation', () => {
   })
 
   it('renders the string keywords test section', () => {
-    cy.contains('String Keywords Test', { timeout: 10000 })
+    // The section header rendered by the test app
+    cy.contains('Reserved Keywords in strings Test', { timeout: 10000 })
       .should('be.visible')
       .should('have.class', 'font-semibold')
   })

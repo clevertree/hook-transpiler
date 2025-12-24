@@ -9,6 +9,13 @@ struct WasmTranspileResult {
     error: Option<String>,
 }
 
+#[derive(Serialize)]
+struct WasmTranspileResultWithMetadata {
+    code: Option<String>,
+    metadata: Option<crate::TranspileMetadata>,
+    error: Option<String>,
+}
+
 #[wasm_bindgen]
 pub fn transpile_jsx(source: &str, filename: &str, is_typescript: Option<bool>) -> JsValue {
     let is_typescript = is_typescript.unwrap_or_else(|| {
@@ -33,6 +40,29 @@ pub fn transpile_jsx(source: &str, filename: &str, is_typescript: Option<bool>) 
 #[wasm_bindgen]
 pub fn get_version() -> String {
     version().to_string()
+}
+
+#[wasm_bindgen]
+pub fn transpile_jsx_with_metadata(source: &str, filename: &str, is_typescript: Option<bool>) -> JsValue {
+    let is_typescript = is_typescript.unwrap_or_else(|| {
+        filename.ends_with(".ts") || filename.ends_with(".tsx")
+    });
+    let opts = TranspileOptions { is_typescript };
+    
+    let result = match crate::jsx_parser::transpile_jsx_with_metadata(source, &opts) {
+        Ok((code, metadata)) => WasmTranspileResultWithMetadata {
+            code: Some(code),
+            metadata: Some(metadata),
+            error: None,
+        },
+        Err(err) => WasmTranspileResultWithMetadata {
+            code: None,
+            metadata: None,
+            error: Some(err.to_string()),
+        },
+    };
+    to_value(&result)
+        .unwrap_or_else(|err| JsValue::from_str(&format!("serde-wasm-bindgen error: {err}")))
 }
 
 #[wasm_bindgen]

@@ -195,6 +195,21 @@ export function transpile_jsx(source, filename, is_typescript) {
     return ret;
 }
 
+/**
+ * @param {string} source
+ * @param {string} filename
+ * @param {boolean | null} [is_typescript]
+ * @returns {any}
+ */
+export function transpile_jsx_with_metadata(source, filename, is_typescript) {
+    const ptr0 = passStringToWasm0(source, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+    const len0 = WASM_VECTOR_LEN;
+    const ptr1 = passStringToWasm0(filename, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+    const len1 = WASM_VECTOR_LEN;
+    const ret = wasm.transpile_jsx_with_metadata(ptr0, len0, ptr1, len1, isLikeNone(is_typescript) ? 0xFFFFFF : is_typescript ? 1 : 0);
+    return ret;
+}
+
 const EXPECTED_RESPONSE_TYPES = new Set(['basic', 'cors', 'default']);
 
 async function __wbg_load(module, imports) {

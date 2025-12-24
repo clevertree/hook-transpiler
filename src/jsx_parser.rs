@@ -1187,6 +1187,189 @@ fn escape_string(s: &str) -> String {
         .replace('\t', "\\t")
 }
 
+/// Extract import metadata and feature flags from source
+pub fn extract_imports_and_features(source: &str) -> (Vec<crate::ImportMetadata>, bool, bool) {
+    let mut imports = Vec::new();
+    let has_jsx = source.contains('<') && (source.contains("/>") || source.contains("</"));
+    let has_dynamic_import = source.contains("import(");
+
+    for raw_line in source.lines() {
+        let line = raw_line.trim_start();
+        if !line.starts_with("import ") { continue; }
+
+        // Strip trailing semicolon
+        let line = line.trim_end_matches(';').trim_end();
+
+        // Quick skip for side-effect imports: import 'x'
+        if let Some(spec) = parse_side_effect_specifier(line) {
+            imports.push(crate::ImportMetadata { source: spec.to_string(), kind: determine_import_kind(spec), bindings: Vec::new() });
+            continue;
+        }
+
+        // Forms we handle (simple):
+        // import { a, b as c } from 'mod'
+        // import * as NS from "mod"
+        // import Default from 'mod'
+        // Note: combined default + named not currently needed by tests
+
+        if let Some((named_clause, spec)) = parse_named_import(line) {
+            let mut bindings = Vec::new();
+            for part in named_clause.split(',') {
+                let p = part.trim();
+                if p.is_empty() { continue; }
+                let segs: Vec<&str> = p.split(" as ").collect();
+                let name = segs[0].trim();
+                if !name.is_empty() {
+                    bindings.push(crate::ImportBinding { binding_type: crate::ImportBindingType::Named, name: name.to_string(), alias: segs.get(1).map(|s| s.trim().to_string()) });
+                }
+            }
+            imports.push(crate::ImportMetadata { source: spec.to_string(), kind: determine_import_kind(spec), bindings });
+            continue;
+        }
+
+        if let Some((ns_name, spec)) = parse_namespace_import(line) {
+            imports.push(crate::ImportMetadata { source: spec.to_string(), kind: determine_import_kind(spec), bindings: vec![crate::ImportBinding { binding_type: crate::ImportBindingType::Namespace, name: ns_name.to_string(), alias: None }] });
+            continue;
+        }
+
+        if let Some((default_name, spec)) = parse_default_import(line) {
+            imports.push(crate::ImportMetadata { source: spec.to_string(), kind: determine_import_kind(spec), bindings: vec![crate::ImportBinding { binding_type: crate::ImportBindingType::Default, name: default_name.to_string(), alias: None }] });
+            continue;
+        }
+    }
+
+    (imports, has_jsx, has_dynamic_import)
+}
+
+fn parse_quoted_spec(s: &str) -> Option<&str> {
+    let bytes = s.as_bytes();
+    let first = *bytes.get(0)?;
+    if first != b'"' && first != b'\'' { return None; }
+    let quote = first as char;
+    let mut i = 1;
+    while i < bytes.len() {
+        let c = bytes[i] as char;
+        if c == '\\' { i += 2; continue; }
+        if c == quote { return Some(&s[1..i]); }
+        i += 1;
+    }
+    None
+}
+
+fn parse_side_effect_specifier(line: &str) -> Option<&str> {
+    // import 'module'
+    if let Some(idx) = line.find("import ") {
+        let rest = line[idx + 7..].trim_start();
+        if rest.starts_with('\'') || rest.starts_with('"') {
+            return parse_quoted_spec(rest);
+        }
+    }
+    None
+}
+
+fn parse_named_import(line: &str) -> Option<(&str, &str)> {
+    // import { a, b as c } from 'mod'
+    if !line.starts_with("import ") { return None; }
+    let after = &line[7..];
+    let after = after.trim_start();
+    if !after.starts_with('{') { return None; }
+    let close = after.find('}')?;
+    let named = &after[1..close];
+    let rest = after[close+1..].trim_start();
+    if !rest.starts_with("from ") { return None; }
+    let spec = rest[5..].trim_start();
+    let spec = parse_quoted_spec(spec)?;
+    Some((named, spec))
+}
+
+fn parse_namespace_import(line: &str) -> Option<(&str, &str)> {
+    // import * as NS from 'mod'
+    if !line.starts_with("import ") { return None; }
+    let mut rest = &line[7..];
+    rest = rest.trim_start();
+    if !rest.starts_with("* as ") { return None; }
+    rest = &rest[5..];
+    // read identifier
+    let mut end = 0;
+    for ch in rest.chars() {
+        if ch.is_alphanumeric() || ch == '_' || ch == '$' { end += ch.len_utf8(); } else { break; }
+    }
+    if end == 0 { return None; }
+    let name = &rest[..end];
+    rest = rest[end..].trim_start();
+    if !rest.starts_with("from ") { return None; }
+    let spec = &rest[5..];
+    let spec = parse_quoted_spec(spec)?;
+    Some((name, spec))
+}
+
+fn parse_default_import(line: &str) -> Option<(&str, &str)> {
+    // import Default from 'mod'
+    if !line.starts_with("import ") { return None; }
+    let mut rest = &line[7..];
+    rest = rest.trim_start();
+    // read identifier
+    let mut end = 0;
+    for ch in rest.chars() {
+        if ch.is_alphanumeric() || ch == '_' || ch == '$' { end += ch.len_utf8(); } else { break; }
+    }
+    if end == 0 { return None; }
+    let name = &rest[..end];
+    rest = rest[end..].trim_start();
+    if !rest.starts_with("from ") { return None; }
+    let spec = &rest[5..];
+    let spec = parse_quoted_spec(spec)?;
+    Some((name, spec))
+}
+
+fn determine_import_kind(source: &str) -> crate::ImportKind {
+    // List of Node.js builtin modules
+    let builtins = [
+        "assert", "buffer", "child_process", "cluster", "crypto", "dgram",
+        "dns", "domain", "events", "fs", "http", "https", "net", "os",
+        "path", "punycode", "querystring", "readline", "stream", "string_decoder",
+        "timers", "tls", "tty", "url", "util", "v8", "vm", "zlib",
+    ];
+    
+    // Check if it's a builtin
+    let module_name = source.split('/').next().unwrap_or(source);
+    if builtins.contains(&module_name) || source.starts_with("node:") {
+        return crate::ImportKind::Builtin;
+    }
+    
+    // Special packages that need rewriting
+    let special_packages = [
+        "react",
+        "react-dom",
+        "@clevertree/meta",
+        "@clevertree/file-renderer",
+        "@clevertree/helpers",
+        "@clevertree/markdown",
+    ];
+    
+    if special_packages.contains(&source) {
+        return crate::ImportKind::SpecialPackage;
+    }
+    
+    // Everything else is a module
+    crate::ImportKind::Module
+}
+
+/// Transpile JSX and return metadata about the module
+pub fn transpile_jsx_with_metadata(source: &str, opts: &TranspileOptions) -> Result<(String, crate::TranspileMetadata)> {
+    let code = transpile_jsx(source, opts)?;
+    let (imports, has_jsx, has_dynamic_import) = extract_imports_and_features(source);
+    
+    let metadata = crate::TranspileMetadata {
+        imports,
+        has_jsx,
+        has_dynamic_import,
+        version: crate::version().to_string(),
+    };
+    
+    Ok((code, metadata))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

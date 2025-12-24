@@ -1,5 +1,8 @@
 mod jsx_parser;
 
+#[cfg(feature = "wasm")]
+use serde::{Deserialize, Serialize};
+
 pub struct TranspileOptions {
     pub is_typescript: bool,
 }
@@ -10,6 +13,51 @@ impl Default for TranspileOptions {
             is_typescript: false,
         }
     }
+}
+
+/// Describes a single import statement
+#[cfg_attr(feature = "wasm", derive(Serialize, Deserialize))]
+#[derive(Debug, Clone, PartialEq)]
+pub struct ImportMetadata {
+    pub source: String,
+    pub kind: ImportKind,
+    pub bindings: Vec<ImportBinding>,
+}
+
+#[cfg_attr(feature = "wasm", derive(Serialize, Deserialize))]
+#[derive(Debug, Clone, PartialEq)]
+#[serde(tag = "type", content = "value")]
+pub enum ImportKind {
+    Builtin,
+    SpecialPackage,
+    Module,
+}
+
+#[cfg_attr(feature = "wasm", derive(Serialize, Deserialize))]
+#[derive(Debug, Clone, PartialEq)]
+pub struct ImportBinding {
+    pub binding_type: ImportBindingType,
+    pub name: String,
+    pub alias: Option<String>,
+}
+
+#[cfg_attr(feature = "wasm", derive(Serialize, Deserialize))]
+#[derive(Debug, Clone, PartialEq)]
+#[serde(tag = "type")]
+pub enum ImportBindingType {
+    Default,
+    Named,
+    Namespace,
+}
+
+/// Metadata about a transpiled module
+#[cfg_attr(feature = "wasm", derive(Serialize, Deserialize))]
+#[derive(Debug, Clone, PartialEq)]
+pub struct TranspileMetadata {
+    pub imports: Vec<ImportMetadata>,
+    pub has_jsx: bool,
+    pub has_dynamic_import: bool,
+    pub version: String,
 }
 
 /// Returns the crate version

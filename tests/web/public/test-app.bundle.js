@@ -24442,10 +24442,10 @@ var require_react_jsx_runtime_development = __commonJS({
           }
         }
         var jsx2 = jsxWithValidationDynamic;
-        var jsxs = jsxWithValidationStatic;
+        var jsxs2 = jsxWithValidationStatic;
         exports.Fragment = REACT_FRAGMENT_TYPE;
         exports.jsx = jsx2;
-        exports.jsxs = jsxs;
+        exports.jsxs = jsxs2;
       })();
     }
   }
@@ -24470,7 +24470,8 @@ __export(relay_hook_transpiler_exports, {
   get_version: () => get_version,
   initSync: () => initSync,
   run_self_test: () => run_self_test,
-  transpile_jsx: () => transpile_jsx
+  transpile_jsx: () => transpile_jsx,
+  transpile_jsx_with_metadata: () => transpile_jsx_with_metadata
 });
 function debugString(val) {
   const type = typeof val;
@@ -24609,6 +24610,14 @@ function transpile_jsx(source, filename, is_typescript) {
   const ptr1 = passStringToWasm0(filename, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
   const len1 = WASM_VECTOR_LEN;
   const ret = wasm.transpile_jsx(ptr0, len0, ptr1, len1, isLikeNone(is_typescript) ? 16777215 : is_typescript ? 1 : 0);
+  return ret;
+}
+function transpile_jsx_with_metadata(source, filename, is_typescript) {
+  const ptr0 = passStringToWasm0(source, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+  const len0 = WASM_VECTOR_LEN;
+  const ptr1 = passStringToWasm0(filename, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+  const len1 = WASM_VECTOR_LEN;
+  const ret = wasm.transpile_jsx_with_metadata(ptr0, len0, ptr1, len1, isLikeNone(is_typescript) ? 16777215 : is_typescript ? 1 : 0);
   return ret;
 }
 async function __wbg_load(module, imports) {
@@ -32089,6 +32098,19 @@ var import_react6 = __toESM(require_react(), 1);
 var import_client = __toESM(require_client(), 1);
 
 // ../../dist/web/runtimeLoader.js
+var __logConfig = globalThis.__relay_log_config || { dedupe: true };
+globalThis.__relay_log_config = __logConfig;
+var __logOnce = globalThis.__relay_log_once || /* @__PURE__ */ new Set();
+globalThis.__relay_log_once = __logOnce;
+function debugOnce(key2, ...args) {
+  try {
+    if (__logConfig?.dedupe && __logOnce.has(key2))
+      return;
+    __logOnce.add(key2);
+    console.debug(...args);
+  } catch {
+  }
+}
 var WebModuleLoader = class {
   async executeModule(code, filename, context, fetchUrl, isMainHook = false) {
     const exports = {};
@@ -32098,12 +32120,10 @@ var WebModuleLoader = class {
       window.__ctx__ = context;
       window.__hook_import_with = async (spec, fromFile) => {
         try {
-          console.error("[WebModuleLoader] __hook_import_with call:", spec, "from", fromFile);
           const fn2 = context && context.helpers && typeof context.helpers.loadModule === "function" ? context.helpers.loadModule : null;
           if (!fn2)
             throw new Error("__hook_import_with unavailable: helpers.loadModule not available");
           const result = await fn2(spec, fromFile);
-          console.error("[WebModuleLoader] __hook_import_with resolved successfully for", spec, "result keys:", Object.keys(result || {}));
           return result;
         } catch (e) {
           console.error("[WebModuleLoader] __hook_import_with failed for", spec, "from", fromFile, "error:", e instanceof Error ? e.message : e);
@@ -32114,81 +32134,81 @@ var WebModuleLoader = class {
 `;
       const __effectiveUrl = fetchUrl || `${globalThis.location?.origin || "http://localhost"}${filename}`;
       const __codePatched = code.replace(/\bimport\.meta\.url\b/g, JSON.stringify(__effectiveUrl));
-      console.debug("[WebModuleLoader] executeModule: filename", filename, "has export?", /\bexport\b/.test(code), "has marker?", /\/\*__ESM__\*\//.test(code));
+      const mkJsxFactory = (React5) => {
+        if (!React5)
+          return void 0;
+        const elementType = (() => {
+          try {
+            if (React5 && typeof React5.createElement === "function") {
+              const el = React5.createElement("div", null);
+              if (el && el.$$typeof)
+                return el.$$typeof;
+            }
+          } catch {
+          }
+          return Symbol.for("react.element");
+        })();
+        return (type, config, maybeKey) => {
+          let key2 = null;
+          let ref = null;
+          let props = {};
+          if (maybeKey !== void 0) {
+            key2 = String(maybeKey);
+          }
+          if (config) {
+            for (let propName in config) {
+              if (propName === "key") {
+                key2 = String(config.key);
+              } else if (propName === "ref") {
+                ref = config.ref;
+              } else {
+                props[propName] = config[propName];
+              }
+            }
+          }
+          if (typeof type === "string" && context.onElement) {
+            try {
+              context.onElement(type, props);
+            } catch {
+            }
+          }
+          return {
+            "$$typeof": elementType,
+            type,
+            key: key2,
+            ref: ref || null,
+            props
+          };
+        };
+      };
       const looksLikeESM = /\/\*__ESM__\*\//.test(code) || /\bexport\b/.test(code);
       if (looksLikeESM) {
         try {
-          console.error("[WebModuleLoader] Using ESM execution path for", filename);
           const dirname = filename.substring(0, filename.lastIndexOf("/") || 0);
           const url = fetchUrl || `${globalThis.location?.origin || "http://localhost"}${filename}`;
           globalThis.__relay_meta = { filename, dirname, url };
           const blob = new Blob([perModuleAlias, __codePatched], { type: "text/javascript" });
           const blobUrl = URL.createObjectURL(blob);
           window.__hook_react = context.React;
-          const createJsxFactory = (React5) => {
-            if (!React5)
-              return void 0;
-            const elementType = (() => {
-              try {
-                if (React5 && typeof React5.createElement === "function") {
-                  const el = React5.createElement("div", null);
-                  if (el && el.$$typeof)
-                    return el.$$typeof;
-                }
-              } catch {
-              }
-              return Symbol.for("react.element");
-            })();
-            return (type, config, maybeKey) => {
-              let key2 = null;
-              let ref = null;
-              let props = {};
-              if (maybeKey !== void 0) {
-                key2 = String(maybeKey);
-              }
-              if (config) {
-                for (let propName in config) {
-                  if (propName === "key") {
-                    key2 = String(config.key);
-                  } else if (propName === "ref") {
-                    ref = config.ref;
-                  } else {
-                    props[propName] = config[propName];
-                  }
-                }
-              }
-              if (typeof type === "string" && context.onElement) {
-                try {
-                  context.onElement(type, props);
-                } catch {
-                }
-              }
-              return {
-                "$$typeof": elementType,
-                type,
-                key: key2,
-                ref: ref || null,
-                props
-              };
-            };
-          };
-          const jsxFactory = createJsxFactory(context.React);
+          const jsxFactory = mkJsxFactory(context.React);
           const fragmentFactory2 = context.React && (context.React.Fragment || context.React.Fragment) ? context.React.Fragment || context.React.Fragment : void 0;
-          window.__hook_jsx_runtime = { jsx: jsxFactory, jsxs: jsxFactory, Fragment: fragmentFactory2 };
-          window.__jsx = jsxFactory;
-          window.__jsxs = jsxFactory;
-          window.__Fragment = fragmentFactory2;
+          if (!window.__hook_jsx_runtime) {
+            window.__hook_jsx_runtime = { jsx: jsxFactory, jsxs: jsxFactory, Fragment: fragmentFactory2 };
+          }
+          if (!window.__jsx) {
+            window.__jsx = jsxFactory;
+            window.__jsxs = jsxFactory;
+          }
+          if (!window.__Fragment) {
+            window.__Fragment = fragmentFactory2;
+          }
+          ;
           window.__hook_file_renderer = context && context.FileRenderer || null;
           window.__hook_helpers = context && context.helpers || {};
           await new Promise((resolve) => setTimeout(resolve, 0));
           window.__currentModulePath = filename;
           const dynImport = new Function("u", "return import(u)");
           const ns = await dynImport(blobUrl);
-          try {
-            const keys = Object.keys(ns || {});
-            console.debug("[WebModuleLoader] ESM module namespace keys:", keys, "default type:", typeof (ns && ns.default));
-          } catch {
-          }
           setTimeout(() => URL.revokeObjectURL(blobUrl), 1e3);
           const normalized = ns && ns.default ? { ...ns, default: ns.default } : ns;
           return normalized;
@@ -32263,52 +32283,7 @@ try {
         }
         return {};
       }, module, exports, context);
-      const createJsxFactory2 = (React5) => {
-        if (!React5)
-          return void 0;
-        const elementType = (() => {
-          try {
-            if (React5 && typeof React5.createElement === "function") {
-              const el = React5.createElement("div", null);
-              if (el && el.$$typeof)
-                return el.$$typeof;
-            }
-          } catch {
-          }
-          return Symbol.for("react.element");
-        })();
-        return (type, config, maybeKey) => {
-          let key2 = null;
-          let ref = null;
-          let props = {};
-          if (maybeKey !== void 0)
-            key2 = String(maybeKey);
-          if (config) {
-            for (let propName in config) {
-              if (propName === "key")
-                key2 = String(config.key);
-              else if (propName === "ref")
-                ref = config.ref;
-              else
-                props[propName] = config[propName];
-            }
-          }
-          if (typeof type === "string" && context.onElement) {
-            try {
-              context.onElement(type, props);
-            } catch {
-            }
-          }
-          return {
-            "$$typeof": elementType,
-            type,
-            key: key2,
-            ref: ref || null,
-            props
-          };
-        };
-      };
-      const jsxFactory2 = createJsxFactory2(context.React);
+      const jsxFactory2 = mkJsxFactory(context.React);
       const fragmentFactory = context.React?.Fragment;
       if (!globalThis.__hook_jsx_runtime) {
         ;
@@ -32468,8 +32443,18 @@ function rewriteDynamicImports(code) {
 }
 function applyHookRewrite(code) {
   const mkBuiltin = (spec, destructure) => `const ${destructure} = ((globalThis && globalThis.__relay_builtins && globalThis.__relay_builtins['${spec}']) || {});`;
+  const mkPackage = (spec, destructure) => `const ${destructure} = ((globalThis && globalThis.__relay_packages && globalThis.__relay_packages['${spec}']) || {});`;
   const markdownRe = /import\s+\{\s*MarkdownRenderer\s*\}\s+from\s+['"]@clevertree\/markdown['"];?/g;
   const themeRe = /import\s+\{\s*registerThemesFromYaml\s*\}\s+from\s+['"]@clevertree\/theme['"];?/g;
+  const themedStylerRe = /import\s+\{\s*([^}]+)\s*\}\s+from\s+['"]@clevertree\/themed-styler['"];?/g;
+  const themedStylerDefaultRe = /import\s+(\w+)\s+from\s+['"]@clevertree\/themed-styler['"];?/g;
+  const themedStylerStarRe = /import\s*\*\s*as\s+(\w+)\s+from\s+['"]@clevertree\/themed-styler['"];?/g;
+  const hookTranspilerRe = /import\s+\{\s*([^}]+)\s*\}\s+from\s+['"]@clevertree\/hook-transpiler['"];?/g;
+  const hookTranspilerDefaultRe = /import\s+(\w+)\s+from\s+['"]@clevertree\/hook-transpiler['"];?/g;
+  const hookTranspilerStarRe = /import\s*\*\s*as\s+(\w+)\s+from\s+['"]@clevertree\/hook-transpiler['"];?/g;
+  const actRe = /import\s+\{\s*([^}]+)\s*\}\s+from\s+['"]@clevertree\/act['"];?/g;
+  const actDefaultRe = /import\s+(\w+)\s+from\s+['"]@clevertree\/act['"];?/g;
+  const actStarRe = /import\s*\*\s*as\s+(\w+)\s+from\s+['"]@clevertree\/act['"];?/g;
   const metaRe = /import\s+(\w+)\s+from\s+['"]@clevertree\/meta['"];?/g;
   const metaStarRe = /import\s*\*\s*as\s+(\w+)\s+from\s+['"]@clevertree\/meta['"];?/g;
   const metaDestructureRe = /import\s+\{\s*([^}]+)\s*\}\s+from\s+['"]@clevertree\/meta['"];?/g;
@@ -32479,6 +32464,15 @@ function applyHookRewrite(code) {
   const jsxRuntimeRe = /import\s+\{\s*jsx\s+as\s+(_jsx)\s*,\s*jsxs\s+as\s+(_jsxs)\s*,\s*Fragment\s+as\s+(_Fragment)\s*\}\s+from\s+['"]react\/jsx-runtime['"];?/g;
   let rewritten = code.replace(markdownRe, mkBuiltin("@clevertree/markdown", "{ MarkdownRenderer }"));
   rewritten = rewritten.replace(themeRe, mkBuiltin("@clevertree/theme", "{ registerThemesFromYaml }"));
+  rewritten = rewritten.replace(themedStylerRe, (_m, destructure) => mkPackage("@clevertree/themed-styler", `{ ${destructure} }`));
+  rewritten = rewritten.replace(themedStylerDefaultRe, (_m, name) => `const ${name} = ((globalThis && globalThis.__relay_packages && globalThis.__relay_packages['@clevertree/themed-styler']?.default) || (globalThis && globalThis.__relay_packages && globalThis.__relay_packages['@clevertree/themed-styler']) || {});`);
+  rewritten = rewritten.replace(themedStylerStarRe, (_m, name) => mkPackage("@clevertree/themed-styler", name));
+  rewritten = rewritten.replace(hookTranspilerRe, (_m, destructure) => mkPackage("@clevertree/hook-transpiler", `{ ${destructure} }`));
+  rewritten = rewritten.replace(hookTranspilerDefaultRe, (_m, name) => `const ${name} = ((globalThis && globalThis.__relay_packages && globalThis.__relay_packages['@clevertree/hook-transpiler']?.default) || (globalThis && globalThis.__relay_packages && globalThis.__relay_packages['@clevertree/hook-transpiler']) || {});`);
+  rewritten = rewritten.replace(hookTranspilerStarRe, (_m, name) => mkPackage("@clevertree/hook-transpiler", name));
+  rewritten = rewritten.replace(actRe, (_m, destructure) => mkPackage("@clevertree/act", `{ ${destructure} }`));
+  rewritten = rewritten.replace(actDefaultRe, (_m, name) => `const ${name} = ((globalThis && globalThis.__relay_packages && globalThis.__relay_packages['@clevertree/act']?.default) || (globalThis && globalThis.__relay_packages && globalThis.__relay_packages['@clevertree/act']) || {});`);
+  rewritten = rewritten.replace(actStarRe, (_m, name) => mkPackage("@clevertree/act", name));
   rewritten = rewritten.replace(reactRe, (_m, named) => {
     let res = "const React = (globalThis.__hook_react || globalThis.React);";
     if (named)
@@ -32564,21 +32558,14 @@ var HookLoader = class {
     return "/" + resolved.join("/");
   }
   async loadModule(modulePath, fromPath = "/hooks/client/get-client.jsx", context) {
-    try {
-      console.error("[HookLoader] loadModule called:", { modulePath, fromPath });
-    } catch {
-    }
     const normalizedPath = this.normalizeToAbsolutePath(modulePath, fromPath);
     const cacheKey = `${this.host}:${normalizedPath}`;
     if (this.moduleCache.has(cacheKey)) {
-      console.error("[HookLoader] Module cache HIT:", cacheKey);
       return this.moduleCache.get(cacheKey);
     }
     if (this.pendingFetches.has(cacheKey)) {
-      console.error("[HookLoader] Pending fetch HIT (avoiding duplicate):", cacheKey);
       return this.pendingFetches.get(cacheKey);
     }
-    console.error("[HookLoader] Starting NEW fetch:", cacheKey);
     const fetchPromise = this._doLoadModule(normalizedPath, context, cacheKey);
     this.pendingFetches.set(cacheKey, fetchPromise);
     try {
@@ -32614,28 +32601,21 @@ var HookLoader = class {
       let code = null;
       let moduleUrl = null;
       const attempts = buildAttempts(normalizedPath);
-      console.error("[HookLoader._doLoadModule] Fetch attempts:", { normalizedPath, attempts });
       for (const candidate of attempts) {
         const url = `${this.protocol}://${this.host}${candidate}`;
-        console.error("[HookLoader] Loop iteration for candidate:", candidate, "total attempts:", attempts.length);
         try {
-          console.error("[HookLoader.loadModule] Trying:", url);
           const response = await fetch(url, fetchOptions);
           if (!response.ok) {
             lastErr = new Error(`ModuleLoadError: ${url} \u2192 ${response.status} ${response.statusText}`);
-            console.error("[HookLoader.loadModule] Not OK, continuing");
             continue;
           }
           const ct = (response.headers.get("content-type") || "").toLowerCase();
           if (ct.includes("text/html")) {
             lastErr = new Error(`ModuleLoadError: ${url} returned HTML (content-type=${ct})`);
-            console.error("[HookLoader.loadModule] HTML response, continuing");
             continue;
           }
           code = await response.text();
-          console.error("[HookLoader.loadModule] Fetched", candidate, "got", code.length, "bytes");
           moduleUrl = url;
-          console.error("[HookLoader.loadModule] Success:", url, "code length:", code.length);
           break;
         } catch (e) {
           lastErr = e;
@@ -32645,7 +32625,6 @@ var HookLoader = class {
       }
       if (!code || !moduleUrl)
         throw lastErr || new Error(`ModuleLoadError: ${this.protocol}://${this.host}${normalizedPath}`);
-      console.error("[HookLoader.loadModule] After loop:", { codeLengthOrNull: code ? code.length : null, moduleUrl });
       let preprocessedCode = code;
       try {
         preprocessedCode = await resolveStaticImports(code, normalizedPath, context);
@@ -32677,11 +32656,6 @@ var HookLoader = class {
       let mod;
       try {
         mod = await this.moduleLoader.executeModule(finalCode, normalizedPath, context, moduleUrl, false);
-        try {
-          const keys = Object.keys(mod || {});
-          console.error("[HookLoader] Loaded module", normalizedPath, "keys:", keys, "default type:", typeof (mod && mod.default));
-        } catch {
-        }
       } catch (execErr) {
         const execMsg = execErr?.message || String(execErr);
         const syntaxMatch = execMsg.match(/Unexpected token|missing \)|SyntaxError/);
@@ -32701,7 +32675,6 @@ var HookLoader = class {
     try {
       diag.phase = "fetch";
       const hookUrl = `${this.protocol}://${this.host}${hookPath}`;
-      console.debug(`[HookLoader] Fetching hook from: ${hookUrl}`);
       const requestHeaders = this.buildRequestHeaders(context);
       const fetchOptions = Object.keys(requestHeaders).length ? { headers: requestHeaders } : void 0;
       let response;
@@ -32713,7 +32686,6 @@ var HookLoader = class {
         console.error("[HookLoader] Fetch failed, got error immediately:", fetchErr);
         throw fetchErr;
       }
-      console.debug(`[HookLoader] Received hook code (${code.length} chars)`);
       diag.fetch = { status: response.status, ok: response.ok, contentType: response.headers.get("content-type") };
       if (!response.ok)
         throw new Error(`ModuleLoadError: ${hookUrl} \u2192 ${response.status} ${response.statusText}`);
@@ -32721,23 +32693,19 @@ var HookLoader = class {
       if (ct.includes("text/html"))
         throw new Error(`ModuleLoadError: ${hookUrl} returned HTML (content-type=${ct})`);
       diag.codeLength = code.length;
-      console.error(`[HookLoader] About to resolve static imports for ${hookPath}`);
       code = await resolveStaticImports(code, hookPath, context);
-      console.error(`[HookLoader] Static imports resolved for ${hookPath}`);
       diag.phase = "transform";
       let finalCode = code;
       const esmHint = /\bexport\s+default\b/.test(code) || /\bimport\s*\(/.test(code);
       const shouldTranspile = !!this.transpiler || looksLikeTsOrJsx(code, hookPath);
       if (shouldTranspile) {
         try {
-          console.debug(`[HookLoader] Transpiling ${hookPath}`);
           if (this.transpiler) {
             finalCode = await this.transpiler(code, hookPath);
             this.logTranspileResult(hookPath, finalCode);
           } else {
             finalCode = await transpileCode(code, { filename: hookPath, hasJsxPragma: /@jsx\s+h/m.test(code) }, false);
           }
-          console.debug(`[HookLoader] Transpilation complete (${finalCode.length} chars)`);
         } catch (err) {
           const msg = err?.message || String(err);
           console.warn("[HookLoader] JSX transpilation failed", { hookPath, error: msg });
@@ -32756,23 +32724,20 @@ var HookLoader = class {
         const sample = finalCode.slice(0, 200);
         const hasExport = /\bexport\b/.test(finalCode);
         const hasMarker = /\/\*__ESM__\*\//.test(finalCode);
-        console.error("[HookLoader] Final code ESM hint:", { esmHint, hasExport, hasMarker, sample });
+        debugOnce(`final-hint:${hookPath}`, "[HookLoader] Final code ESM hint:", { esmHint, hasExport, hasMarker, sample });
       } catch {
       }
       diag.phase = "import";
-      console.debug(`[HookLoader] Executing hook module`);
       try {
         const mod = await this.moduleLoader.executeModule(finalCode, hookPath, context, hookUrl, true);
         if (!mod || typeof mod.default !== "function")
           throw new Error("Hook module does not export a default function");
         diag.phase = "exec";
-        console.debug(`[HookLoader] Rendering hook component`);
         const Comp = mod.default;
         const createEl = context && context.createElement || context && context.React && context.React.createElement;
         if (typeof createEl !== "function")
           throw new Error("React createElement not available");
         const element = createEl(Comp, context);
-        console.debug(`[HookLoader] Hook component element created`);
         return element;
       } catch (execErr) {
         console.error("[HookLoader] Hook execution error:", execErr);
@@ -38103,11 +38068,15 @@ async function initHookTranspiler(wasmUrl) {
   const init = mod && mod.default;
   if (typeof init !== "function")
     throw new Error("Invalid WASM wrapper: expected default init function");
-  await init(url);
+  await init({ module_or_path: url });
   const transpile = mod.transpile_jsx;
   if (typeof transpile !== "function")
     throw new Error("WASM not exporting transpile_jsx");
   globalThis.__hook_transpile_jsx = transpile;
+  const transpileWithMetadata = mod.transpile_jsx_with_metadata;
+  if (typeof transpileWithMetadata === "function") {
+    globalThis.__hook_transpile_jsx_with_metadata = transpileWithMetadata;
+  }
   const version = mod.get_version ? mod.get_version() : "unknown";
   globalThis.__hook_transpiler_version = version;
 }
@@ -38158,13 +38127,112 @@ async function initThemedStyler() {
 
 // public/test-app.js
 var import_jsx_runtime5 = __toESM(require_jsx_runtime(), 1);
+var defaultRemoteUrl = new URL("https://clevertree.github.io/relay-template/hooks/client/get-client.jsx");
+var defaultRemoteHost = `${defaultRemoteUrl.protocol}//${defaultRemoteUrl.host}`;
+var defaultRemotePath = defaultRemoteUrl.pathname;
+function buildHookRendererProps(host, hookPath) {
+  return {
+    host,
+    hookPath,
+    onElement: (tag2, props) => unifiedBridge_default.registerUsage(tag2, props),
+    requestRender: () => styleManager_default.requestRender(),
+    renderCssIntoDom: () => styleManager_default.renderCssIntoDom(),
+    startAutoSync: (interval) => styleManager_default.startAutoSync(interval),
+    stopAutoSync: () => styleManager_default.stopAutoSync(),
+    registerTheme: (name, defs) => unifiedBridge_default.registerTheme(name, defs),
+    loadThemesFromYamlUrl: (url) => unifiedBridge_default.loadThemesFromYamlUrl(url)
+  };
+}
+function renderDefaultHookRenderer() {
+  const container = document.getElementById("root");
+  if (!container) {
+    return;
+  }
+  console.log("Test App: Rendering default HookRenderer...");
+  console.log("React version:", import_react6.default.version);
+  if (!import_react6.default.useState) {
+    console.error("React.useState is MISSING!");
+    throw new Error("React.useState is missing");
+  }
+  const root = (0, import_client.createRoot)(container);
+  const props = buildHookRendererProps(window.location.origin, "/hooks/test-hook.jsx");
+  console.log("Test App: Default HookRenderer props:", props);
+  root.render(
+    /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(import_react6.default.StrictMode, { children: /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(HookRenderer_default, { ...props }) })
+  );
+}
+function UrlHookTester({ defaultHost, defaultPath }) {
+  const [host, setHost] = import_react6.default.useState(defaultHost);
+  const [hookPath, setHookPath] = import_react6.default.useState(defaultPath);
+  const [activeHost, setActiveHost] = import_react6.default.useState(defaultHost);
+  const [activePath, setActivePath] = import_react6.default.useState(defaultPath);
+  const onSubmit = (event) => {
+    event.preventDefault();
+    setActiveHost(host.trim() || defaultHost);
+    setActivePath(hookPath.trim() || defaultPath);
+  };
+  const rendererProps = import_react6.default.useMemo(
+    () => buildHookRendererProps(activeHost || defaultHost, activePath || defaultPath),
+    [activeHost, activePath, defaultHost, defaultPath]
+  );
+  const effectiveUrl = `${rendererProps.host}${rendererProps.hookPath}`;
+  return /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("div", { className: "url-tester", children: [
+    /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("form", { className: "url-form", onSubmit, children: [
+      /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("label", { children: [
+        "Host",
+        /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(
+          "input",
+          {
+            type: "text",
+            value: host,
+            onChange: (e) => setHost(e.target.value),
+            placeholder: "https://example.com"
+          }
+        )
+      ] }),
+      /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("label", { children: [
+        "Path",
+        /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(
+          "input",
+          {
+            type: "text",
+            value: hookPath,
+            onChange: (e) => setHookPath(e.target.value),
+            placeholder: "/hooks/client/get-client.jsx"
+          }
+        )
+      ] }),
+      /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("button", { type: "submit", children: "Load Hook" })
+    ] }),
+    /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("div", { className: "url-preview", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("span", { children: "Active URL:" }),
+      /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("span", { className: "url-value", children: effectiveUrl })
+    ] }),
+    /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("div", { className: "renderer-container", children: /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(HookRenderer_default, { ...rendererProps }) })
+  ] });
+}
+function renderUrlTesterPage() {
+  const container = document.getElementById("remote-root");
+  if (!container) {
+    return;
+  }
+  console.log("Test App: Rendering remote URL HookRenderer tester...");
+  const root = (0, import_client.createRoot)(container);
+  root.render(
+    /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(import_react6.default.StrictMode, { children: /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(UrlHookTester, { defaultHost: defaultRemoteHost, defaultPath: defaultRemotePath }) })
+  );
+}
 async function main() {
   const wasmEl = document.getElementById("wasm-state");
   try {
     console.log("Test App: Starting...");
-    wasmEl.textContent = "Starting...";
+    if (wasmEl) {
+      wasmEl.textContent = "Starting...";
+    }
     console.log("Test App: Initializing WASMs...");
-    wasmEl.textContent = "Initializing WASMs...";
+    if (wasmEl) {
+      wasmEl.textContent = "Initializing WASMs...";
+    }
     await Promise.all([
       initTranspiler(),
       initThemedStyler()
@@ -38182,36 +38250,16 @@ async function main() {
     } catch (e) {
       console.error("TRANSPILE ERROR:", e);
     }
-    wasmEl.textContent = `Ready (Transpiler: v${version}, Styler: v${stylerVersion})`;
-    document.getElementById("styler-state").textContent = "Ready";
-    styleManager_default.startAutoSync();
-    console.log("Test App: Rendering component...");
-    console.log("React version:", import_react6.default.version);
-    if (!import_react6.default.useState) {
-      console.error("React.useState is MISSING!");
-      throw new Error("React.useState is missing");
+    if (wasmEl) {
+      wasmEl.textContent = `Ready (Transpiler: v${version}, Styler: v${stylerVersion})`;
     }
-    const container = document.getElementById("root");
-    const root = (0, import_client.createRoot)(container);
-    console.log("Test App: HookRenderer type:", typeof HookRenderer_default);
-    const props = {
-      host: window.location.origin,
-      hookPath: "/hooks/test-hook.jsx",
-      onElement: (tag2, props2) => {
-        console.log("registerUsage:", tag2);
-        unifiedBridge_default.registerUsage(tag2, props2);
-      },
-      requestRender: () => styleManager_default.requestRender(),
-      renderCssIntoDom: () => styleManager_default.renderCssIntoDom(),
-      startAutoSync: (interval) => styleManager_default.startAutoSync(interval),
-      stopAutoSync: () => styleManager_default.stopAutoSync(),
-      registerTheme: (name, defs) => unifiedBridge_default.registerTheme(name, defs),
-      loadThemesFromYamlUrl: (url) => unifiedBridge_default.loadThemesFromYamlUrl(url)
-    };
-    console.log("Test App: HookRenderer props:", props);
-    root.render(
-      /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(import_react6.default.StrictMode, { children: /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(HookRenderer_default, { ...props }) })
-    );
+    const stylerState = document.getElementById("styler-state");
+    if (stylerState) {
+      stylerState.textContent = "Ready";
+    }
+    styleManager_default.startAutoSync();
+    renderDefaultHookRenderer();
+    renderUrlTesterPage();
     setTimeout(() => {
       if (window.__currentLoader) {
         console.log("Test App: Loader exposed for e2e tests");
@@ -38222,14 +38270,17 @@ async function main() {
     statusEl.textContent = "static-imports-ok";
     statusEl.style.display = "none";
     document.body.appendChild(statusEl);
-    console.log("Test App: Render called");
+    console.log("Test App: Render calls finished");
   } catch (err) {
     console.error("Test App Error:", err);
-    document.getElementById("root").innerHTML = `<div style="color: red; padding: 2rem;">
+    const fallbackContainer = document.getElementById("root") || document.getElementById("remote-root");
+    if (fallbackContainer) {
+      fallbackContainer.innerHTML = `<div style="color: red; padding: 2rem;">
         <h2>Bootstrap Error</h2>
         <pre>${err.message}
 ${err.stack}</pre>
     </div>`;
+    }
   }
 }
 main();

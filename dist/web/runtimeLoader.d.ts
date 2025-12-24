@@ -11,6 +11,10 @@ declare global {
         dirname: string;
         url: string;
     } | undefined;
+    var __relay_log_config: {
+        dedupe?: boolean;
+    } | undefined;
+    var __relay_log_once: Set<string> | undefined;
 }
 export interface TransformOptions {
     filename: string;

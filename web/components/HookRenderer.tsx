@@ -28,6 +28,42 @@ function normalizeHostUrl(host: string) {
     return `https://${host}`
 }
 
+function ensureLeadingSlash(path: string): string {
+    if (!path) return ''
+    return path.startsWith('/') ? path : `/${path}`
+}
+
+async function discoverHookPathWithOptions(hostUrl: string): Promise<string> {
+    const optionsUrl = hostUrl.endsWith('/') ? hostUrl : `${hostUrl}/`
+    const response = await fetch(optionsUrl, { method: 'OPTIONS' })
+    if (!response.ok) {
+        throw new Error(`OPTIONS ${optionsUrl} → ${response.status} ${response.statusText}`)
+    }
+
+    // Prefer header if provided, fall back to body
+    let candidate = response.headers.get('x-hook-path') || response.headers.get('x-relay-hook-path')
+    if (!candidate) {
+        const contentType = response.headers.get('content-type') || ''
+        if (contentType.includes('application/json')) {
+            try {
+                const json = await response.json()
+                candidate = json?.hookPath || json?.hook_path || json?.path || null
+            } catch (e) {
+                throw new Error(`OPTIONS ${optionsUrl} returned invalid JSON: ${e instanceof Error ? e.message : String(e)}`)
+            }
+        } else {
+            const text = (await response.text()).trim()
+            candidate = text || null
+        }
+    }
+
+    if (!candidate) {
+        throw new Error(`OPTIONS ${optionsUrl} did not return a hook path`)
+    }
+
+    return ensureLeadingSlash(candidate)
+}
+
 export const HookRenderer: React.FC<HookRendererProps> = ({
     host,
     hookPath,
@@ -48,6 +84,7 @@ export const HookRenderer: React.FC<HookRendererProps> = ({
     const [wasmError, setWasmError] = useState<string | null>(null)
     const [error, setError] = useState<string | null>(null)
     const [element, setElement] = useState<React.ReactNode | null>(null)
+    const [resolvedHookPath, setResolvedHookPath] = useState<string | null>(hookPath || null)
     const normalizedHost = useMemo(() => normalizeHostUrl(host), [host])
     const loaderRef = useRef<HookLoader | null>(null)
 
@@ -117,6 +154,11 @@ export const HookRenderer: React.FC<HookRendererProps> = ({
             }
         }
     }, [normalizedHost, host, startAutoSync, stopAutoSync, requestRender])
+
+    useEffect(() => {
+        setResolvedHookPath(hookPath || null)
+        setError(null)
+    }, [hookPath, normalizedHost])
 
     const registerUsageFromElement = useCallback((tag: string, props?: Record<string, unknown>) => {
         if (onElement) {
@@ -220,6 +262,15 @@ export const HookRenderer: React.FC<HookRendererProps> = ({
         }
     }, [normalizedHost, onElement, registerUsageFromElement, loadThemesFromYamlUrl, renderCssIntoDom, registerTheme])
 
+    const resolveHookPath = useCallback(async (): Promise<string> => {
+        if (!normalizedHost) throw new Error('Host is required to resolve hook path')
+        if (hookPath) return hookPath
+        if (resolvedHookPath) return resolvedHookPath
+        const discovered = await discoverHookPathWithOptions(normalizedHost)
+        setResolvedHookPath(discovered)
+        return discovered
+    }, [hookPath, normalizedHost, resolvedHookPath])
+
     const tryRender = useCallback(async () => {
         if (!wasmReady) return
         setLoading(true)
@@ -229,7 +280,8 @@ export const HookRenderer: React.FC<HookRendererProps> = ({
             try { onLoading() } catch { }
         }
         try {
-            const path = hookPath || 'http://localhost:8002/hooks/client/get-client.jsx'
+            const path = await resolveHookPath()
+            if (!path) throw new Error('Hook path is missing')
             if (!loaderRef.current) throw new Error('hook loader not initialized')
             const ctx = createHookContext(path)
             const el = await loaderRef.current.loadAndExecuteHook(path, ctx)
@@ -250,7 +302,7 @@ export const HookRenderer: React.FC<HookRendererProps> = ({
         } finally {
             setLoading(false)
         }
-    }, [createHookContext, hookPath, wasmReady, renderCssIntoDom])
+    }, [createHookContext, wasmReady, renderCssIntoDom, onLoading, onReady, onError, resolveHookPath])
 
     useEffect(() => { void tryRender() }, [tryRender])
 

@@ -37,7 +37,7 @@ export class ES6ImportHandler {
     this.protocol = options.protocol || 'https'
     this.baseUrl = options.baseUrl || '/hooks'
     this.onDiagnostics = options.onDiagnostics || ((diag: any) => {
-      console.debug('[ES6ImportHandler] Diagnostics:', diag)
+      // console.debug('[ES6ImportHandler] Diagnostics:', diag)
     })
     this.transpiler = options.transpiler || this.defaultTranspiler
   }
@@ -92,13 +92,13 @@ export class ES6ImportHandler {
 
     // Check cache first
     if (this.moduleCache.has(cacheKey)) {
-      console.debug('[ES6ImportHandler] Cache hit:', cacheKey)
+      // console.debug('[ES6ImportHandler] Cache hit:', cacheKey)
       return this.moduleCache.get(cacheKey)
     }
 
     // Check if already transpiling (prevent duplicate requests)
     if (this.transpiling.has(cacheKey)) {
-      console.debug('[ES6ImportHandler] Waiting for in-flight transpile:', cacheKey)
+      // console.debug('[ES6ImportHandler] Waiting for in-flight transpile:', cacheKey)
       return this.transpiling.get(cacheKey)!
     }
 
@@ -138,12 +138,12 @@ export class ES6ImportHandler {
     cacheKey: string
   ): Promise<any> {
     const startTime = Date.now()
-    console.debug('[ES6ImportHandler] Loading module:', { originalPath, normalizedPath })
+    // console.debug('[ES6ImportHandler] Loading module:', { originalPath, normalizedPath })
 
     try {
       // Fetch module source from host
       const moduleUrl = `${this.protocol}://${this.host}${normalizedPath}`
-      console.debug('[ES6ImportHandler] Fetching from:', moduleUrl)
+      // console.debug('[ES6ImportHandler] Fetching from:', moduleUrl)
 
       const response = await fetch(moduleUrl)
       if (!response.ok) {
@@ -151,12 +151,12 @@ export class ES6ImportHandler {
       }
 
       const code = await response.text()
-      console.debug('[ES6ImportHandler] Fetched code, length:', code.length)
+      // console.debug('[ES6ImportHandler] Fetched code, length:', code.length)
 
       // Transpile the code
-      console.debug('[ES6ImportHandler] Transpiling:', normalizedPath)
+      // console.debug('[ES6ImportHandler] Transpiling:', normalizedPath)
       const transpiled = await this.transpiler(code, normalizedPath)
-      console.debug('[ES6ImportHandler] Transpiled code, length:', transpiled.length)
+      // console.debug('[ES6ImportHandler] Transpiled code, length:', transpiled.length)
 
       // Execute module with ES6 import support
       const moduleExports = await this.executeModule(transpiled, normalizedPath)
@@ -165,7 +165,7 @@ export class ES6ImportHandler {
       this.moduleCache.set(cacheKey, moduleExports)
 
       const duration = Date.now() - startTime
-      console.debug('[ES6ImportHandler] Successfully loaded module:', {
+      // console.debug('[ES6ImportHandler] Successfully loaded module:', {
         path: normalizedPath,
         duration: `${duration}ms`,
         exports: Object.keys(moduleExports).slice(0, 5),
@@ -230,7 +230,7 @@ return (async function(){
       // Execute with import handler bound to this
       await fn(this.handle.bind(this), module, moduleExports)
 
-      console.debug('[ES6ImportHandler] Module executed:', filename)
+      // console.debug('[ES6ImportHandler] Module executed:', filename)
       return moduleExports
     } catch (err) {
       console.error(`[ES6ImportHandler] Failed to execute module ${filename}:`, err)
@@ -251,13 +251,13 @@ return (async function(){
         const baseUrl = new URL(base, 'http://resolver.local')
         const resolvedUrl = new URL(modulePath, baseUrl)
         const resolved = resolvedUrl.pathname
-        console.debug('[ES6ImportHandler] Resolved relative path:', { modulePath, from: this.currentModulePath, resolved })
+        // console.debug('[ES6ImportHandler] Resolved relative path:', { modulePath, from: this.currentModulePath, resolved })
         return resolved
       } catch {
         // Fallback to naive join with baseUrl
         const cleaned = modulePath.replace(/^\.\//g, '')
         const resolved = `${this.baseUrl}/${cleaned}`.replace(/\/+/g, '/').replace(/\/\.\//g, '/')
-        console.debug('[ES6ImportHandler] Resolved (fallback) relative path:', { modulePath, resolved })
+        // console.debug('[ES6ImportHandler] Resolved (fallback) relative path:', { modulePath, resolved })
         return resolved
       }
     }
@@ -283,7 +283,7 @@ return (async function(){
    */
   clearCache(): void {
     this.moduleCache.clear()
-    console.debug('[ES6ImportHandler] Cache cleared')
+    // console.debug('[ES6ImportHandler] Cache cleared')
   }
 
   /**

@@ -270,14 +270,14 @@ export class WebModuleLoader implements ModuleLoader {
             ; (window as any).__Fragment = fragmentFactory
             ; (window as any).__hook_file_renderer = (context && context.FileRenderer) || null
             ; (window as any).__hook_helpers = (context && context.helpers) || {}
-          console.log('[WebModuleLoader] Set globals before blob import:', {
-            hasReact: !!(window as any).__hook_react,
-            hasJsxRuntime: !!(window as any).__hook_jsx_runtime,
-            hasFileRenderer: !!(window as any).__hook_file_renderer,
-            hasHelpers: !!(window as any).__hook_helpers,
-            filename,
-            fetchUrl
-          })
+          // console.log('[WebModuleLoader] Set globals before blob import:', {
+          //   hasReact: !!(window as any).__hook_react,
+          //   hasJsxRuntime: !!(window as any).__hook_jsx_runtime,
+          //   hasFileRenderer: !!(window as any).__hook_file_renderer,
+          //   hasHelpers: !!(window as any).__hook_helpers,
+          //   filename,
+          //   fetchUrl
+          // })
           // Small delay to ensure globals are set before blob execution
           await new Promise(resolve => setTimeout(resolve, 0))
             // Ensure context is available to module (transpiler may read window.__ctx__)
@@ -1196,10 +1196,10 @@ export class HookLoader {
     // Resolve path robustly relative to the current hook file path
     let normalizedPath = modulePath
     try {
-      const dbg = (globalThis as any).__HOOK_DEBUG || (typeof localStorage !== 'undefined' && localStorage.getItem('hookDebug') === '1')
-      if (dbg) {
-        try { console.debug('[HookLoader.loadModule] start', { modulePath, fromPath }) } catch { }
-      }
+      // const dbg = (globalThis as any).__HOOK_DEBUG || (typeof localStorage !== 'undefined' && localStorage.getItem('hookDebug') === '1')
+      // if (dbg) {
+      //   try { console.debug('[HookLoader.loadModule] start', { modulePath, fromPath }) } catch { }
+      // }
       if (modulePath.startsWith('./') || modulePath.startsWith('../')) {
         // Ensure the base includes the 'client' segment by default
         const base = fromPath && fromPath.startsWith('/') ? fromPath : '/hooks/client/get-client.jsx'
@@ -1220,9 +1220,9 @@ export class HookLoader {
         }
       }
       normalizedPath = '/' + normalized.join('/')
-      if (dbg) {
-        try { console.debug('[HookLoader.loadModule] normalized', { modulePath, fromPath, normalizedPath }) } catch { }
-      }
+      // if (dbg) {
+      //   try { console.debug('[HookLoader.loadModule] normalized', { modulePath, fromPath, normalizedPath }) } catch { }
+      // }
     } catch (_) {
       // Fallback to previous logic if URL API not available for some reason
       const baseDir = (fromPath || '/hooks/client/get-client.jsx').split('/').slice(0, -1).join('/') || '/hooks/client'
@@ -1238,10 +1238,10 @@ export class HookLoader {
         }
       }
       normalizedPath = '/' + normalized.join('/')
-      try {
-        const dbg2 = (globalThis as any).__HOOK_DEBUG || (typeof localStorage !== 'undefined' && localStorage.getItem('hookDebug') === '1')
-        if (dbg2) console.debug('[HookLoader.loadModule] normalized (fallback)', { modulePath, fromPath, normalizedPath })
-      } catch { }
+      // try {
+      //   const dbg2 = (globalThis as any).__HOOK_DEBUG || (typeof localStorage !== 'undefined' && localStorage.getItem('hookDebug') === '1')
+      //   if (dbg2) console.debug('[HookLoader.loadModule] normalized (fallback)', { modulePath, fromPath, normalizedPath })
+      // } catch { }
     }
 
     // Check cache
@@ -1283,7 +1283,7 @@ export class HookLoader {
         try {
           if (this.transpiler) {
             finalCode = await this.transpiler(preprocessedCode, normalizedPath)
-            this.logTranspileResult(normalizedPath, finalCode)
+            // this.logTranspileResult(normalizedPath, finalCode)
           } else {
             finalCode = await transpileCode(
               preprocessedCode,
@@ -1349,7 +1349,7 @@ export class HookLoader {
     try {
       diag.phase = 'fetch'
       const hookUrl = `${this.protocol}://${this.host}${hookPath}`
-      console.debug(`[HookLoader] Fetching hook from: ${hookUrl}`)
+      // console.debug(`[HookLoader] Fetching hook from: ${hookUrl}`)
       const requestHeaders = this.buildRequestHeaders(context)
       const fetchOptions = Object.keys(requestHeaders).length ? { headers: requestHeaders } : undefined
 
@@ -1365,7 +1365,7 @@ export class HookLoader {
         throw fetchErr
       }
 
-      console.debug(`[HookLoader] Received hook code (${code.length} chars)`)
+      // console.debug(`[HookLoader] Received hook code (${code.length} chars)`)
 
       diag.fetch = {
         status: response.status,
@@ -1394,12 +1394,12 @@ export class HookLoader {
       const shouldTranspile = !!this.transpiler || looksLikeTsOrJsx(code, hookPath)
       if (shouldTranspile) {
         try {
-          console.debug(`[HookLoader] Transpiling ${hookPath}`)
+          // console.debug(`[HookLoader] Transpiling ${hookPath}`)
 
           // Use custom transpiler if provided (e.g., for Android with CommonJS conversion)
           if (this.transpiler) {
             finalCode = await this.transpiler(code, hookPath)
-            this.logTranspileResult(hookPath, finalCode)
+            // this.logTranspileResult(hookPath, finalCode)
           } else {
             finalCode = await transpileCode(
               code,
@@ -1407,7 +1407,7 @@ export class HookLoader {
               false // Web uses dynamic import
             )
           }
-          console.debug(`[HookLoader] Transpilation complete (${finalCode.length} chars)`)
+          // console.debug(`[HookLoader] Transpilation complete (${finalCode.length} chars)`)
         } catch (err) {
           const msg = (err as any)?.message || String(err)
           console.warn('[HookLoader] JSX transpilation failed', { hookPath, error: msg })
@@ -1421,7 +1421,7 @@ export class HookLoader {
 
       // Execute
       diag.phase = 'import'
-      console.debug(`[HookLoader] Executing hook module`)
+      // console.debug(`[HookLoader] Executing hook module`)
 
       try {
         // Pass the actual fetch URL for @clevertree/meta injection, not the logical path
@@ -1432,9 +1432,9 @@ export class HookLoader {
         }
 
         diag.phase = 'exec'
-        console.debug(`[HookLoader] Calling hook function`)
+        // console.debug(`[HookLoader] Calling hook function`)
         const element = await mod.default(context)
-        console.debug(`[HookLoader] Hook executed successfully`)
+        // console.debug(`[HookLoader] Hook executed successfully`)
 
         return element
       } catch (execErr) {
