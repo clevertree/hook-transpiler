@@ -12,20 +12,22 @@ describe('Module Cache Deduplication', () => {
   let fetchedUrls = []
 
   beforeEach(() => {
-    fetchedUrls = []
-    
     cy.visit('/', {
       onBeforeLoad(win) {
+        // Initialize fetch tracking on window object
+        win.__fetchedUrls = []
+        
         // Intercept fetch calls to track what's being fetched
         const originalFetch = win.fetch
-        cy.stub(win, 'fetch').callsFake((...args) => {
+        win.fetch = function(...args) {
           const url = args[0]
           if (typeof url === 'string' && url.includes('/hooks/')) {
-            fetchedUrls.push(url)
-            cy.log(`Fetch: ${url}`)
+            win.__fetchedUrls.push(url)
+            // Log to console for debugging
+            win.console.log(`[e2e] Fetch: ${url}`)
           }
-          return originalFetch.apply(win, args)
-        })
+          return originalFetch.apply(this, args)
+        }
       }
     })
   })
@@ -38,7 +40,8 @@ describe('Module Cache Deduplication', () => {
     cy.wait(2000)
 
     // Check that each unique module path was fetched only once
-    cy.wrap(fetchedUrls).then(urls => {
+    cy.window().then(win => {
+      const urls = win.__fetchedUrls || []
       const counts = {}
       urls.forEach(url => {
         // Normalize URL to just the path
@@ -47,6 +50,7 @@ describe('Module Cache Deduplication', () => {
         counts[path] = (counts[path] || 0) + 1
       })
 
+      cy.log('Fetched URLs:', JSON.stringify(urls, null, 2))
       cy.log('Fetch counts by path:', JSON.stringify(counts, null, 2))
 
       // Assert no path was fetched more than once
@@ -78,7 +82,7 @@ describe('Module Cache Deduplication', () => {
       // Access private cache via type assertion (for testing only)
       const moduleCache = loader.moduleCache || new Map()
       const cacheKeys = Array.from(moduleCache.keys())
-      
+
       cy.log('Cache keys:', cacheKeys.join(', '))
 
       // Check that all cache keys are normalized (absolute paths)
@@ -92,52 +96,33 @@ describe('Module Cache Deduplication', () => {
       // Check for duplicates (same normalized path appearing twice)
       const paths = cacheKeys.map(key => key.includes(':') ? key.split(':')[1] : key)
       const uniquePaths = new Set(paths)
-      
+
       expect(paths.length, 'No duplicate cache entries expected').to.equal(uniquePaths.size)
     })
   })
 
   it('should use cached module for concurrent imports', () => {
-    cy.visit('/', {
-      onBeforeLoad(win) {
-        const fetchTimes = []
-        const originalFetch = win.fetch
-        
-        cy.stub(win, 'fetch').callsFake((...args) => {
-          const url = args[0]
-          if (typeof url === 'string' && url.includes('/hooks/')) {
-            fetchTimes.push({
-              url,
-              timestamp: Date.now()
-            })
-          }
-          return originalFetch.apply(win, args)
-        })
-        
-        // Store fetchTimes on window for later access
-        win.__fetchTimes = fetchTimes
-      }
-    })
-
     cy.get('#app', { timeout: 20000 }).should('exist')
     cy.wait(2000)
 
     // Check that fetches didn't happen concurrently for the same URL
     cy.window().then(win => {
-      const fetchTimes = win.__fetchTimes || []
-      
+      const urls = win.__fetchedUrls || []
+
       // Group by URL
       const byUrl = {}
-      fetchTimes.forEach(({ url, timestamp }) => {
+      urls.forEach(url => {
         const urlObj = new URL(url)
         const path = urlObj.pathname
         if (!byUrl[path]) byUrl[path] = []
-        byUrl[path].push(timestamp)
+        byUrl[path].push(url)
       })
 
+      cy.log('Fetch concurrency check:', JSON.stringify(byUrl, null, 2))
+
       // Each URL should only have one fetch
-      Object.entries(byUrl).forEach(([path, timestamps]) => {
-        expect(timestamps, `Path ${path} should be fetched only once`).to.have.length(1)
+      Object.entries(byUrl).forEach(([path, fetchedList]) => {
+        expect(fetchedList, `Path ${path} should be fetched only once`).to.have.length(1)
       })
     })
   })
@@ -164,10 +149,10 @@ describe('Module Cache Deduplication', () => {
       // Access console.error stub if it exists
       if (win.console.error.getCalls) {
         const errorCalls = win.console.error.getCalls()
-        const importErrors = errorCalls.filter(call => 
+        const importErrors = errorCalls.filter(call =>
           call.args.join(' ').toLowerCase().includes('import') &&
           (call.args.join(' ').toLowerCase().includes('error') ||
-           call.args.join(' ').toLowerCase().includes('failed'))
+            call.args.join(' ').toLowerCase().includes('failed'))
         )
         expect(importErrors).to.have.length(0)
       }
@@ -175,37 +160,20 @@ describe('Module Cache Deduplication', () => {
   })
 
   it('should share cache between static and dynamic imports', () => {
-    // Track fetch calls
-    const fetchLog = []
-    
-    cy.visit('/', {
-      onBeforeLoad(win) {
-        const originalFetch = win.fetch
-        cy.stub(win, 'fetch').callsFake((...args) => {
-          const url = args[0]
-          if (typeof url === 'string' && url.includes('/hooks/')) {
-            const urlObj = new URL(url)
-            fetchLog.push({
-              path: urlObj.pathname,
-              timestamp: Date.now()
-            })
-            cy.log(`Fetch: ${urlObj.pathname}`)
-          }
-          return originalFetch.apply(win, args)
-        })
-      }
-    })
-
     cy.get('#app', { timeout: 20000 }).should('exist')
     cy.wait(2000)
 
-    // Analyze fetch log
-    cy.wrap(fetchLog).then(log => {
+    // Analyze fetch log from window
+    cy.window().then(win => {
+      const urls = win.__fetchedUrls || []
       const pathCounts = {}
-      log.forEach(({ path }) => {
+      urls.forEach(url => {
+        const urlObj = new URL(url)
+        const path = urlObj.pathname
         pathCounts[path] = (pathCounts[path] || 0) + 1
       })
 
+      cy.log('Fetched URLs:', JSON.stringify(urls, null, 2))
       cy.log('Path fetch counts:', JSON.stringify(pathCounts, null, 2))
 
       // No path should be fetched more than once
@@ -229,7 +197,7 @@ describe('Module Cache Deduplication', () => {
 
       const moduleCache = loader.moduleCache || new Map()
       const cacheKeys = Array.from(moduleCache.keys())
-      
+
       cy.log('Inspecting cache keys:', JSON.stringify(cacheKeys))
 
       // All cache keys should be in absolute format (start with /)

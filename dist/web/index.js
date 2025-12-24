@@ -6,6 +6,7 @@ export { default as HookRenderer } from './components/HookRenderer';
 export { FileRenderer } from './components/FileRenderer';
 export { MarkdownRenderer } from './components/MarkdownRenderer';
 export { default as HookApp } from './components/HookApp';
+export { ErrorBoundary } from './components/ErrorBoundary';
 export async function initHookTranspiler(wasmUrl) {
     let mod;
     let url;
@@ -29,6 +30,28 @@ export async function initHookTranspiler(wasmUrl) {
     globalThis.__hook_transpile_jsx = transpile;
     const version = mod.get_version ? mod.get_version() : 'unknown';
     globalThis.__hook_transpiler_version = version;
+}
+/**
+ * Preload @clevertree/* packages to make them available to hooks
+ */
+export async function preloadPackages() {
+    if (globalThis.__relay_packages) {
+        return; // Already loaded
+    }
+    const packages = {};
+    // Dynamically import packages without requiring them to be listed in tsconfig
+    const packageNames = ['@clevertree/themed-styler', '@clevertree/hook-transpiler'];
+    for (const pkgName of packageNames) {
+        try {
+            const pkg = await import(pkgName);
+            packages[pkgName] = pkg;
+        }
+        catch (e) {
+            console.warn(`[preloadPackages] Failed to load ${pkgName}:`, e);
+        }
+    }
+    // Store packages globally
+    globalThis.__relay_packages = packages;
 }
 // Backwards-compatible alias for tests and existing clients
 export const initTranspiler = initHookTranspiler;

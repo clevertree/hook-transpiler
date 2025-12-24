@@ -405,6 +405,12 @@ fn check_for_typescript_syntax(source: &str) -> Result<()> {
             }
         }
 
+        // Handle JSX elements - skip over them entirely since keywords in JSX text are not code
+        if ch == '<' && is_jsx_start(&ctx) {
+            skip_jsx_element(&mut ctx)?;
+            continue;
+        }
+
         // Handle keywords
         if ch.is_alphabetic() {
             let start = ctx.pos;
@@ -416,6 +422,24 @@ fn check_for_typescript_syntax(source: &str) -> Result<()> {
                 }
             }
             let word = ctx.slice(start, ctx.pos);
+            
+            // Only flag keywords if they're actual standalone words (not part of larger identifiers)
+            // Check that the character before was not alphanumeric or underscore
+            let has_valid_prefix = if start == 0 {
+                true
+            } else {
+                let prev_char = ctx.source.get(start - 1).copied();
+                match prev_char {
+                    Some(c) if c.is_alphanumeric() || c == '_' => false,
+                    _ => true,
+                }
+            };
+            
+            if !has_valid_prefix {
+                // This word is part of a larger identifier, not a keyword
+                continue;
+            }
+            
             if word == "type" {
                 // Distinguish between `type Foo =` (TS) and property names like `type:` inside objects/JSX text.
                 let mut looks_like_type_alias = false;
@@ -512,6 +536,208 @@ fn check_for_typescript_syntax(source: &str) -> Result<()> {
 
         ctx.advance();
     }
+    Ok(())
+}
+
+/// Skip an entire JSX element, including all its content and children
+/// Assumes ctx is at the '<' of a JSX element
+fn skip_jsx_element(ctx: &mut ParseContext) -> Result<()> {
+    ctx.consume('<')?;
+    
+    // Handle fragments <>...</>
+    if ctx.current_char() == Some('>') {
+        ctx.advance();
+        return skip_jsx_children(ctx, "");
+    }
+    
+    // Skip tag name
+    while let Some(ch) = ctx.current_char() {
+        if ch.is_alphanumeric() || ch == '-' || ch == '_' || ch == '.' {
+            ctx.advance();
+        } else {
+            break;
+        }
+    }
+    
+    // Skip attributes/props
+    while ctx.current_char() != Some('>') && ctx.current_char() != Some('/') {
+        ctx.skip_whitespace();
+        
+        if ctx.current_char() == Some('>') || ctx.current_char() == Some('/') {
+            break;
+        }
+        
+        // Skip prop name
+        while let Some(ch) = ctx.current_char() {
+            if ch.is_alphanumeric() || ch == '-' || ch == '_' || ch == ':' {
+                ctx.advance();
+            } else {
+                break;
+            }
+        }
+        
+        ctx.skip_whitespace();
+        
+        // Skip prop value if it exists
+        if ctx.current_char() == Some('=') {
+            ctx.advance();
+            ctx.skip_whitespace();
+            
+            if ctx.current_char() == Some('"') || ctx.current_char() == Some('\'') || ctx.current_char() == Some('`') {
+                let quote = ctx.current_char().unwrap();
+                ctx.advance();
+                while let Some(c) = ctx.current_char() {
+                    ctx.advance();
+                    if c == '\\' {
+                        ctx.advance();
+                    } else if c == quote {
+                        break;
+                    }
+                }
+            } else if ctx.current_char() == Some('{') {
+                // Skip {expr} prop value
+                ctx.advance();
+                let mut depth = 1;
+                while let Some(ch) = ctx.current_char() {
+                    if ch == '{' {
+                        depth += 1;
+                    } else if ch == '}' {
+                        depth -= 1;
+                        if depth == 0 {
+                            ctx.advance();
+                            break;
+                        }
+                    } else if ch == '"' || ch == '\'' || ch == '`' {
+                        let q = ch;
+                        ctx.advance();
+                        while let Some(c) = ctx.current_char() {
+                            ctx.advance();
+                            if c == '\\' {
+                                ctx.advance();
+                            } else if c == q {
+                                break;
+                            }
+                        }
+                        continue;
+                    }
+                    ctx.advance();
+                }
+            }
+        }
+    }
+    
+    // Check for self-closing tag
+    if ctx.current_char() == Some('/') {
+        ctx.advance();
+        ctx.consume('>')?;
+        return Ok(());
+    }
+    
+    // Consume opening >
+    ctx.consume('>')?;
+    
+    // Get the tag name to match closing tag
+    // We need to parse it from before, but for now we'll just skip children until we find a closing tag
+    // This is a simplified approach - we scan backwards to find the tag name
+    let mut tag_name = String::new();
+    let mut tag_pos = ctx.pos.saturating_sub(1);
+    
+    // Go back from the > we just consumed
+    while tag_pos > 0 && ctx.source[tag_pos] != '<' {
+        tag_pos -= 1;
+    }
+    
+    if tag_pos < ctx.pos && ctx.source[tag_pos] == '<' {
+        tag_pos += 1; // Skip the <
+        while tag_pos < ctx.source.len() {
+            let c = ctx.source[tag_pos];
+            if c.is_alphanumeric() || c == '-' || c == '_' || c == '.' {
+                tag_name.push(c);
+                tag_pos += 1;
+            } else {
+                break;
+            }
+        }
+    }
+    
+    skip_jsx_children(ctx, &tag_name)
+}
+
+/// Skip JSX children until the closing tag is found
+fn skip_jsx_children(ctx: &mut ParseContext, _parent_tag: &str) -> Result<()> {
+    loop {
+        ctx.skip_whitespace();
+        
+        // Check for closing tag
+        if ctx.current_char() == Some('<') && ctx.peek(1) == Some('/') {
+            ctx.advance(); // <
+            ctx.advance(); // /
+            
+            // Skip closing tag name
+            while let Some(ch) = ctx.current_char() {
+                if ch.is_alphanumeric() || ch == '-' || ch == '_' || ch == '.' {
+                    ctx.advance();
+                } else {
+                    break;
+                }
+            }
+            
+            ctx.skip_whitespace();
+            ctx.consume('>')?;
+            break;
+        }
+        
+        // Check for nested JSX element
+        if ctx.current_char() == Some('<') {
+            skip_jsx_element(ctx)?;
+            continue;
+        }
+        
+        // Check for JS expression {expr}
+        if ctx.current_char() == Some('{') {
+            ctx.advance();
+            let mut depth = 1;
+            while let Some(ch) = ctx.current_char() {
+                if ch == '{' {
+                    depth += 1;
+                } else if ch == '}' {
+                    depth -= 1;
+                    if depth == 0 {
+                        ctx.advance();
+                        break;
+                    }
+                } else if ch == '"' || ch == '\'' || ch == '`' {
+                    let q = ch;
+                    ctx.advance();
+                    while let Some(c) = ctx.current_char() {
+                        ctx.advance();
+                        if c == '\\' {
+                            ctx.advance();
+                        } else if c == q {
+                            break;
+                        }
+                    }
+                    continue;
+                }
+                ctx.advance();
+            }
+            continue;
+        }
+        
+        // Skip text content
+        while let Some(ch) = ctx.current_char() {
+            if ch == '<' || ch == '{' {
+                break;
+            }
+            ctx.advance();
+        }
+        
+        // Check if we're at the end
+        if ctx.pos >= ctx.source.len() {
+            break;
+        }
+    }
+    
     Ok(())
 }
 

@@ -52,6 +52,11 @@ export default function TestHook(context = {}) {
         <h1 className="text-2xl font-bold mb-1">{meta.title}</h1>
         <p className="text-sm text-gray-500 mb-4">{meta.subtitle}</p>
 
+        <div className="mt-2">
+            <p className="text-xs text-gray-500 mb-2">Select a theme for the application</p>
+            <button className="px-3 py-1 bg-blue-600 text-white rounded">Test Button with Classes</button>
+        </div>
+
         <div className="space-y-2">
             {items.map((item) => (
                 <ListItem key={item.id} item={item} tags={tagsById.get(item.id)} />
@@ -77,5 +82,12 @@ export default function TestHook(context = {}) {
         <div className="mt-4 text-sm text-gray-500">
             <p>This string contains JSX-like text: {"<div>test</div>"}</p>
         </div>
-    </div>;
+
+        <div className="mt-4 p-2 bg-purple-50 text-purple-800 rounded">
+            <h3 className="font-semibold mb-2">Reserved Keywords in strings Test</h3>
+            <p>
+                This paragraph has reserved keywords like interface await default import export but should still render correctly.
+            </p>
+        </div>
+    </div >;
 }

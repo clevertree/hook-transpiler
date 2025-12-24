@@ -418,8 +418,12 @@ function rewriteDynamicImports(code: string): string {
 
 export function applyHookRewrite(code: string): string {
     const mkBuiltin = (spec: string, destructure: string) => `const ${destructure} = ((globalThis && globalThis.__relay_builtins && globalThis.__relay_builtins['${spec}']) || {});`
+    const mkPackage = (spec: string, destructure: string) => `const ${destructure} = ((globalThis && globalThis.__relay_packages && globalThis.__relay_packages['${spec}']) || {});`
     const markdownRe = /import\s+\{\s*MarkdownRenderer\s*\}\s+from\s+['"]@clevertree\/markdown['"];?/g
     const themeRe = /import\s+\{\s*registerThemesFromYaml\s*\}\s+from\s+['"]@clevertree\/theme['"];?/g
+    const themedStylerRe = /import\s+\{\s*([^}]+)\s*\}\s+from\s+['"]@clevertree\/themed-styler['"];?/g
+    const themedStylerDefaultRe = /import\s+(\w+)\s+from\s+['"]@clevertree\/themed-styler['"];?/g
+    const themedStylerStarRe = /import\s*\*\s*as\s+(\w+)\s+from\s+['"]@clevertree\/themed-styler['"];?/g
     const metaRe = /import\s+(\w+)\s+from\s+['"]@clevertree\/meta['"];?/g
     const metaStarRe = /import\s*\*\s*as\s+(\w+)\s+from\s+['"]@clevertree\/meta['"];?/g
     const metaDestructureRe = /import\s+\{\s*([^}]+)\s*\}\s+from\s+['"]@clevertree\/meta['"];?/g
@@ -429,6 +433,9 @@ export function applyHookRewrite(code: string): string {
     const jsxRuntimeRe = /import\s+\{\s*jsx\s+as\s+(_jsx)\s*,\s*jsxs\s+as\s+(_jsxs)\s*,\s*Fragment\s+as\s+(_Fragment)\s*\}\s+from\s+['"]react\/jsx-runtime['"];?/g
     let rewritten = code.replace(markdownRe, mkBuiltin('@clevertree/markdown', '{ MarkdownRenderer }'))
     rewritten = rewritten.replace(themeRe, mkBuiltin('@clevertree/theme', '{ registerThemesFromYaml }'))
+    rewritten = rewritten.replace(themedStylerRe, (_m, destructure) => mkPackage('@clevertree/themed-styler', `{ ${destructure} }`))
+    rewritten = rewritten.replace(themedStylerDefaultRe, (_m, name) => `const ${name} = ((globalThis && globalThis.__relay_packages && globalThis.__relay_packages['@clevertree/themed-styler']?.default) || (globalThis && globalThis.__relay_packages && globalThis.__relay_packages['@clevertree/themed-styler']) || {});`)
+    rewritten = rewritten.replace(themedStylerStarRe, (_m, name) => mkPackage('@clevertree/themed-styler', name))
     rewritten = rewritten.replace(reactRe, (_m, named) => {
         let res = 'const React = (globalThis.__hook_react || globalThis.React);'
         if (named) res += ` const { ${named} } = React;`
@@ -757,8 +764,8 @@ export class HookLoader {
         }
     }
 
-    clearCache(): void { 
-        this.moduleCache.clear() 
+    clearCache(): void {
+        this.moduleCache.clear()
         this.pendingFetches.clear()
     }
 }

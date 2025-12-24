@@ -6,7 +6,8 @@
   "scripts": {
     "start": "node server.js",
     "build": "esbuild public/test-app.js --bundle --outfile=public/test-app.bundle.js --format=esm --platform=browser --loader:.wasm=file --loader:.js=jsx --alias:react=./node_modules/react --alias:react-dom=./node_modules/react-dom",
-    "test:e2e": "npm run build && cypress run",
+    "test:e2e": "npm run build && node scripts/run-e2e.js",
+    "test:e2e:spec": "npm run build && SPEC=cypress/e2e/transpilation.cy.js node scripts/run-e2e.js",
     "cypress:open": "cypress open"
   },
   "dependencies": {
