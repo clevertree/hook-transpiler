@@ -114,3 +114,43 @@ Check `filename` ends in `.jsx`/`.tsx` or source contains `<` character
 - `src/lib.rs` - Main implementation
 - `Cargo.toml` - Dependencies (serde, swc_core, wasm_bindgen)
 - `build-and-deploy.sh` - Build & deploy script
+
+## Build & Test Playbook (per repo)
+
+### hook-transpiler (this repo)
+- Rebuild WASM first: `bash build-and-deploy.sh` (uses `wasm-pack build --release --target web --features wasm`; copies outputs into relay-clients).
+- Rust unit tests: `cargo test`.
+- JS self-check: `npm test` (runs `npm run build` → `node --test dist/selfCheck.test.js`).
+- Web e2e (Cypress):
+  1) `cd tests/web && npm install` (once).
+  2) `npm run build` to refresh bundle.
+  3) Start dev server `npm run start` in **one terminal and leave it running**.
+  4) In another terminal run `npm run test:e2e` or `npm run cypress:open`.
+  5) Do **not** stop the dev server between steps 3 and 4; Cypress needs it alive.
+
+### themed-styler
+- Rebuild WASM before any client build: `cd /home/ari/dev/themed-styler && npm install && npm run build` (calls `wasm-pack build --release --target web --features wasm` and populates `wasm/`).
+- Publish prep: `npm run build` already covers `build:wasm`; use `npm run build` prior to `npm publish` or local `npm pack`.
+
+### relay-client-web
+- Prereqs: rebuild native deps first (`npm --prefix /home/ari/dev/hook-transpiler run build` and `npm --prefix /home/ari/dev/themed-styler run build`) so local packages have fresh dist/wasm.
+- Install deps: `npm install` in `/home/ari/dev/relay-client-web`.
+- Dev server: `npm run dev` (esbuild serve).
+- Build: `npm run build`.
+- Unit tests: `npm test` (Node test runner over `src/tests/**/*.test.ts`).
+- Serve built assets with relay-server: `npm run serve:relay` (runs build then serves via compiled relay-server binary on 8080).
+
+### relay (monorepo root)
+- Repo root: `/home/ari/dev/relay`.
+- Web dev: `npm run web:dev` or `npm run web:dev:full` (full script).
+- Web build: `npm run web:build` (or `web:build:debug`).
+- Server dev: `npm run dev:server` (cargo run). Release server build: `npm run build:server`.
+- React Native prep: `npm run rn:prep-hook-transpiler` to copy latest transpiler assets before mobile builds; Android/iOS starts via `npm run rn:android` / `npm run rn:ios`.
+- Tests: `npm test` (workspace `cargo test`). Playwright e2e: `npm run test:e2e` (ensure server + static assets built if scenario requires).
+
+### relay-client-android
+- Before Gradle: refresh transpiler/native bits: `npm --prefix /home/ari/dev/hook-transpiler run build` and ensure JNI/JSI sources are up to date; Gradle will compile native libs.
+- Build debug APK: `cd /home/ari/dev/relay-client-android/android && ./gradlew clean assembleDebug`.
+- Install to device/emulator: `adb install -r app/build/outputs/apk/debug/app-debug.apk`.
+- Logs: `adb logcat | grep -E "HermesManager|NativeRenderer|RelayJSI"`.
+

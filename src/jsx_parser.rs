@@ -438,7 +438,9 @@ fn check_for_typescript_syntax(source: &str) -> Result<()> {
                 }
                 continue;
             }
-            if word == "interface" || word == "enum" || word == "as" || 
+                // Note: 'as' is valid ES6 syntax in import/export statements like "import { x as y }"
+                // Only reject it if used for TypeScript type assertions (handled separately below)
+                if word == "interface" || word == "enum" || 
                word == "public" || word == "private" || word == "protected" || word == "readonly" {
                 return Err(anyhow!("Unexpected TypeScript syntax '{}' at position {}", word, start));
             }

@@ -125,18 +125,20 @@ export interface ModuleLoader {
    * @param filename Path to the module for source maps
    * @param context The hook context to make available to the module
    * @param fetchUrl Optional: The actual URL where the module was fetched from (for @clevertree/meta)
+   * @param isMainHook Optional: If true, validates that module exports a default function (for main hooks)
    * @returns Resolved module exports
    */
-  executeModule(code: string, filename: string, context: HookContext, fetchUrl?: string): Promise<any>
+  executeModule(code: string, filename: string, context: HookContext, fetchUrl?: string, isMainHook?: boolean): Promise<any>
 }
 
 /**
  * Web-specific module loader: uses Function constructor for Metro compatibility
  */
 export class WebModuleLoader implements ModuleLoader {
-  async executeModule(code: string, filename: string, context: HookContext, fetchUrl?: string): Promise<any> {
+  async executeModule(code: string, filename: string, context: HookContext, fetchUrl?: string, isMainHook: boolean = false): Promise<any> {
     // Note: preamble is now added BEFORE transpilation in transpileCode(),
     // so we no longer need to add it again here
+    // Note: Static imports are resolved in loadAndExecuteHook BEFORE transpilation
 
     const exports: any = {}
     const module = { exports }
@@ -513,7 +515,12 @@ try {
 
       // Return the module exports
       const mod = module.exports
-      if (!mod || typeof mod.default !== 'function') {
+      // Only validate default function export for main hooks, not imported modules
+      if (isMainHook && (!mod || typeof mod.default !== 'function')) {
+        // For non-hook modules (components, utilities), allow any export structure
+        if (mod && (typeof mod === 'object' || typeof mod === 'function')) {
+          return mod
+        }
         throw new Error('Hook module does not export a default function')
       }
 
@@ -596,7 +603,7 @@ export class AndroidModuleLoader implements ModuleLoader {
     this.importHandler = importHandler
   }
 
-  async executeModule(code: string, filename: string, context: HookContext, fetchUrl?: string): Promise<any> {
+  async executeModule(code: string, filename: string, context: HookContext, fetchUrl?: string, isMainHook: boolean = false): Promise<any> {
     const exports: any = {}
     const module = { exports }
 
@@ -689,7 +696,8 @@ try {
     console.log('[AndroidModuleLoader] module.exports === exports?', (module as any).exports === exports)
     console.log('[AndroidModuleLoader] exports object:', JSON.stringify(exports, null, 2))
 
-    if (!mod || typeof mod.default !== 'function') {
+    // Only validate default function export for main hooks
+    if (isMainHook && (!mod || typeof mod.default !== 'function')) {
       throw new Error('Hook module must export default function(ctx)')
     }
 
@@ -934,6 +942,136 @@ export async function transpileCode(
 }
 
 /**
+ * Parse static import statements from code
+ * Returns array of { statement, specifier, bindings }
+ */
+function parseStaticImports(code: string): Array<{
+  statement: string
+  specifier: string
+  bindings: string
+  isDefault: boolean
+  isNamespace: boolean
+}> {
+  const imports: Array<any> = []
+
+  // Match: import Default from "spec"
+  // Match: import { named } from "spec"  
+  // Match: import { named as alias } from "spec"
+  // Match: import Default, { named } from "spec"
+  // Match: import * as namespace from "spec"
+  const importRe = /import\s+((?:[^"']+)\s+from\s+)?['"]([^"']+)['"]\s*;?/g
+
+  let match
+  while ((match = importRe.exec(code)) !== null) {
+    const statement = match[0]
+    const beforeFrom = match[1] || ''
+    const specifier = match[2]
+
+    // Skip if it's a special import we handle separately
+    if (specifier.startsWith('@clevertree/') || specifier === 'react' || specifier === 'react/jsx-runtime') {
+      continue
+    }
+
+    // Skip if it's not a relative/absolute path (bare specifier)
+    if (!specifier.startsWith('./') && !specifier.startsWith('../') && !specifier.startsWith('/')) {
+      continue
+    }
+
+    let bindings = beforeFrom.replace(/\s+from\s*$/, '').trim()
+    let isDefault = false
+    let isNamespace = false
+
+    // Check for namespace import: import * as Name
+    if (/^\*\s+as\s+\w+$/.test(bindings)) {
+      isNamespace = true
+    }
+    // Check for default import (no braces)
+    else if (bindings && !bindings.includes('{')) {
+      isDefault = true
+    }
+
+    imports.push({ statement, specifier, bindings, isDefault, isNamespace })
+  }
+
+  return imports
+}
+
+/**
+ * Pre-fetch all static imports and rewrite them to const declarations
+ */
+async function resolveStaticImports(
+  code: string,
+  filename: string,
+  context: HookContext
+): Promise<string> {
+  const imports = parseStaticImports(code)
+
+  console.error(`[resolveStaticImports] ${filename}: found ${imports.length} imports`, imports.map(i => i.specifier))
+
+  if (imports.length === 0) {
+    return code
+  }
+
+  // Pre-fetch all imports
+  const loadModule = context?.helpers?.loadModule
+  if (!loadModule) {
+    console.warn('[resolveStaticImports] No loadModule helper available, skipping static import resolution')
+    return code
+  }
+
+  const modules = new Map<string, any>()
+
+  // Fetch all modules in parallel
+  await Promise.all(
+    imports.map(async (imp) => {
+      try {
+        const mod = await loadModule(imp.specifier, filename)
+        modules.set(imp.specifier, mod)
+      } catch (e) {
+        console.error(`[resolveStaticImports] Failed to load ${imp.specifier}:`, e)
+        throw new Error(`Failed to load static import "${imp.specifier}": ${e}`)
+      }
+    })
+  )
+
+  // Rewrite imports to const declarations
+  let rewritten = code
+
+  for (const imp of imports) {
+    const mod = modules.get(imp.specifier)
+    const varName = `__import_${Math.random().toString(36).substr(2, 9)}`
+
+      // Store module in a global variable
+      ; (globalThis as any)[varName] = mod
+
+    let replacement = ''
+
+    if (imp.isNamespace) {
+      // import * as Name from "spec" -> const Name = globalThis.__import_xxx
+      const nsName = imp.bindings.replace(/^\*\s+as\s+/, '')
+      replacement = `const ${nsName} = globalThis.${varName};`
+    } else if (imp.isDefault) {
+      // import Name from "spec" -> const Name = globalThis.__import_xxx.default
+      const defaultName = imp.bindings.split(',')[0].trim()
+      replacement = `const ${defaultName} = (globalThis.${varName}?.default || globalThis.${varName});`
+    } else {
+      // import { a, b as c } from "spec"
+      // Parse the destructuring and handle aliases
+      // Convert ES6 import syntax (as) to destructuring syntax (:)
+      const destructure = imp.bindings
+        .replace(/^\{|\}$/g, '')
+        .trim()
+        .replace(/\bas\b/g, ':') // Convert "x as y" to "x: y" for destructuring
+      replacement = `const { ${destructure} } = (globalThis.${varName} || {});`
+    }
+
+    rewritten = rewritten.replace(imp.statement, replacement)
+  }
+
+  return rewritten
+}
+
+/**
  * Centralized import rewriting for hooks.
  * Offloads JS glue from client repos to the transpiler runtime.
  */
@@ -1129,17 +1267,26 @@ export class HookLoader {
 
       const code = await response.text()
 
+      // Pre-resolve static imports BEFORE transpilation
+      let preprocessedCode = code
+      try {
+        preprocessedCode = await resolveStaticImports(code, normalizedPath, context)
+      } catch (resolveErr) {
+        console.warn('[RuntimeLoader] Static import resolution failed:', resolveErr)
+        // Continue with original code if resolution fails
+      }
+
       // Transpile if needed (Android always routes through custom transpiler)
-      let finalCode = code
-      const shouldTranspile = !!this.transpiler || looksLikeTsOrJsx(code, normalizedPath)
+      let finalCode = preprocessedCode
+      const shouldTranspile = !!this.transpiler || looksLikeTsOrJsx(preprocessedCode, normalizedPath)
       if (shouldTranspile) {
         try {
           if (this.transpiler) {
-            finalCode = await this.transpiler(code, normalizedPath)
+            finalCode = await this.transpiler(preprocessedCode, normalizedPath)
             this.logTranspileResult(normalizedPath, finalCode)
           } else {
             finalCode = await transpileCode(
-              code,
+              preprocessedCode,
               { filename: normalizedPath },
               false // Web uses import, not CommonJS
             )
@@ -1159,7 +1306,8 @@ export class HookLoader {
       // Execute and cache
       let mod: any
       try {
-        mod = await this.moduleLoader.executeModule(finalCode, normalizedPath, context, moduleUrl)
+        // Don't validate default export for imported modules
+        mod = await this.moduleLoader.executeModule(finalCode, normalizedPath, context, moduleUrl, false)
       } catch (execErr) {
         const execMsg = (execErr as any)?.message || String(execErr)
         const syntaxMatch = execMsg.match(/Unexpected token|missing \)|SyntaxError/)
@@ -1235,6 +1383,11 @@ export class HookLoader {
 
       diag.codeLength = code.length
 
+      // Pre-resolve all static imports BEFORE transpilation
+      console.error(`[HookLoader] About to resolve static imports for ${hookPath}`)
+      code = await resolveStaticImports(code, hookPath, context)
+      console.error(`[HookLoader] Static imports resolved for ${hookPath}`)
+
       // Transpile if needed
       diag.phase = 'transform'
       let finalCode = code
@@ -1272,7 +1425,7 @@ export class HookLoader {
 
       try {
         // Pass the actual fetch URL for @clevertree/meta injection, not the logical path
-        const mod = await this.moduleLoader.executeModule(finalCode, hookPath, context, hookUrl)
+        const mod = await this.moduleLoader.executeModule(finalCode, hookPath, context, hookUrl, true)
 
         if (!mod || typeof mod.default !== 'function') {
           throw new Error('Hook module does not export a default function')

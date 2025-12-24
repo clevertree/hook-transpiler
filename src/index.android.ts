@@ -1,6 +1,7 @@
 // Android QuickJS/JNI entrypoint: keep API aligned with web exports without Android-specific JSI bindings
 import { transpileCode } from './runtimeLoader.js'
-import { initAndroidThemedStyler, createAndroidTheme, applyAndroidThemeStyle } from '@clevertree/themed-styler/android'
+// TODO: Re-enable when themed-styler Android module is available
+// import { initAndroidThemedStyler, createAndroidTheme, applyAndroidThemeStyle } from '@clevertree/themed-styler/android'
 
 export {
     type TransformOptions,
@@ -29,8 +30,8 @@ export { buildPeerUrl, buildRepoHeaders } from './urlBuilder.js'
 export { installWebApiShims, type WebApiShimOptions } from './android/webApiShims.js'
 export { createQuickJsContext, type QuickJsModuleContext, formatTranspiledCode } from './android/quickJsContext.js'
 
-// ThemedStyler Android exports
-export { initAndroidThemedStyler, createAndroidTheme, applyAndroidThemeStyle } from '@clevertree/themed-styler/android'
+// ThemedStyler Android exports - TODO: Re-enable when themed-styler Android module is available
+// export { initAndroidThemedStyler, createAndroidTheme, applyAndroidThemeStyle } from '@clevertree/themed-styler/android'
 
 // Android uses native JNI/QuickJS to set __hook_transpile_jsx; no WASM or Android bootstrap here
 export async function initTranspiler(): Promise<void> {
@@ -39,8 +40,10 @@ export async function initTranspiler(): Promise<void> {
 
 // Convenience init alias for Android consumers.
 export async function initAndroid(opts?: { onThemedStylerInit?: () => Promise<void> }): Promise<void> {
+    // TODO: Re-enable when themed-styler Android module is available
     // Initialize themed-styler for Android
-    await initAndroidThemedStyler()
+    // await initAndroidThemedStyler()
+
     // Call custom init if provided
     if (opts?.onThemedStylerInit) {
         await opts.onThemedStylerInit()

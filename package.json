@@ -1,21 +1,20 @@
 {
   "name": "@clevertree/hook-transpiler",
-  "version": "1.3.2",
+  "version": "1.3.3",
   "description": "Minimal JSX/TSX transpiler for Relay hooks on web and Android (QuickJS/JNI)",
   "type": "module",
-  "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
+  "main": "./dist/web/index.js",
+  "types": "./dist/web/index.d.ts",
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
-      "android": "./dist/index.android.js",
-      "import": "./dist/index.js",
-      "default": "./dist/index.js"
+      "types": "./dist/web/index.d.ts",
+      "import": "./dist/web/index.js",
+      "default": "./dist/web/index.js"
     },
     "./android": {
-      "types": "./dist/index.android.d.ts",
-      "import": "./dist/index.android.js",
-      "default": "./dist/index.android.js"
+      "types": "./dist/android/index.android.d.ts",
+      "import": "./dist/android/index.android.js",
+      "default": "./dist/android/index.android.js"
     }
   },
   "files": [
@@ -26,7 +25,7 @@
   "scripts": {
     "clean": "rm -rf dist",
     "build": "tsc && npm run build:wasm",
-    "build:wasm": "wasm-pack build --release --target web --features wasm && mkdir -p wasm && cp pkg/relay_hook_transpiler* wasm/",
+    "build:wasm": "wasm-pack build --release --target web --features wasm && mkdir -p wasm && cp pkg/relay_hook_transpiler* wasm/ && mkdir -p dist/web/wasm && cp pkg/relay_hook_transpiler* dist/web/wasm/ && mkdir -p dist/wasm && cp pkg/relay_hook_transpiler* dist/wasm/",
     "test": "npm run build && node --test dist/selfCheck.test.js",
     "prepublishOnly": "npm run clean && npm run build"
   },

@@ -14,10 +14,4 @@ export interface WebApiShimOptions {
     /** Debug logging */
     debug?: boolean;
 }
-/**
- * Install Web API shims for Android QuickJS
- *
- * Note: This function does NOT install fetch - fetch is already provided by native QuickJSManager
- * This only installs URL/URLSearchParams shims if missing, and verifies timers exist.
- */
 export declare function installWebApiShims(options?: WebApiShimOptions): void;

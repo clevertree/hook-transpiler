@@ -8,17 +8,12 @@
  * - URL and URLSearchParams may be missing from QuickJS - install polyfills if needed
  * - Timers (setTimeout/setInterval) must be provided by host - verify they exist
  */
-/**
- * Minimal URLSearchParams shim for QuickJS
- * Only required if not already available in host environment
- */
 class URLSearchParamsShim {
     constructor(init) {
         this._entries = [];
         if (!init)
             return;
         if (typeof init === 'string') {
-            // Parse query string
             const parts = init.split('&');
             for (const part of parts) {
                 const idx = part.indexOf('=');
@@ -80,32 +75,21 @@ class URLSearchParamsShim {
         return this._entries.map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`).join('&');
     }
 }
-/**
- * Install Web API shims for Android QuickJS
- *
- * Note: This function does NOT install fetch - fetch is already provided by native QuickJSManager
- * This only installs URL/URLSearchParams shims if missing, and verifies timers exist.
- */
 export function installWebApiShims(options = {}) {
     const { requireTimers = true, debug = false } = options;
-    // Verify fetch is already available (injected by native code)
     if (typeof globalThis.fetch !== 'function') {
         console.warn('[webApiShims] fetch not found - QuickJS environment may not be fully initialized. Ensure Kotlin QuickJSManager runs first.');
     }
-    // Install URL shim if missing
     if (typeof globalThis.URL !== 'function') {
         if (debug)
             console.log('[webApiShims] Installing URL shim');
-        // QuickJS may have built-in URL; if not, this would need a more complete implementation
         console.warn('[webApiShims] URL is not available in this QuickJS instance. Hooks cannot use new URL(). Provide a host implementation.');
     }
-    // Install URLSearchParams shim if missing
     if (typeof globalThis.URLSearchParams !== 'function') {
         if (debug)
             console.log('[webApiShims] Installing URLSearchParams shim');
         globalThis.URLSearchParams = URLSearchParamsShim;
     }
-    // Verify timers exist
     if (requireTimers) {
         if (typeof globalThis.setTimeout !== 'function') {
             throw new Error('[webApiShims] setTimeout is required but not found. Ensure host provides timer implementation.');

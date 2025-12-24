@@ -1102,7 +1102,7 @@ var require_react_development = __commonJS({
           var dispatcher = resolveDispatcher();
           return dispatcher.useRef(initialValue);
         }
-        function useEffect6(create, deps) {
+        function useEffect5(create, deps) {
           var dispatcher = resolveDispatcher();
           return dispatcher.useEffect(create, deps);
         }
@@ -1885,7 +1885,7 @@ var require_react_development = __commonJS({
         exports.useContext = useContext2;
         exports.useDebugValue = useDebugValue;
         exports.useDeferredValue = useDeferredValue;
-        exports.useEffect = useEffect6;
+        exports.useEffect = useEffect5;
         exports.useId = useId;
         exports.useImperativeHandle = useImperativeHandle;
         exports.useInsertionEffect = useInsertionEffect;
@@ -2389,9 +2389,9 @@ var require_react_dom_development = __commonJS({
         if (typeof __REACT_DEVTOOLS_GLOBAL_HOOK__ !== "undefined" && typeof __REACT_DEVTOOLS_GLOBAL_HOOK__.registerInternalModuleStart === "function") {
           __REACT_DEVTOOLS_GLOBAL_HOOK__.registerInternalModuleStart(new Error());
         }
-        var React7 = require_react();
+        var React5 = require_react();
         var Scheduler = require_scheduler();
-        var ReactSharedInternals = React7.__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED;
+        var ReactSharedInternals = React5.__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED;
         var suppressWarning = false;
         function setSuppressWarning(newSuppressWarning) {
           {
@@ -3996,7 +3996,7 @@ var require_react_dom_development = __commonJS({
           {
             if (props.value == null) {
               if (typeof props.children === "object" && props.children !== null) {
-                React7.Children.forEach(props.children, function(child) {
+                React5.Children.forEach(props.children, function(child) {
                   if (child == null) {
                     return;
                   }
@@ -23565,7 +23565,7 @@ var require_react_jsx_runtime_development = __commonJS({
     if (true) {
       (function() {
         "use strict";
-        var React7 = require_react();
+        var React5 = require_react();
         var REACT_ELEMENT_TYPE = Symbol.for("react.element");
         var REACT_PORTAL_TYPE = Symbol.for("react.portal");
         var REACT_FRAGMENT_TYPE = Symbol.for("react.fragment");
@@ -23591,7 +23591,7 @@ var require_react_jsx_runtime_development = __commonJS({
           }
           return null;
         }
-        var ReactSharedInternals = React7.__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED;
+        var ReactSharedInternals = React5.__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED;
         function error(format) {
           {
             {
@@ -24463,7 +24463,7 @@ var require_jsx_runtime = __commonJS({
   }
 });
 
-// ../../wasm/relay_hook_transpiler.js
+// ../../dist/wasm/relay_hook_transpiler.js
 var relay_hook_transpiler_exports = {};
 __export(relay_hook_transpiler_exports, {
   default: () => relay_hook_transpiler_default,
@@ -24732,7 +24732,7 @@ async function __wbg_init(module_or_path) {
 }
 var wasm, cachedDataViewMemory0, cachedUint8ArrayMemory0, cachedTextDecoder, MAX_SAFARI_DECODE_BYTES, numBytesDecoded, cachedTextEncoder, WASM_VECTOR_LEN, EXPECTED_RESPONSE_TYPES, relay_hook_transpiler_default;
 var init_relay_hook_transpiler = __esm({
-  "../../wasm/relay_hook_transpiler.js"() {
+  "../../dist/wasm/relay_hook_transpiler.js"() {
     "use strict";
     cachedDataViewMemory0 = null;
     cachedUint8ArrayMemory0 = null;
@@ -24757,7 +24757,7 @@ var init_relay_hook_transpiler = __esm({
   }
 });
 
-// ../../node_modules/yaml/browser/dist/nodes/identity.js
+// ../../../themed-styler/node_modules/yaml/browser/dist/nodes/identity.js
 function isCollection(node) {
   if (node && typeof node === "object")
     switch (node[NODE_TYPE]) {
@@ -24780,7 +24780,7 @@ function isNode(node) {
 }
 var ALIAS, DOC, MAP, PAIR, SCALAR, SEQ, NODE_TYPE, isAlias, isDocument, isMap, isPair, isScalar, isSeq, hasAnchor;
 var init_identity = __esm({
-  "../../node_modules/yaml/browser/dist/nodes/identity.js"() {
+  "../../../themed-styler/node_modules/yaml/browser/dist/nodes/identity.js"() {
     ALIAS = Symbol.for("yaml.alias");
     DOC = Symbol.for("yaml.document");
     MAP = Symbol.for("yaml.map");
@@ -24798,7 +24798,7 @@ var init_identity = __esm({
   }
 });
 
-// ../../node_modules/yaml/browser/dist/visit.js
+// ../../../themed-styler/node_modules/yaml/browser/dist/visit.js
 function visit(node, visitor) {
   const visitor_ = initVisitor(visitor);
   if (isDocument(node)) {
@@ -24940,7 +24940,7 @@ function replaceNode(key2, path2, node) {
 }
 var BREAK, SKIP, REMOVE;
 var init_visit = __esm({
-  "../../node_modules/yaml/browser/dist/visit.js"() {
+  "../../../themed-styler/node_modules/yaml/browser/dist/visit.js"() {
     init_identity();
     BREAK = Symbol("break visit");
     SKIP = Symbol("skip children");
@@ -24954,10 +24954,10 @@ var init_visit = __esm({
   }
 });
 
-// ../../node_modules/yaml/browser/dist/doc/directives.js
+// ../../../themed-styler/node_modules/yaml/browser/dist/doc/directives.js
 var escapeChars, escapeTagName, Directives;
 var init_directives = __esm({
-  "../../node_modules/yaml/browser/dist/doc/directives.js"() {
+  "../../../themed-styler/node_modules/yaml/browser/dist/doc/directives.js"() {
     init_identity();
     init_visit();
     escapeChars = {
@@ -25124,7 +25124,7 @@ var init_directives = __esm({
   }
 });
 
-// ../../node_modules/yaml/browser/dist/doc/anchors.js
+// ../../../themed-styler/node_modules/yaml/browser/dist/doc/anchors.js
 function anchorIsValid(anchor) {
   if (/[\x00-\x19\s,[\]{}]/.test(anchor)) {
     const sa = JSON.stringify(anchor);
@@ -25183,13 +25183,13 @@ function createNodeAnchors(doc, prefix) {
   };
 }
 var init_anchors = __esm({
-  "../../node_modules/yaml/browser/dist/doc/anchors.js"() {
+  "../../../themed-styler/node_modules/yaml/browser/dist/doc/anchors.js"() {
     init_identity();
     init_visit();
   }
 });
 
-// ../../node_modules/yaml/browser/dist/doc/applyReviver.js
+// ../../../themed-styler/node_modules/yaml/browser/dist/doc/applyReviver.js
 function applyReviver(reviver, obj, key2, val) {
   if (val && typeof val === "object") {
     if (Array.isArray(val)) {
@@ -25233,11 +25233,11 @@ function applyReviver(reviver, obj, key2, val) {
   return reviver.call(obj, key2, val);
 }
 var init_applyReviver = __esm({
-  "../../node_modules/yaml/browser/dist/doc/applyReviver.js"() {
+  "../../../themed-styler/node_modules/yaml/browser/dist/doc/applyReviver.js"() {
   }
 });
 
-// ../../node_modules/yaml/browser/dist/nodes/toJS.js
+// ../../../themed-styler/node_modules/yaml/browser/dist/nodes/toJS.js
 function toJS(value2, arg, ctx) {
   if (Array.isArray(value2))
     return value2.map((v, i) => toJS(v, String(i), ctx));
@@ -25260,15 +25260,15 @@ function toJS(value2, arg, ctx) {
   return value2;
 }
 var init_toJS = __esm({
-  "../../node_modules/yaml/browser/dist/nodes/toJS.js"() {
+  "../../../themed-styler/node_modules/yaml/browser/dist/nodes/toJS.js"() {
     init_identity();
   }
 });
 
-// ../../node_modules/yaml/browser/dist/nodes/Node.js
+// ../../../themed-styler/node_modules/yaml/browser/dist/nodes/Node.js
 var NodeBase;
 var init_Node = __esm({
-  "../../node_modules/yaml/browser/dist/nodes/Node.js"() {
+  "../../../themed-styler/node_modules/yaml/browser/dist/nodes/Node.js"() {
     init_applyReviver();
     init_identity();
     init_toJS();
@@ -25305,7 +25305,7 @@ var init_Node = __esm({
   }
 });
 
-// ../../node_modules/yaml/browser/dist/nodes/Alias.js
+// ../../../themed-styler/node_modules/yaml/browser/dist/nodes/Alias.js
 function getAliasCount(doc, node, anchors) {
   if (isAlias(node)) {
     const source = node.resolve(doc);
@@ -25328,7 +25328,7 @@ function getAliasCount(doc, node, anchors) {
 }
 var Alias;
 var init_Alias = __esm({
-  "../../node_modules/yaml/browser/dist/nodes/Alias.js"() {
+  "../../../themed-styler/node_modules/yaml/browser/dist/nodes/Alias.js"() {
     init_anchors();
     init_visit();
     init_identity();
@@ -25418,10 +25418,10 @@ var init_Alias = __esm({
   }
 });
 
-// ../../node_modules/yaml/browser/dist/nodes/Scalar.js
+// ../../../themed-styler/node_modules/yaml/browser/dist/nodes/Scalar.js
 var isScalarValue, Scalar;
 var init_Scalar = __esm({
-  "../../node_modules/yaml/browser/dist/nodes/Scalar.js"() {
+  "../../../themed-styler/node_modules/yaml/browser/dist/nodes/Scalar.js"() {
     init_identity();
     init_Node();
     init_toJS();
@@ -25446,7 +25446,7 @@ var init_Scalar = __esm({
   }
 });
 
-// ../../node_modules/yaml/browser/dist/doc/createNode.js
+// ../../../themed-styler/node_modules/yaml/browser/dist/doc/createNode.js
 function findTagObject(value2, tagName, tags) {
   if (tagName) {
     const match = tags.filter((t) => t.tag === tagName);
@@ -25512,7 +25512,7 @@ function createNode(value2, tagName, ctx) {
 }
 var defaultTagPrefix;
 var init_createNode = __esm({
-  "../../node_modules/yaml/browser/dist/doc/createNode.js"() {
+  "../../../themed-styler/node_modules/yaml/browser/dist/doc/createNode.js"() {
     init_Alias();
     init_identity();
     init_Scalar();
@@ -25520,7 +25520,7 @@ var init_createNode = __esm({
   }
 });
 
-// ../../node_modules/yaml/browser/dist/nodes/Collection.js
+// ../../../themed-styler/node_modules/yaml/browser/dist/nodes/Collection.js
 function collectionFromPath(schema4, path2, value2) {
   let v = value2;
   for (let i = path2.length - 1; i >= 0; --i) {
@@ -25545,7 +25545,7 @@ function collectionFromPath(schema4, path2, value2) {
 }
 var isEmptyPath, Collection;
 var init_Collection = __esm({
-  "../../node_modules/yaml/browser/dist/nodes/Collection.js"() {
+  "../../../themed-styler/node_modules/yaml/browser/dist/nodes/Collection.js"() {
     init_createNode();
     init_identity();
     init_Node();
@@ -25660,7 +25660,7 @@ var init_Collection = __esm({
   }
 });
 
-// ../../node_modules/yaml/browser/dist/stringify/stringifyComment.js
+// ../../../themed-styler/node_modules/yaml/browser/dist/stringify/stringifyComment.js
 function indentComment(comment, indent) {
   if (/^\n+$/.test(comment))
     return comment.substring(1);
@@ -25668,13 +25668,13 @@ function indentComment(comment, indent) {
 }
 var stringifyComment, lineComment;
 var init_stringifyComment = __esm({
-  "../../node_modules/yaml/browser/dist/stringify/stringifyComment.js"() {
+  "../../../themed-styler/node_modules/yaml/browser/dist/stringify/stringifyComment.js"() {
     stringifyComment = (str) => str.replace(/^(?!$)(?: $)?/gm, "#");
     lineComment = (str, indent, comment) => str.endsWith("\n") ? indentComment(comment, indent) : comment.includes("\n") ? "\n" + indentComment(comment, indent) : (str.endsWith(" ") ? "" : " ") + comment;
   }
 });
 
-// ../../node_modules/yaml/browser/dist/stringify/foldFlowLines.js
+// ../../../themed-styler/node_modules/yaml/browser/dist/stringify/foldFlowLines.js
 function foldFlowLines(text, indent, mode = "flow", { indentAtStart, lineWidth = 80, minContentWidth = 20, onFold, onOverflow } = {}) {
   if (!lineWidth || lineWidth < 0)
     return text;
@@ -25799,14 +25799,14 @@ function consumeMoreIndentedLines(text, i, indent) {
 }
 var FOLD_FLOW, FOLD_BLOCK, FOLD_QUOTED;
 var init_foldFlowLines = __esm({
-  "../../node_modules/yaml/browser/dist/stringify/foldFlowLines.js"() {
+  "../../../themed-styler/node_modules/yaml/browser/dist/stringify/foldFlowLines.js"() {
     FOLD_FLOW = "flow";
     FOLD_BLOCK = "block";
     FOLD_QUOTED = "quoted";
   }
 });
 
-// ../../node_modules/yaml/browser/dist/stringify/stringifyString.js
+// ../../../themed-styler/node_modules/yaml/browser/dist/stringify/stringifyString.js
 function lineLengthOverLimit(str, lineWidth, indentLength) {
   if (!lineWidth || lineWidth < 0)
     return false;
@@ -26070,7 +26070,7 @@ function stringifyString(item, ctx, onComment, onChompKeep) {
 }
 var getFoldOptions, containsDocumentMarker, blockEndNewlines;
 var init_stringifyString = __esm({
-  "../../node_modules/yaml/browser/dist/stringify/stringifyString.js"() {
+  "../../../themed-styler/node_modules/yaml/browser/dist/stringify/stringifyString.js"() {
     init_Scalar();
     init_foldFlowLines();
     getFoldOptions = (ctx, isBlock2) => ({
@@ -26087,7 +26087,7 @@ var init_stringifyString = __esm({
   }
 });
 
-// ../../node_modules/yaml/browser/dist/stringify/stringify.js
+// ../../../themed-styler/node_modules/yaml/browser/dist/stringify/stringify.js
 function createStringifyContext(doc, options2) {
   const opt = Object.assign({
     blockQuote: true,
@@ -26199,7 +26199,7 @@ function stringify(item, ctx, onComment, onChompKeep) {
 ${ctx.indent}${str}`;
 }
 var init_stringify = __esm({
-  "../../node_modules/yaml/browser/dist/stringify/stringify.js"() {
+  "../../../themed-styler/node_modules/yaml/browser/dist/stringify/stringify.js"() {
     init_anchors();
     init_identity();
     init_stringifyComment();
@@ -26207,7 +26207,7 @@ var init_stringify = __esm({
   }
 });
 
-// ../../node_modules/yaml/browser/dist/stringify/stringifyPair.js
+// ../../../themed-styler/node_modules/yaml/browser/dist/stringify/stringifyPair.js
 function stringifyPair({ key: key2, value: value2 }, ctx, onComment, onChompKeep) {
   const { allNullValues, doc, indent, indentStep, options: { commentString, indentSeq, simpleKeys } } = ctx;
   let keyComment = isNode(key2) && key2.comment || null;
@@ -26330,7 +26330,7 @@ ${ctx.indent}`;
   return str;
 }
 var init_stringifyPair = __esm({
-  "../../node_modules/yaml/browser/dist/stringify/stringifyPair.js"() {
+  "../../../themed-styler/node_modules/yaml/browser/dist/stringify/stringifyPair.js"() {
     init_identity();
     init_Scalar();
     init_stringify();
@@ -26338,18 +26338,18 @@ var init_stringifyPair = __esm({
   }
 });
 
-// ../../node_modules/yaml/browser/dist/log.js
+// ../../../themed-styler/node_modules/yaml/browser/dist/log.js
 function warn(logLevel, warning) {
   if (logLevel === "debug" || logLevel === "warn") {
     console.warn(warning);
   }
 }
 var init_log = __esm({
-  "../../node_modules/yaml/browser/dist/log.js"() {
+  "../../../themed-styler/node_modules/yaml/browser/dist/log.js"() {
   }
 });
 
-// ../../node_modules/yaml/browser/dist/schema/yaml-1.1/merge.js
+// ../../../themed-styler/node_modules/yaml/browser/dist/schema/yaml-1.1/merge.js
 function addMergeToJSMap(ctx, map2, value2) {
   value2 = ctx && isAlias(value2) ? value2.resolve(ctx.doc) : value2;
   if (isSeq(value2))
@@ -26385,7 +26385,7 @@ function mergeValue(ctx, map2, value2) {
 }
 var MERGE_KEY, merge, isMergeKey;
 var init_merge = __esm({
-  "../../node_modules/yaml/browser/dist/schema/yaml-1.1/merge.js"() {
+  "../../../themed-styler/node_modules/yaml/browser/dist/schema/yaml-1.1/merge.js"() {
     init_identity();
     init_Scalar();
     MERGE_KEY = "<<";
@@ -26403,7 +26403,7 @@ var init_merge = __esm({
   }
 });
 
-// ../../node_modules/yaml/browser/dist/nodes/addPairToJSMap.js
+// ../../../themed-styler/node_modules/yaml/browser/dist/nodes/addPairToJSMap.js
 function addPairToJSMap(ctx, map2, { key: key2, value: value2 }) {
   if (isNode(key2) && key2.addToJSMap)
     key2.addToJSMap(ctx, map2, value2);
@@ -26456,7 +26456,7 @@ function stringifyKey(key2, jsKey, ctx) {
   return JSON.stringify(jsKey);
 }
 var init_addPairToJSMap = __esm({
-  "../../node_modules/yaml/browser/dist/nodes/addPairToJSMap.js"() {
+  "../../../themed-styler/node_modules/yaml/browser/dist/nodes/addPairToJSMap.js"() {
     init_log();
     init_merge();
     init_stringify();
@@ -26465,7 +26465,7 @@ var init_addPairToJSMap = __esm({
   }
 });
 
-// ../../node_modules/yaml/browser/dist/nodes/Pair.js
+// ../../../themed-styler/node_modules/yaml/browser/dist/nodes/Pair.js
 function createPair(key2, value2, ctx) {
   const k = createNode(key2, void 0, ctx);
   const v = createNode(value2, void 0, ctx);
@@ -26473,7 +26473,7 @@ function createPair(key2, value2, ctx) {
 }
 var Pair;
 var init_Pair = __esm({
-  "../../node_modules/yaml/browser/dist/nodes/Pair.js"() {
+  "../../../themed-styler/node_modules/yaml/browser/dist/nodes/Pair.js"() {
     init_createNode();
     init_stringifyPair();
     init_addPairToJSMap();
@@ -26503,7 +26503,7 @@ var init_Pair = __esm({
   }
 });
 
-// ../../node_modules/yaml/browser/dist/stringify/stringifyCollection.js
+// ../../../themed-styler/node_modules/yaml/browser/dist/stringify/stringifyCollection.js
 function stringifyCollection(collection, ctx, options2) {
   const flow = ctx.inFlow ?? collection.flow;
   const stringify4 = flow ? stringifyFlowCollection : stringifyBlockCollection;
@@ -26638,14 +26638,14 @@ function addCommentBefore({ indent, options: { commentString } }, lines, comment
   }
 }
 var init_stringifyCollection = __esm({
-  "../../node_modules/yaml/browser/dist/stringify/stringifyCollection.js"() {
+  "../../../themed-styler/node_modules/yaml/browser/dist/stringify/stringifyCollection.js"() {
     init_identity();
     init_stringify();
     init_stringifyComment();
   }
 });
 
-// ../../node_modules/yaml/browser/dist/nodes/YAMLMap.js
+// ../../../themed-styler/node_modules/yaml/browser/dist/nodes/YAMLMap.js
 function findPair(items, key2) {
   const k = isScalar(key2) ? key2.value : key2;
   for (const it of items) {
@@ -26660,7 +26660,7 @@ function findPair(items, key2) {
 }
 var YAMLMap;
 var init_YAMLMap = __esm({
-  "../../node_modules/yaml/browser/dist/nodes/YAMLMap.js"() {
+  "../../../themed-styler/node_modules/yaml/browser/dist/nodes/YAMLMap.js"() {
     init_stringifyCollection();
     init_addPairToJSMap();
     init_Collection();
@@ -26787,10 +26787,10 @@ var init_YAMLMap = __esm({
   }
 });
 
-// ../../node_modules/yaml/browser/dist/schema/common/map.js
+// ../../../themed-styler/node_modules/yaml/browser/dist/schema/common/map.js
 var map;
 var init_map = __esm({
-  "../../node_modules/yaml/browser/dist/schema/common/map.js"() {
+  "../../../themed-styler/node_modules/yaml/browser/dist/schema/common/map.js"() {
     init_identity();
     init_YAMLMap();
     map = {
@@ -26808,7 +26808,7 @@ var init_map = __esm({
   }
 });
 
-// ../../node_modules/yaml/browser/dist/nodes/YAMLSeq.js
+// ../../../themed-styler/node_modules/yaml/browser/dist/nodes/YAMLSeq.js
 function asItemIndex(key2) {
   let idx = isScalar(key2) ? key2.value : key2;
   if (idx && typeof idx === "string")
@@ -26817,7 +26817,7 @@ function asItemIndex(key2) {
 }
 var YAMLSeq;
 var init_YAMLSeq = __esm({
-  "../../node_modules/yaml/browser/dist/nodes/YAMLSeq.js"() {
+  "../../../themed-styler/node_modules/yaml/browser/dist/nodes/YAMLSeq.js"() {
     init_createNode();
     init_stringifyCollection();
     init_Collection();
@@ -26923,10 +26923,10 @@ var init_YAMLSeq = __esm({
   }
 });
 
-// ../../node_modules/yaml/browser/dist/schema/common/seq.js
+// ../../../themed-styler/node_modules/yaml/browser/dist/schema/common/seq.js
 var seq;
 var init_seq = __esm({
-  "../../node_modules/yaml/browser/dist/schema/common/seq.js"() {
+  "../../../themed-styler/node_modules/yaml/browser/dist/schema/common/seq.js"() {
     init_identity();
     init_YAMLSeq();
     seq = {
@@ -26944,10 +26944,10 @@ var init_seq = __esm({
   }
 });
 
-// ../../node_modules/yaml/browser/dist/schema/common/string.js
+// ../../../themed-styler/node_modules/yaml/browser/dist/schema/common/string.js
 var string;
 var init_string = __esm({
-  "../../node_modules/yaml/browser/dist/schema/common/string.js"() {
+  "../../../themed-styler/node_modules/yaml/browser/dist/schema/common/string.js"() {
     init_stringifyString();
     string = {
       identify: (value2) => typeof value2 === "string",
@@ -26962,10 +26962,10 @@ var init_string = __esm({
   }
 });
 
-// ../../node_modules/yaml/browser/dist/schema/common/null.js
+// ../../../themed-styler/node_modules/yaml/browser/dist/schema/common/null.js
 var nullTag;
 var init_null = __esm({
-  "../../node_modules/yaml/browser/dist/schema/common/null.js"() {
+  "../../../themed-styler/node_modules/yaml/browser/dist/schema/common/null.js"() {
     init_Scalar();
     nullTag = {
       identify: (value2) => value2 == null,
@@ -26979,10 +26979,10 @@ var init_null = __esm({
   }
 });
 
-// ../../node_modules/yaml/browser/dist/schema/core/bool.js
+// ../../../themed-styler/node_modules/yaml/browser/dist/schema/core/bool.js
 var boolTag;
 var init_bool = __esm({
-  "../../node_modules/yaml/browser/dist/schema/core/bool.js"() {
+  "../../../themed-styler/node_modules/yaml/browser/dist/schema/core/bool.js"() {
     init_Scalar();
     boolTag = {
       identify: (value2) => typeof value2 === "boolean",
@@ -27002,7 +27002,7 @@ var init_bool = __esm({
   }
 });
 
-// ../../node_modules/yaml/browser/dist/stringify/stringifyNumber.js
+// ../../../themed-styler/node_modules/yaml/browser/dist/stringify/stringifyNumber.js
 function stringifyNumber({ format, minFractionDigits, tag: tag2, value: value2 }) {
   if (typeof value2 === "bigint")
     return String(value2);
@@ -27023,14 +27023,14 @@ function stringifyNumber({ format, minFractionDigits, tag: tag2, value: value2 }
   return n;
 }
 var init_stringifyNumber = __esm({
-  "../../node_modules/yaml/browser/dist/stringify/stringifyNumber.js"() {
+  "../../../themed-styler/node_modules/yaml/browser/dist/stringify/stringifyNumber.js"() {
   }
 });
 
-// ../../node_modules/yaml/browser/dist/schema/core/float.js
+// ../../../themed-styler/node_modules/yaml/browser/dist/schema/core/float.js
 var floatNaN, floatExp, float;
 var init_float = __esm({
-  "../../node_modules/yaml/browser/dist/schema/core/float.js"() {
+  "../../../themed-styler/node_modules/yaml/browser/dist/schema/core/float.js"() {
     init_Scalar();
     init_stringifyNumber();
     floatNaN = {
@@ -27070,7 +27070,7 @@ var init_float = __esm({
   }
 });
 
-// ../../node_modules/yaml/browser/dist/schema/core/int.js
+// ../../../themed-styler/node_modules/yaml/browser/dist/schema/core/int.js
 function intStringify(node, radix, prefix) {
   const { value: value2 } = node;
   if (intIdentify(value2) && value2 >= 0)
@@ -27079,7 +27079,7 @@ function intStringify(node, radix, prefix) {
 }
 var intIdentify, intResolve, intOct, int, intHex;
 var init_int = __esm({
-  "../../node_modules/yaml/browser/dist/schema/core/int.js"() {
+  "../../../themed-styler/node_modules/yaml/browser/dist/schema/core/int.js"() {
     init_stringifyNumber();
     intIdentify = (value2) => typeof value2 === "bigint" || Number.isInteger(value2);
     intResolve = (str, offset, radix, { intAsBigInt }) => intAsBigInt ? BigInt(str) : parseInt(str.substring(offset), radix);
@@ -27112,10 +27112,10 @@ var init_int = __esm({
   }
 });
 
-// ../../node_modules/yaml/browser/dist/schema/core/schema.js
+// ../../../themed-styler/node_modules/yaml/browser/dist/schema/core/schema.js
 var schema;
 var init_schema = __esm({
-  "../../node_modules/yaml/browser/dist/schema/core/schema.js"() {
+  "../../../themed-styler/node_modules/yaml/browser/dist/schema/core/schema.js"() {
     init_map();
     init_null();
     init_seq();
@@ -27139,13 +27139,13 @@ var init_schema = __esm({
   }
 });
 
-// ../../node_modules/yaml/browser/dist/schema/json/schema.js
+// ../../../themed-styler/node_modules/yaml/browser/dist/schema/json/schema.js
 function intIdentify2(value2) {
   return typeof value2 === "bigint" || Number.isInteger(value2);
 }
 var stringifyJSON, jsonScalars, jsonError, schema2;
 var init_schema2 = __esm({
-  "../../node_modules/yaml/browser/dist/schema/json/schema.js"() {
+  "../../../themed-styler/node_modules/yaml/browser/dist/schema/json/schema.js"() {
     init_Scalar();
     init_map();
     init_seq();
@@ -27205,10 +27205,10 @@ var init_schema2 = __esm({
   }
 });
 
-// ../../node_modules/yaml/browser/dist/schema/yaml-1.1/binary.js
+// ../../../themed-styler/node_modules/yaml/browser/dist/schema/yaml-1.1/binary.js
 var binary;
 var init_binary = __esm({
-  "../../node_modules/yaml/browser/dist/schema/yaml-1.1/binary.js"() {
+  "../../../themed-styler/node_modules/yaml/browser/dist/schema/yaml-1.1/binary.js"() {
     init_Scalar();
     init_stringifyString();
     binary = {
@@ -27265,7 +27265,7 @@ var init_binary = __esm({
   }
 });
 
-// ../../node_modules/yaml/browser/dist/schema/yaml-1.1/pairs.js
+// ../../../themed-styler/node_modules/yaml/browser/dist/schema/yaml-1.1/pairs.js
 function resolvePairs(seq2, onError) {
   if (isSeq(seq2)) {
     for (let i = 0; i < seq2.items.length; ++i) {
@@ -27325,7 +27325,7 @@ function createPairs(schema4, iterable, ctx) {
 }
 var pairs;
 var init_pairs = __esm({
-  "../../node_modules/yaml/browser/dist/schema/yaml-1.1/pairs.js"() {
+  "../../../themed-styler/node_modules/yaml/browser/dist/schema/yaml-1.1/pairs.js"() {
     init_identity();
     init_Pair();
     init_Scalar();
@@ -27340,10 +27340,10 @@ var init_pairs = __esm({
   }
 });
 
-// ../../node_modules/yaml/browser/dist/schema/yaml-1.1/omap.js
+// ../../../themed-styler/node_modules/yaml/browser/dist/schema/yaml-1.1/omap.js
 var YAMLOMap, omap;
 var init_omap = __esm({
-  "../../node_modules/yaml/browser/dist/schema/yaml-1.1/omap.js"() {
+  "../../../themed-styler/node_modules/yaml/browser/dist/schema/yaml-1.1/omap.js"() {
     init_identity();
     init_toJS();
     init_YAMLMap();
@@ -27416,7 +27416,7 @@ var init_omap = __esm({
   }
 });
 
-// ../../node_modules/yaml/browser/dist/schema/yaml-1.1/bool.js
+// ../../../themed-styler/node_modules/yaml/browser/dist/schema/yaml-1.1/bool.js
 function boolStringify({ value: value2, source }, ctx) {
   const boolObj = value2 ? trueTag : falseTag;
   if (source && boolObj.test.test(source))
@@ -27425,7 +27425,7 @@ function boolStringify({ value: value2, source }, ctx) {
 }
 var trueTag, falseTag;
 var init_bool2 = __esm({
-  "../../node_modules/yaml/browser/dist/schema/yaml-1.1/bool.js"() {
+  "../../../themed-styler/node_modules/yaml/browser/dist/schema/yaml-1.1/bool.js"() {
     init_Scalar();
     trueTag = {
       identify: (value2) => value2 === true,
@@ -27446,10 +27446,10 @@ var init_bool2 = __esm({
   }
 });
 
-// ../../node_modules/yaml/browser/dist/schema/yaml-1.1/float.js
+// ../../../themed-styler/node_modules/yaml/browser/dist/schema/yaml-1.1/float.js
 var floatNaN2, floatExp2, float2;
 var init_float2 = __esm({
-  "../../node_modules/yaml/browser/dist/schema/yaml-1.1/float.js"() {
+  "../../../themed-styler/node_modules/yaml/browser/dist/schema/yaml-1.1/float.js"() {
     init_Scalar();
     init_stringifyNumber();
     floatNaN2 = {
@@ -27492,7 +27492,7 @@ var init_float2 = __esm({
   }
 });
 
-// ../../node_modules/yaml/browser/dist/schema/yaml-1.1/int.js
+// ../../../themed-styler/node_modules/yaml/browser/dist/schema/yaml-1.1/int.js
 function intResolve2(str, offset, radix, { intAsBigInt }) {
   const sign = str[0];
   if (sign === "-" || sign === "+")
@@ -27526,7 +27526,7 @@ function intStringify2(node, radix, prefix) {
 }
 var intIdentify3, intBin, intOct2, int2, intHex2;
 var init_int2 = __esm({
-  "../../node_modules/yaml/browser/dist/schema/yaml-1.1/int.js"() {
+  "../../../themed-styler/node_modules/yaml/browser/dist/schema/yaml-1.1/int.js"() {
     init_stringifyNumber();
     intIdentify3 = (value2) => typeof value2 === "bigint" || Number.isInteger(value2);
     intBin = {
@@ -27567,10 +27567,10 @@ var init_int2 = __esm({
   }
 });
 
-// ../../node_modules/yaml/browser/dist/schema/yaml-1.1/set.js
+// ../../../themed-styler/node_modules/yaml/browser/dist/schema/yaml-1.1/set.js
 var YAMLSet, set;
 var init_set = __esm({
-  "../../node_modules/yaml/browser/dist/schema/yaml-1.1/set.js"() {
+  "../../../themed-styler/node_modules/yaml/browser/dist/schema/yaml-1.1/set.js"() {
     init_identity();
     init_Pair();
     init_YAMLMap();
@@ -27654,7 +27654,7 @@ var init_set = __esm({
   }
 });
 
-// ../../node_modules/yaml/browser/dist/schema/yaml-1.1/timestamp.js
+// ../../../themed-styler/node_modules/yaml/browser/dist/schema/yaml-1.1/timestamp.js
 function parseSexagesimal(str, asBigInt) {
   const sign = str[0];
   const parts = sign === "-" || sign === "+" ? str.substring(1) : str;
@@ -27690,7 +27690,7 @@ function stringifySexagesimal(node) {
 }
 var intTime, floatTime, timestamp;
 var init_timestamp = __esm({
-  "../../node_modules/yaml/browser/dist/schema/yaml-1.1/timestamp.js"() {
+  "../../../themed-styler/node_modules/yaml/browser/dist/schema/yaml-1.1/timestamp.js"() {
     init_stringifyNumber();
     intTime = {
       identify: (value2) => typeof value2 === "bigint" || Number.isInteger(value2),
@@ -27739,10 +27739,10 @@ var init_timestamp = __esm({
   }
 });
 
-// ../../node_modules/yaml/browser/dist/schema/yaml-1.1/schema.js
+// ../../../themed-styler/node_modules/yaml/browser/dist/schema/yaml-1.1/schema.js
 var schema3;
 var init_schema3 = __esm({
-  "../../node_modules/yaml/browser/dist/schema/yaml-1.1/schema.js"() {
+  "../../../themed-styler/node_modules/yaml/browser/dist/schema/yaml-1.1/schema.js"() {
     init_map();
     init_null();
     init_seq();
@@ -27782,7 +27782,7 @@ var init_schema3 = __esm({
   }
 });
 
-// ../../node_modules/yaml/browser/dist/schema/tags.js
+// ../../../themed-styler/node_modules/yaml/browser/dist/schema/tags.js
 function getTags(customTags, schemaName, addMergeTag) {
   const schemaTags = schemas.get(schemaName);
   if (schemaTags && !customTags) {
@@ -27819,7 +27819,7 @@ function getTags(customTags, schemaName, addMergeTag) {
 }
 var schemas, tagsByName, coreKnownTags;
 var init_tags = __esm({
-  "../../node_modules/yaml/browser/dist/schema/tags.js"() {
+  "../../../themed-styler/node_modules/yaml/browser/dist/schema/tags.js"() {
     init_map();
     init_null();
     init_seq();
@@ -27874,10 +27874,10 @@ var init_tags = __esm({
   }
 });
 
-// ../../node_modules/yaml/browser/dist/schema/Schema.js
+// ../../../themed-styler/node_modules/yaml/browser/dist/schema/Schema.js
 var sortMapEntriesByKey, Schema;
 var init_Schema = __esm({
-  "../../node_modules/yaml/browser/dist/schema/Schema.js"() {
+  "../../../themed-styler/node_modules/yaml/browser/dist/schema/Schema.js"() {
     init_identity();
     init_map();
     init_seq();
@@ -27905,7 +27905,7 @@ var init_Schema = __esm({
   }
 });
 
-// ../../node_modules/yaml/browser/dist/stringify/stringifyDocument.js
+// ../../../themed-styler/node_modules/yaml/browser/dist/stringify/stringifyDocument.js
 function stringifyDocument(doc, options2) {
   const lines = [];
   let hasDirectives = options2.directives === true;
@@ -27976,14 +27976,14 @@ function stringifyDocument(doc, options2) {
   return lines.join("\n") + "\n";
 }
 var init_stringifyDocument = __esm({
-  "../../node_modules/yaml/browser/dist/stringify/stringifyDocument.js"() {
+  "../../../themed-styler/node_modules/yaml/browser/dist/stringify/stringifyDocument.js"() {
     init_identity();
     init_stringify();
     init_stringifyComment();
   }
 });
 
-// ../../node_modules/yaml/browser/dist/doc/Document.js
+// ../../../themed-styler/node_modules/yaml/browser/dist/doc/Document.js
 function assertCollection(contents) {
   if (isCollection(contents))
     return true;
@@ -27991,7 +27991,7 @@ function assertCollection(contents) {
 }
 var Document;
 var init_Document = __esm({
-  "../../node_modules/yaml/browser/dist/doc/Document.js"() {
+  "../../../themed-styler/node_modules/yaml/browser/dist/doc/Document.js"() {
     init_Alias();
     init_Collection();
     init_identity();
@@ -28291,10 +28291,10 @@ var init_Document = __esm({
   }
 });
 
-// ../../node_modules/yaml/browser/dist/errors.js
+// ../../../themed-styler/node_modules/yaml/browser/dist/errors.js
 var YAMLError, YAMLParseError, YAMLWarning, prettifyError;
 var init_errors = __esm({
-  "../../node_modules/yaml/browser/dist/errors.js"() {
+  "../../../themed-styler/node_modules/yaml/browser/dist/errors.js"() {
     YAMLError = class extends Error {
       constructor(name, pos, code, message) {
         super();
@@ -28352,7 +28352,7 @@ ${pointer}
   }
 });
 
-// ../../node_modules/yaml/browser/dist/compose/resolve-props.js
+// ../../../themed-styler/node_modules/yaml/browser/dist/compose/resolve-props.js
 function resolveProps(tokens, { flow, indicator, next, offset, onError, parentIndent, startOnNewline }) {
   let spaceBefore = false;
   let atNewline = startOnNewline;
@@ -28479,11 +28479,11 @@ function resolveProps(tokens, { flow, indicator, next, offset, onError, parentIn
   };
 }
 var init_resolve_props = __esm({
-  "../../node_modules/yaml/browser/dist/compose/resolve-props.js"() {
+  "../../../themed-styler/node_modules/yaml/browser/dist/compose/resolve-props.js"() {
   }
 });
 
-// ../../node_modules/yaml/browser/dist/compose/util-contains-newline.js
+// ../../../themed-styler/node_modules/yaml/browser/dist/compose/util-contains-newline.js
 function containsNewline(key2) {
   if (!key2)
     return null;
@@ -28519,11 +28519,11 @@ function containsNewline(key2) {
   }
 }
 var init_util_contains_newline = __esm({
-  "../../node_modules/yaml/browser/dist/compose/util-contains-newline.js"() {
+  "../../../themed-styler/node_modules/yaml/browser/dist/compose/util-contains-newline.js"() {
   }
 });
 
-// ../../node_modules/yaml/browser/dist/compose/util-flow-indent-check.js
+// ../../../themed-styler/node_modules/yaml/browser/dist/compose/util-flow-indent-check.js
 function flowIndentCheck(indent, fc, onError) {
   if (fc?.type === "flow-collection") {
     const end = fc.end[0];
@@ -28534,12 +28534,12 @@ function flowIndentCheck(indent, fc, onError) {
   }
 }
 var init_util_flow_indent_check = __esm({
-  "../../node_modules/yaml/browser/dist/compose/util-flow-indent-check.js"() {
+  "../../../themed-styler/node_modules/yaml/browser/dist/compose/util-flow-indent-check.js"() {
     init_util_contains_newline();
   }
 });
 
-// ../../node_modules/yaml/browser/dist/compose/util-map-includes.js
+// ../../../themed-styler/node_modules/yaml/browser/dist/compose/util-map-includes.js
 function mapIncludes(ctx, items, search) {
   const { uniqueKeys } = ctx.options;
   if (uniqueKeys === false)
@@ -28548,12 +28548,12 @@ function mapIncludes(ctx, items, search) {
   return items.some((pair) => isEqual(pair.key, search));
 }
 var init_util_map_includes = __esm({
-  "../../node_modules/yaml/browser/dist/compose/util-map-includes.js"() {
+  "../../../themed-styler/node_modules/yaml/browser/dist/compose/util-map-includes.js"() {
     init_identity();
   }
 });
 
-// ../../node_modules/yaml/browser/dist/compose/resolve-block-map.js
+// ../../../themed-styler/node_modules/yaml/browser/dist/compose/resolve-block-map.js
 function resolveBlockMap({ composeNode: composeNode2, composeEmptyNode: composeEmptyNode2 }, ctx, bm, onError, tag2) {
   const NodeClass = tag2?.nodeClass ?? YAMLMap;
   const map2 = new NodeClass(ctx.schema);
@@ -28649,7 +28649,7 @@ function resolveBlockMap({ composeNode: composeNode2, composeEmptyNode: composeE
 }
 var startColMsg;
 var init_resolve_block_map = __esm({
-  "../../node_modules/yaml/browser/dist/compose/resolve-block-map.js"() {
+  "../../../themed-styler/node_modules/yaml/browser/dist/compose/resolve-block-map.js"() {
     init_Pair();
     init_YAMLMap();
     init_resolve_props();
@@ -28660,7 +28660,7 @@ var init_resolve_block_map = __esm({
   }
 });
 
-// ../../node_modules/yaml/browser/dist/compose/resolve-block-seq.js
+// ../../../themed-styler/node_modules/yaml/browser/dist/compose/resolve-block-seq.js
 function resolveBlockSeq({ composeNode: composeNode2, composeEmptyNode: composeEmptyNode2 }, ctx, bs, onError, tag2) {
   const NodeClass = tag2?.nodeClass ?? YAMLSeq;
   const seq2 = new NodeClass(ctx.schema);
@@ -28702,14 +28702,14 @@ function resolveBlockSeq({ composeNode: composeNode2, composeEmptyNode: composeE
   return seq2;
 }
 var init_resolve_block_seq = __esm({
-  "../../node_modules/yaml/browser/dist/compose/resolve-block-seq.js"() {
+  "../../../themed-styler/node_modules/yaml/browser/dist/compose/resolve-block-seq.js"() {
     init_YAMLSeq();
     init_resolve_props();
     init_util_flow_indent_check();
   }
 });
 
-// ../../node_modules/yaml/browser/dist/compose/resolve-end.js
+// ../../../themed-styler/node_modules/yaml/browser/dist/compose/resolve-end.js
 function resolveEnd(end, offset, reqSpace, onError) {
   let comment = "";
   if (end) {
@@ -28746,11 +28746,11 @@ function resolveEnd(end, offset, reqSpace, onError) {
   return { comment, offset };
 }
 var init_resolve_end = __esm({
-  "../../node_modules/yaml/browser/dist/compose/resolve-end.js"() {
+  "../../../themed-styler/node_modules/yaml/browser/dist/compose/resolve-end.js"() {
   }
 });
 
-// ../../node_modules/yaml/browser/dist/compose/resolve-flow-collection.js
+// ../../../themed-styler/node_modules/yaml/browser/dist/compose/resolve-flow-collection.js
 function resolveFlowCollection({ composeNode: composeNode2, composeEmptyNode: composeEmptyNode2 }, ctx, fc, onError, tag2) {
   const isMap2 = fc.start.source === "{";
   const fcName = isMap2 ? "flow map" : "flow sequence";
@@ -28930,7 +28930,7 @@ function resolveFlowCollection({ composeNode: composeNode2, composeEmptyNode: co
 }
 var blockMsg, isBlock;
 var init_resolve_flow_collection = __esm({
-  "../../node_modules/yaml/browser/dist/compose/resolve-flow-collection.js"() {
+  "../../../themed-styler/node_modules/yaml/browser/dist/compose/resolve-flow-collection.js"() {
     init_identity();
     init_Pair();
     init_YAMLMap();
@@ -28944,7 +28944,7 @@ var init_resolve_flow_collection = __esm({
   }
 });
 
-// ../../node_modules/yaml/browser/dist/compose/compose-collection.js
+// ../../../themed-styler/node_modules/yaml/browser/dist/compose/compose-collection.js
 function resolveCollection(CN2, ctx, token, onError, tagName, tag2) {
   const coll = token.type === "block-map" ? resolveBlockMap(CN2, ctx, token, onError, tag2) : token.type === "block-seq" ? resolveBlockSeq(CN2, ctx, token, onError, tag2) : resolveFlowCollection(CN2, ctx, token, onError, tag2);
   const Coll = coll.constructor;
@@ -28996,7 +28996,7 @@ function composeCollection(CN2, ctx, token, props, onError) {
   return node;
 }
 var init_compose_collection = __esm({
-  "../../node_modules/yaml/browser/dist/compose/compose-collection.js"() {
+  "../../../themed-styler/node_modules/yaml/browser/dist/compose/compose-collection.js"() {
     init_identity();
     init_Scalar();
     init_YAMLMap();
@@ -29007,7 +29007,7 @@ var init_compose_collection = __esm({
   }
 });
 
-// ../../node_modules/yaml/browser/dist/compose/resolve-block-scalar.js
+// ../../../themed-styler/node_modules/yaml/browser/dist/compose/resolve-block-scalar.js
 function resolveBlockScalar(ctx, scalar, onError) {
   const start = scalar.offset;
   const header = parseBlockScalarHeader(scalar, ctx.options.strict, onError);
@@ -29181,12 +29181,12 @@ function splitLines(source) {
   return lines;
 }
 var init_resolve_block_scalar = __esm({
-  "../../node_modules/yaml/browser/dist/compose/resolve-block-scalar.js"() {
+  "../../../themed-styler/node_modules/yaml/browser/dist/compose/resolve-block-scalar.js"() {
     init_Scalar();
   }
 });
 
-// ../../node_modules/yaml/browser/dist/compose/resolve-flow-scalar.js
+// ../../../themed-styler/node_modules/yaml/browser/dist/compose/resolve-flow-scalar.js
 function resolveFlowScalar(scalar, strict, onError) {
   const { offset, type, source, end } = scalar;
   let _type;
@@ -29363,7 +29363,7 @@ function parseCharCode(source, offset, length, onError) {
 }
 var escapeCodes;
 var init_resolve_flow_scalar = __esm({
-  "../../node_modules/yaml/browser/dist/compose/resolve-flow-scalar.js"() {
+  "../../../themed-styler/node_modules/yaml/browser/dist/compose/resolve-flow-scalar.js"() {
     init_Scalar();
     init_resolve_end();
     escapeCodes = {
@@ -29402,7 +29402,7 @@ var init_resolve_flow_scalar = __esm({
   }
 });
 
-// ../../node_modules/yaml/browser/dist/compose/compose-scalar.js
+// ../../../themed-styler/node_modules/yaml/browser/dist/compose/compose-scalar.js
 function composeScalar(ctx, token, tagToken, onError) {
   const { value: value2, type, comment, range } = token.type === "block-scalar" ? resolveBlockScalar(ctx, token, onError) : resolveFlowScalar(token, ctx.options.strict, onError);
   const tagName = tagToken ? ctx.directives.tagName(tagToken.source, (msg) => onError(tagToken, "TAG_RESOLVE_FAILED", msg)) : null;
@@ -29473,7 +29473,7 @@ function findScalarTagByTest({ atKey, directives, schema: schema4 }, value2, tok
   return tag2;
 }
 var init_compose_scalar = __esm({
-  "../../node_modules/yaml/browser/dist/compose/compose-scalar.js"() {
+  "../../../themed-styler/node_modules/yaml/browser/dist/compose/compose-scalar.js"() {
     init_identity();
     init_Scalar();
     init_resolve_block_scalar();
@@ -29481,7 +29481,7 @@ var init_compose_scalar = __esm({
   }
 });
 
-// ../../node_modules/yaml/browser/dist/compose/util-empty-scalar-position.js
+// ../../../themed-styler/node_modules/yaml/browser/dist/compose/util-empty-scalar-position.js
 function emptyScalarPosition(offset, before, pos) {
   if (before) {
     pos ?? (pos = before.length);
@@ -29505,11 +29505,11 @@ function emptyScalarPosition(offset, before, pos) {
   return offset;
 }
 var init_util_empty_scalar_position = __esm({
-  "../../node_modules/yaml/browser/dist/compose/util-empty-scalar-position.js"() {
+  "../../../themed-styler/node_modules/yaml/browser/dist/compose/util-empty-scalar-position.js"() {
   }
 });
 
-// ../../node_modules/yaml/browser/dist/compose/compose-node.js
+// ../../../themed-styler/node_modules/yaml/browser/dist/compose/compose-node.js
 function composeNode(ctx, token, props, onError) {
   const atKey = ctx.atKey;
   const { spaceBefore, comment, anchor, tag: tag2 } = props;
@@ -29597,7 +29597,7 @@ function composeAlias({ options: options2 }, { offset, source, end }, onError) {
 }
 var CN;
 var init_compose_node = __esm({
-  "../../node_modules/yaml/browser/dist/compose/compose-node.js"() {
+  "../../../themed-styler/node_modules/yaml/browser/dist/compose/compose-node.js"() {
     init_Alias();
     init_identity();
     init_compose_collection();
@@ -29608,7 +29608,7 @@ var init_compose_node = __esm({
   }
 });
 
-// ../../node_modules/yaml/browser/dist/compose/compose-doc.js
+// ../../../themed-styler/node_modules/yaml/browser/dist/compose/compose-doc.js
 function composeDoc(options2, directives, { offset, start, value: value2, end }, onError) {
   const opts = Object.assign({ _directives: directives }, options2);
   const doc = new Document(void 0, opts);
@@ -29641,7 +29641,7 @@ function composeDoc(options2, directives, { offset, start, value: value2, end },
   return doc;
 }
 var init_compose_doc = __esm({
-  "../../node_modules/yaml/browser/dist/compose/compose-doc.js"() {
+  "../../../themed-styler/node_modules/yaml/browser/dist/compose/compose-doc.js"() {
     init_Document();
     init_compose_node();
     init_resolve_end();
@@ -29649,7 +29649,7 @@ var init_compose_doc = __esm({
   }
 });
 
-// ../../node_modules/yaml/browser/dist/compose/composer.js
+// ../../../themed-styler/node_modules/yaml/browser/dist/compose/composer.js
 function getErrorPos(src) {
   if (typeof src === "number")
     return [src, src + 1];
@@ -29685,7 +29685,7 @@ function parsePrelude(prelude) {
 }
 var Composer;
 var init_composer = __esm({
-  "../../node_modules/yaml/browser/dist/compose/composer.js"() {
+  "../../../themed-styler/node_modules/yaml/browser/dist/compose/composer.js"() {
     init_directives();
     init_Document();
     init_errors();
@@ -29851,9 +29851,9 @@ ${end.comment}` : end.comment;
   }
 });
 
-// ../../node_modules/yaml/browser/dist/parse/cst-scalar.js
+// ../../../themed-styler/node_modules/yaml/browser/dist/parse/cst-scalar.js
 var init_cst_scalar = __esm({
-  "../../node_modules/yaml/browser/dist/parse/cst-scalar.js"() {
+  "../../../themed-styler/node_modules/yaml/browser/dist/parse/cst-scalar.js"() {
     init_resolve_block_scalar();
     init_resolve_flow_scalar();
     init_errors();
@@ -29861,13 +29861,13 @@ var init_cst_scalar = __esm({
   }
 });
 
-// ../../node_modules/yaml/browser/dist/parse/cst-stringify.js
+// ../../../themed-styler/node_modules/yaml/browser/dist/parse/cst-stringify.js
 var init_cst_stringify = __esm({
-  "../../node_modules/yaml/browser/dist/parse/cst-stringify.js"() {
+  "../../../themed-styler/node_modules/yaml/browser/dist/parse/cst-stringify.js"() {
   }
 });
 
-// ../../node_modules/yaml/browser/dist/parse/cst-visit.js
+// ../../../themed-styler/node_modules/yaml/browser/dist/parse/cst-visit.js
 function visit2(cst, visitor) {
   if ("type" in cst && cst.type === "document")
     cst = { start: cst.start, value: cst.value };
@@ -29899,7 +29899,7 @@ function _visit(path2, item, visitor) {
 }
 var BREAK2, SKIP2, REMOVE2;
 var init_cst_visit = __esm({
-  "../../node_modules/yaml/browser/dist/parse/cst-visit.js"() {
+  "../../../themed-styler/node_modules/yaml/browser/dist/parse/cst-visit.js"() {
     BREAK2 = Symbol("break visit");
     SKIP2 = Symbol("skip children");
     REMOVE2 = Symbol("remove item");
@@ -29928,7 +29928,7 @@ var init_cst_visit = __esm({
   }
 });
 
-// ../../node_modules/yaml/browser/dist/parse/cst.js
+// ../../../themed-styler/node_modules/yaml/browser/dist/parse/cst.js
 function tokenType(source) {
   switch (source) {
     case BOM:
@@ -29990,7 +29990,7 @@ function tokenType(source) {
 }
 var BOM, DOCUMENT, FLOW_END, SCALAR2;
 var init_cst = __esm({
-  "../../node_modules/yaml/browser/dist/parse/cst.js"() {
+  "../../../themed-styler/node_modules/yaml/browser/dist/parse/cst.js"() {
     init_cst_scalar();
     init_cst_stringify();
     init_cst_visit();
@@ -30001,7 +30001,7 @@ var init_cst = __esm({
   }
 });
 
-// ../../node_modules/yaml/browser/dist/parse/lexer.js
+// ../../../themed-styler/node_modules/yaml/browser/dist/parse/lexer.js
 function isEmpty(ch) {
   switch (ch) {
     case void 0:
@@ -30016,7 +30016,7 @@ function isEmpty(ch) {
 }
 var hexDigits, tagChars, flowIndicatorChars, invalidAnchorChars, isNotAnchorChar, Lexer;
 var init_lexer = __esm({
-  "../../node_modules/yaml/browser/dist/parse/lexer.js"() {
+  "../../../themed-styler/node_modules/yaml/browser/dist/parse/lexer.js"() {
     init_cst();
     hexDigits = new Set("0123456789ABCDEFabcdef");
     tagChars = new Set("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-#;/?:@&=+$_.!~*'()");
@@ -30575,10 +30575,10 @@ var init_lexer = __esm({
   }
 });
 
-// ../../node_modules/yaml/browser/dist/parse/line-counter.js
+// ../../../themed-styler/node_modules/yaml/browser/dist/parse/line-counter.js
 var LineCounter;
 var init_line_counter = __esm({
-  "../../node_modules/yaml/browser/dist/parse/line-counter.js"() {
+  "../../../themed-styler/node_modules/yaml/browser/dist/parse/line-counter.js"() {
     LineCounter = class {
       constructor() {
         this.lineStarts = [];
@@ -30605,7 +30605,7 @@ var init_line_counter = __esm({
   }
 });
 
-// ../../node_modules/yaml/browser/dist/parse/parser.js
+// ../../../themed-styler/node_modules/yaml/browser/dist/parse/parser.js
 function includesToken(list, type) {
   for (let i = 0; i < list.length; ++i)
     if (list[i].type === type)
@@ -30691,7 +30691,7 @@ function fixFlowSeqItems(fc) {
 }
 var Parser;
 var init_parser = __esm({
-  "../../node_modules/yaml/browser/dist/parse/parser.js"() {
+  "../../../themed-styler/node_modules/yaml/browser/dist/parse/parser.js"() {
     init_cst();
     init_lexer();
     Parser = class {
@@ -31465,7 +31465,7 @@ var init_parser = __esm({
   }
 });
 
-// ../../node_modules/yaml/browser/dist/public-api.js
+// ../../../themed-styler/node_modules/yaml/browser/dist/public-api.js
 function parseOptions(options2) {
   const prettyErrors = options2.prettyErrors !== false;
   const lineCounter = options2.lineCounter || prettyErrors && new LineCounter() || null;
@@ -31510,7 +31510,7 @@ function parse(src, reviver, options2) {
   return doc.toJS(Object.assign({ reviver: _reviver }, options2));
 }
 var init_public_api = __esm({
-  "../../node_modules/yaml/browser/dist/public-api.js"() {
+  "../../../themed-styler/node_modules/yaml/browser/dist/public-api.js"() {
     init_composer();
     init_Document();
     init_errors();
@@ -31521,9 +31521,9 @@ var init_public_api = __esm({
   }
 });
 
-// ../../node_modules/yaml/browser/dist/index.js
+// ../../../themed-styler/node_modules/yaml/browser/dist/index.js
 var init_dist = __esm({
-  "../../node_modules/yaml/browser/dist/index.js"() {
+  "../../../themed-styler/node_modules/yaml/browser/dist/index.js"() {
     init_composer();
     init_Document();
     init_Schema();
@@ -31543,18 +31543,19 @@ var init_dist = __esm({
   }
 });
 
-// ../../node_modules/yaml/browser/index.js
+// ../../../themed-styler/node_modules/yaml/browser/index.js
 var init_browser = __esm({
-  "../../node_modules/yaml/browser/index.js"() {
+  "../../../themed-styler/node_modules/yaml/browser/index.js"() {
     init_dist();
     init_dist();
   }
 });
 
-// ../../node_modules/@clevertree/themed-styler/dist/theme.js
+// ../../../themed-styler/dist/theme.js
 var themeYaml;
 var init_theme = __esm({
-  "../../node_modules/@clevertree/themed-styler/dist/theme.js"() {
+  "../../../themed-styler/dist/theme.js"() {
+    "use strict";
     themeYaml = `themes:
   default:
     name: "Default Theme"
@@ -31666,7 +31667,7 @@ default_theme: default
   }
 });
 
-// ../../node_modules/@clevertree/themed-styler/dist/styleManager.js
+// ../../../themed-styler/dist/styleManager.js
 var styleManager_exports = {};
 __export(styleManager_exports, {
   default: () => styleManager_default,
@@ -31820,7 +31821,8 @@ function onChange(cb) {
 }
 var import_react5, styleEl, syncInterval, lastSnapshotJson, debounceTimer, forceRenderNext, emitter, isDevMode, styleManager_default;
 var init_styleManager = __esm({
-  "../../node_modules/@clevertree/themed-styler/dist/styleManager.js"() {
+  "../../../themed-styler/dist/styleManager.js"() {
+    "use strict";
     init_unifiedBridge();
     import_react5 = __toESM(require_react(), 1);
     styleEl = null;
@@ -31845,7 +31847,7 @@ var init_styleManager = __esm({
   }
 });
 
-// ../../node_modules/@clevertree/themed-styler/dist/themedStylerBridge.js
+// ../../../themed-styler/dist/themedStylerBridge.js
 function registerUsage(tag2, props, hierarchy) {
   const cls = props ? props.className || props.class || "" : "";
   const classes = typeof cls === "string" && cls.trim().length ? cls.split(/\s+/).map((c) => c.trim()).filter(Boolean) : [];
@@ -32003,18 +32005,20 @@ tagClasses=${JSON.stringify(snap.tagClasses)}
 }
 function getRnStyles(selector, classes = []) {
   const g2 = typeof globalThis !== "undefined" ? globalThis : {};
-  if (typeof g2.__themedStylerGetRn === "function") {
-    const themesState = getThemes();
-    try {
-      return g2.__themedStylerGetRn(selector, classes, themesState);
-    } catch (e) {
-    }
+  if (typeof g2.__themedStylerGetRn !== "function") {
+    throw new Error("[themedStylerBridge.getRnStyles] Native hook __themedStylerGetRn not available. Ensure initThemedStyler() completed successfully.");
   }
-  return {};
+  const themesState = getThemes();
+  try {
+    return g2.__themedStylerGetRn(selector, classes, themesState);
+  } catch (e) {
+    throw new Error(`[themedStylerBridge.getRnStyles] Failed to compute styles: ${e}`);
+  }
 }
 var usage, themes, currentTheme, _defaults_loaded, themedStylerBridge_default;
 var init_themedStylerBridge = __esm({
-  "../../node_modules/@clevertree/themed-styler/dist/themedStylerBridge.js"() {
+  "../../../themed-styler/dist/themedStylerBridge.js"() {
+    "use strict";
     init_browser();
     init_theme();
     usage = {
@@ -32042,10 +32046,11 @@ var init_themedStylerBridge = __esm({
   }
 });
 
-// ../../node_modules/@clevertree/themed-styler/dist/unifiedBridge.js
+// ../../../themed-styler/dist/unifiedBridge.js
 var unifiedBridge, unifiedBridge_default;
 var init_unifiedBridge = __esm({
-  "../../node_modules/@clevertree/themed-styler/dist/unifiedBridge.js"() {
+  "../../../themed-styler/dist/unifiedBridge.js"() {
+    "use strict";
     init_themedStylerBridge();
     unifiedBridge = {
       // Transpile API: wraps global hook-transpiler function if present
@@ -32079,10 +32084,11 @@ var init_unifiedBridge = __esm({
   }
 });
 
-// ../../node_modules/@clevertree/themed-styler/wasm/themed_styler.js
+// ../../../themed-styler/wasm/themed_styler.js
 var themed_styler_exports = {};
 __export(themed_styler_exports, {
   default: () => themed_styler_default,
+  get_android_styles: () => get_android_styles,
   get_default_state_json: () => get_default_state_json,
   get_rn_styles: () => get_rn_styles,
   get_theme_list_json: () => get_theme_list_json,
@@ -32141,6 +32147,24 @@ function decodeText2(ptr, len) {
     numBytesDecoded2 = len;
   }
   return cachedTextDecoder2.decode(getUint8ArrayMemory02().subarray(ptr, ptr + len));
+}
+function get_android_styles(state_json, selector, classes_json) {
+  let deferred4_0;
+  let deferred4_1;
+  try {
+    const ptr0 = passStringToWasm02(state_json, wasm2.__wbindgen_malloc, wasm2.__wbindgen_realloc);
+    const len0 = WASM_VECTOR_LEN2;
+    const ptr1 = passStringToWasm02(selector, wasm2.__wbindgen_malloc, wasm2.__wbindgen_realloc);
+    const len1 = WASM_VECTOR_LEN2;
+    const ptr2 = passStringToWasm02(classes_json, wasm2.__wbindgen_malloc, wasm2.__wbindgen_realloc);
+    const len2 = WASM_VECTOR_LEN2;
+    const ret = wasm2.get_android_styles(ptr0, len0, ptr1, len1, ptr2, len2);
+    deferred4_0 = ret[0];
+    deferred4_1 = ret[1];
+    return getStringFromWasm02(ret[0], ret[1]);
+  } finally {
+    wasm2.__wbindgen_free(deferred4_0, deferred4_1, 1);
+  }
 }
 function get_default_state_json() {
   let deferred1_0;
@@ -32329,7 +32353,8 @@ async function __wbg_init2(module_or_path) {
 }
 var wasm2, cachedUint8ArrayMemory02, cachedTextDecoder2, MAX_SAFARI_DECODE_BYTES2, numBytesDecoded2, cachedTextEncoder2, WASM_VECTOR_LEN2, EXPECTED_RESPONSE_TYPES2, themed_styler_default;
 var init_themed_styler = __esm({
-  "../../node_modules/@clevertree/themed-styler/wasm/themed_styler.js"() {
+  "../../../themed-styler/wasm/themed_styler.js"() {
+    "use strict";
     cachedUint8ArrayMemory02 = null;
     cachedTextDecoder2 = new TextDecoder("utf-8", { ignoreBOM: true, fatal: true });
     cachedTextDecoder2.decode();
@@ -32353,12 +32378,12 @@ var init_themed_styler = __esm({
 });
 
 // public/test-app.js
-var import_react8 = __toESM(require_react(), 1);
+var import_react6 = __toESM(require_react(), 1);
 var import_client = __toESM(require_client(), 1);
 
-// ../../dist/runtimeLoader.js
+// ../../dist/web/runtimeLoader.js
 var WebModuleLoader = class {
-  async executeModule(code, filename, context, fetchUrl) {
+  async executeModule(code, filename, context, fetchUrl, isMainHook = false) {
     const exports = {};
     const module = { exports };
     try {
@@ -32366,48 +32391,40 @@ var WebModuleLoader = class {
       window.__ctx__ = context;
       window.__hook_import_with = async (spec, fromFile) => {
         try {
-          const dbg = globalThis.__HOOK_DEBUG || typeof localStorage !== "undefined" && localStorage.getItem("hookDebug") === "1";
-          if (dbg) {
-            try {
-              console.debug("[__hook_import_with] spec=", spec, "fromFile=", fromFile);
-            } catch {
-            }
-          }
+          console.error("[WebModuleLoader] __hook_import_with call:", spec, "from", fromFile);
           const fn2 = context && context.helpers && typeof context.helpers.loadModule === "function" ? context.helpers.loadModule : null;
           if (!fn2)
             throw new Error("__hook_import_with unavailable: helpers.loadModule not available");
-          return await fn2(spec, fromFile);
+          const result = await fn2(spec, fromFile);
+          console.error("[WebModuleLoader] __hook_import_with resolved successfully for", spec, "result keys:", Object.keys(result || {}));
+          return result;
         } catch (e) {
-          console.error("[WebModuleLoader] __hook_import_with failed for", spec, "from", fromFile, e);
+          console.error("[WebModuleLoader] __hook_import_with failed for", spec, "from", fromFile, "error:", e instanceof Error ? e.message : e);
           throw e;
         }
       };
       const perModuleAlias = `const __hook_import = (spec) => (globalThis.__hook_import_with ? globalThis.__hook_import_with(String(spec), ${JSON.stringify(filename)}) : Promise.reject(new Error('__hook_import_with not available')));
 `;
-      const looksLikeESM = /\bexport\b/.test(code);
+      const __effectiveUrl = fetchUrl || `${globalThis.location?.origin || "http://localhost"}${filename}`;
+      const __codePatched = code.replace(/\bimport\.meta\.url\b/g, JSON.stringify(__effectiveUrl));
+      console.debug("[WebModuleLoader] executeModule: filename", filename, "has export?", /\bexport\b/.test(code), "has marker?", /\/\*__ESM__\*\//.test(code));
+      const looksLikeESM = /\/\*__ESM__\*\//.test(code) || /\bexport\b/.test(code);
       if (looksLikeESM) {
         try {
+          console.error("[WebModuleLoader] Using ESM execution path for", filename);
           const dirname = filename.substring(0, filename.lastIndexOf("/") || 0);
           const url = fetchUrl || `${globalThis.location?.origin || "http://localhost"}${filename}`;
           globalThis.__relay_meta = { filename, dirname, url };
-          const blob = new Blob([perModuleAlias, code], { type: "text/javascript" });
+          const blob = new Blob([perModuleAlias, __codePatched], { type: "text/javascript" });
           const blobUrl = URL.createObjectURL(blob);
           window.__hook_react = context.React;
-          const createJsxFactory = (React7) => {
-            if (!React7)
+          const createJsxFactory = (React5) => {
+            if (!React5)
               return void 0;
-            const shouldLogJsx = (() => {
-              try {
-                const g2 = globalThis;
-                return !!g2.__HOOK_DEBUG || typeof localStorage !== "undefined" && localStorage.getItem("hookDebug") === "1";
-              } catch {
-                return false;
-              }
-            })();
             const elementType = (() => {
               try {
-                if (React7 && typeof React7.createElement === "function") {
-                  const el = React7.createElement("div", null);
+                if (React5 && typeof React5.createElement === "function") {
+                  const el = React5.createElement("div", null);
                   if (el && el.$$typeof)
                     return el.$$typeof;
                 }
@@ -32415,19 +32432,6 @@ var WebModuleLoader = class {
               }
               return Symbol.for("react.element");
             })();
-            const logJsx = (kind, type, key2, props) => {
-              if (!shouldLogJsx)
-                return;
-              try {
-                const typeName = typeof type === "string" ? type : type && (type.displayName || type.name) || "anonymous";
-                const children = props ? props.children : void 0;
-                const childType = Array.isArray(children) ? "array" : children === null ? "null" : typeof children;
-                const childSummary = Array.isArray(children) ? `[${children.length} items]` : children && typeof children === "object" ? children && children["$$typeof"] ? "react.element" : "object" : children;
-                const keys = props ? Object.keys(props) : [];
-                console.debug(`[jsx/${kind}]`, { type: typeName, key: key2, childType, childSummary, propsKeys: keys });
-              } catch {
-              }
-            };
             return (type, config, maybeKey) => {
               let key2 = null;
               let ref = null;
@@ -32446,7 +32450,6 @@ var WebModuleLoader = class {
                   }
                 }
               }
-              logJsx("prod", type, key2, props);
               if (typeof type === "string" && context.onElement) {
                 try {
                   context.onElement(type, props);
@@ -32470,18 +32473,15 @@ var WebModuleLoader = class {
           window.__Fragment = fragmentFactory2;
           window.__hook_file_renderer = context && context.FileRenderer || null;
           window.__hook_helpers = context && context.helpers || {};
-          console.log("[WebModuleLoader] Set globals before blob import:", {
-            hasReact: !!window.__hook_react,
-            hasJsxRuntime: !!window.__hook_jsx_runtime,
-            hasFileRenderer: !!window.__hook_file_renderer,
-            hasHelpers: !!window.__hook_helpers,
-            filename,
-            fetchUrl
-          });
           await new Promise((resolve) => setTimeout(resolve, 0));
           window.__currentModulePath = filename;
           const dynImport = new Function("u", "return import(u)");
           const ns = await dynImport(blobUrl);
+          try {
+            const keys = Object.keys(ns || {});
+            console.debug("[WebModuleLoader] ESM module namespace keys:", keys, "default type:", typeof (ns && ns.default));
+          } catch {
+          }
           setTimeout(() => URL.revokeObjectURL(blobUrl), 1e3);
           const normalized = ns && ns.default ? { ...ns, default: ns.default } : ns;
           return normalized;
@@ -32493,7 +32493,7 @@ var WebModuleLoader = class {
       const fn = new Function("require", "module", "exports", "context", `
 try {
   ${perModuleAlias}
-  ${code}
+  ${__codePatched}
 } catch (err) {
   console.error('[WebModuleLoader] Code execution error in ${filename}:', err.message || err);
   throw err;
@@ -32501,50 +32501,22 @@ try {
         `);
       window.__currentModulePath = filename;
       fn((spec) => {
-        if (spec === "react") {
+        if (spec === "react")
           return context.React || {};
-        }
-        if (spec === "@clevertree/helpers") {
+        if (spec === "@clevertree/helpers")
           return context.helpers || {};
-        }
-        if (spec === "@clevertree/file-renderer") {
+        if (spec === "@clevertree/file-renderer")
           return context.FileRenderer || (() => null);
-        }
-        if (spec === "@clevertree/layout") {
+        if (spec === "@clevertree/layout")
           return context.Layout || null;
-        }
-        if (spec === "@clevertree/markdown") {
-          return context.__relay_builtins?.["@clevertree/markdown"] || globalThis.__relay_builtins?.["@clevertree/markdown"] || {};
-        }
-        if (spec === "@clevertree/theme") {
-          return context.__relay_builtins?.["@clevertree/theme"] || globalThis.__relay_builtins?.["@clevertree/theme"] || {};
-        }
-        if (spec === "@clevertree/meta") {
+        if (spec === "@clevertree/markdown")
+          return globalThis.__relay_builtins?.["@clevertree/markdown"] || {};
+        if (spec === "@clevertree/theme")
+          return globalThis.__relay_builtins?.["@clevertree/theme"] || {};
+        if (spec === "@clevertree/meta")
           return globalThis.__relay_meta || { filename: "", dirname: "", url: "" };
-        }
         if (spec === "react/jsx-runtime") {
           const r2 = context.React || globalThis.__hook_react || globalThis.React || {};
-          const shouldLogJsx = (() => {
-            try {
-              const g2 = globalThis;
-              return !!g2.__HOOK_DEBUG || typeof localStorage !== "undefined" && localStorage.getItem("hookDebug") === "1";
-            } catch {
-              return false;
-            }
-          })();
-          const logJsx = (kind, type, key2, props) => {
-            if (!shouldLogJsx)
-              return;
-            try {
-              const typeName = typeof type === "string" ? type : type && (type.displayName || type.name) || "anonymous";
-              const children = props ? props.children : void 0;
-              const childType = Array.isArray(children) ? "array" : children === null ? "null" : typeof children;
-              const childSummary = Array.isArray(children) ? `[${children.length} items]` : children && typeof children === "object" ? children && children["$$typeof"] ? "react.element" : "object" : children;
-              const keys = props ? Object.keys(props) : [];
-              console.debug(`[jsx/${kind}]`, { type: typeName, key: key2, childType, childSummary, propsKeys: keys });
-            } catch {
-            }
-          };
           const jsxFactory = (type, config, maybeKey) => {
             let key2 = null;
             let ref = null;
@@ -32560,21 +32532,18 @@ try {
               }
               return Symbol.for("react.element");
             })();
-            if (maybeKey !== void 0) {
+            if (maybeKey !== void 0)
               key2 = String(maybeKey);
-            }
             if (config) {
               for (let propName in config) {
-                if (propName === "key") {
+                if (propName === "key")
                   key2 = String(config.key);
-                } else if (propName === "ref") {
+                else if (propName === "ref")
                   ref = config.ref;
-                } else {
+                else
                   props[propName] = config[propName];
-                }
               }
             }
-            logJsx("shim", type, key2, props);
             return {
               "$$typeof": elementType,
               type,
@@ -32583,42 +32552,17 @@ try {
               props
             };
           };
-          return {
-            jsx: jsxFactory,
-            jsxs: jsxFactory,
-            Fragment: r2.Fragment
-          };
+          return { jsx: jsxFactory, jsxs: jsxFactory, Fragment: r2.Fragment };
         }
         return {};
       }, module, exports, context);
-      const createJsxFactory2 = (React7) => {
-        if (!React7)
+      const createJsxFactory2 = (React5) => {
+        if (!React5)
           return void 0;
-        const shouldLogJsx = (() => {
-          try {
-            const g2 = globalThis;
-            return !!g2.__HOOK_DEBUG || typeof localStorage !== "undefined" && localStorage.getItem("hookDebug") === "1";
-          } catch {
-            return false;
-          }
-        })();
-        const logJsx = (kind, type, key2, props) => {
-          if (!shouldLogJsx)
-            return;
-          try {
-            const typeName = typeof type === "string" ? type : type && (type.displayName || type.name) || "anonymous";
-            const children = props ? props.children : void 0;
-            const childType = Array.isArray(children) ? "array" : children === null ? "null" : typeof children;
-            const childSummary = Array.isArray(children) ? `[${children.length} items]` : children && typeof children === "object" ? children && children["$$typeof"] ? "react.element" : "object" : children;
-            const keys = props ? Object.keys(props) : [];
-            console.debug(`[jsx/func]`, { type: typeName, key: key2, childType, childSummary, propsKeys: keys });
-          } catch {
-          }
-        };
         const elementType = (() => {
           try {
-            if (React7 && typeof React7.createElement === "function") {
-              const el = React7.createElement("div", null);
+            if (React5 && typeof React5.createElement === "function") {
+              const el = React5.createElement("div", null);
               if (el && el.$$typeof)
                 return el.$$typeof;
             }
@@ -32630,21 +32574,18 @@ try {
           let key2 = null;
           let ref = null;
           let props = {};
-          if (maybeKey !== void 0) {
+          if (maybeKey !== void 0)
             key2 = String(maybeKey);
-          }
           if (config) {
             for (let propName in config) {
-              if (propName === "key") {
+              if (propName === "key")
                 key2 = String(config.key);
-              } else if (propName === "ref") {
+              else if (propName === "ref")
                 ref = config.ref;
-              } else {
+              else
                 props[propName] = config[propName];
-              }
             }
           }
-          logJsx("func", type, key2, props);
           if (typeof type === "string" && context.onElement) {
             try {
               context.onElement(type, props);
@@ -32676,7 +32617,10 @@ try {
         globalThis.__Fragment = fragmentFactory;
       }
       const mod = module.exports;
-      if (!mod || typeof mod.default !== "function") {
+      if (isMainHook && (!mod || typeof mod.default !== "function")) {
+        if (mod && (typeof mod === "object" || typeof mod === "function")) {
+          return mod;
+        }
         throw new Error("Hook module does not export a default function");
       }
       return mod;
@@ -32712,30 +32656,6 @@ async function transpileCode(code, options2, _toCommonJs = false) {
   const g2 = typeof globalThis !== "undefined" ? globalThis : {};
   const wasmTranspile = g2.__hook_transpile_jsx;
   const version = g2.__hook_transpiler_version || "unknown";
-  const forceServer = !!g2.__forceServerTranspile;
-  if (forceServer) {
-    try {
-      const resp = await fetch("/api/transpile", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ code, filename, to_common_js: false })
-      });
-      if (!resp.ok) {
-        const txt = await resp.text().catch(() => "");
-        throw new Error(`ServerTranspileError: ${resp.status} ${resp.statusText} ${txt}`);
-      }
-      const data = await resp.json();
-      if (!data?.ok || !data?.code) {
-        throw new Error(`ServerTranspileError: ${data?.diagnostics || "unknown error"}`);
-      }
-      const out3 = String(data.code);
-      const rewritten = applyHookRewrite(out3.replace(/\bimport\s*\(/g, "context.helpers.loadModule("));
-      return rewritten + `
-//# sourceURL=${filename}`;
-    } catch (e) {
-      throw e;
-    }
-  }
   if (typeof wasmTranspile !== "function") {
     const availableKeys = Object.keys(g2).filter((k) => k.startsWith("__")).join(", ");
     console.error("[transpileCode] WASM not ready:", {
@@ -32744,109 +32664,22 @@ async function transpileCode(code, options2, _toCommonJs = false) {
       type: typeof wasmTranspile,
       globalKeys: availableKeys || "(none)"
     });
-    if (g2.__allowServerTranspile) {
-      console.warn("[transpileCode] WASM not ready; attempting server fallback /api/transpile");
-      try {
-        const resp = await fetch("/api/transpile", {
-          method: "POST",
-          headers: { "content-type": "application/json" },
-          body: JSON.stringify({ code, filename, to_common_js: false })
-        });
-        if (!resp.ok) {
-          const txt = await resp.text().catch(() => "");
-          throw new Error(`ServerTranspileError: ${resp.status} ${resp.statusText} ${txt}`);
-        }
-        const data = await resp.json();
-        if (!data?.ok || !data?.code) {
-          throw new Error(`ServerTranspileError: ${data?.diagnostics || "unknown error"}`);
-        }
-        const out3 = String(data.code);
-        const rewritten = applyHookRewrite(out3.replace(/\bimport\s*\(/g, "context.helpers.loadModule("));
-        return rewritten + `
-//# sourceURL=${filename}`;
-      } catch (e) {
-        console.error("[transpileCode] Server fallback failed:", e);
-      }
-    }
     throw new Error(`HookTranspiler WASM not loaded (v${version}): expected globalThis.__hook_transpile_jsx(source, filename)`);
   }
-  let pragmaFn = "h";
-  let pragmaFragFn = "React.Fragment";
-  const pragmaMatch = code.match(/\/\*+\s*@jsx\s+([\w.]+)\s*\*+\//);
-  const pragmaFragMatch = code.match(/\/\*+\s*@jsxFrag\s+([\w.]+)\s*\*+\//);
-  if (pragmaMatch && pragmaMatch[1])
-    pragmaFn = pragmaMatch[1];
-  if (pragmaFragMatch && pragmaFragMatch[1])
-    pragmaFragFn = pragmaFragMatch[1];
-  const preamble = ``;
-  const codeWithPreamble = preamble + code;
   let out2;
   try {
-    out2 = await wasmTranspile(codeWithPreamble, filename, options2.isTypescript);
+    out2 = await wasmTranspile(code, filename, options2.isTypescript);
   } catch (callError) {
     console.error("[transpileCode] WASM call threw exception:", callError);
-    if (g2.__allowServerTranspile) {
-      console.warn("[transpileCode] Attempting server fallback due to WASM exception");
-      try {
-        const resp = await fetch("/api/transpile", {
-          method: "POST",
-          headers: { "content-type": "application/json" },
-          body: JSON.stringify({ code, filename, to_common_js: false })
-        });
-        if (!resp.ok) {
-          const txt = await resp.text().catch(() => "");
-          throw new Error(`ServerTranspileError: ${resp.status} ${resp.statusText} ${txt}`);
-        }
-        const data = await resp.json();
-        if (!data?.ok || !data?.code) {
-          throw new Error(`ServerTranspileError: ${data?.diagnostics || "unknown error"}`);
-        }
-        const out3 = String(data.code);
-        const rewritten = applyHookRewrite(out3.replace(/\bimport\s*\(/g, "context.helpers.loadModule("));
-        return rewritten + `
-//# sourceURL=${filename}`;
-      } catch (e) {
-        console.error("[transpileCode] Server fallback failed after WASM exception:", e);
-      }
-    }
     throw callError;
   }
   let transpiledCode;
   if (typeof out2 === "object" && out2 !== null) {
     if (out2.error) {
       const errorMsg = `TranspileError: ${filename}: ${out2.error} (v${version})`;
-      console.error("[transpileCode] JSX transpilation failed:", {
-        filename,
-        inputSize: code.length,
-        errorMessage: errorMsg,
-        codePreview: code.substring(0, 200)
-      });
+      console.error("[transpileCode] JSX transpilation failed:", { filename, inputSize: code.length, errorMessage: errorMsg });
       globalThis.__lastTranspiledCode = null;
       globalThis.__lastTranspileError = errorMsg;
-      if (g2.__allowServerTranspile) {
-        console.warn("[transpileCode] WASM returned error; attempting server fallback");
-        try {
-          const resp = await fetch("/api/transpile", {
-            method: "POST",
-            headers: { "content-type": "application/json" },
-            body: JSON.stringify({ code, filename, to_common_js: false })
-          });
-          if (!resp.ok) {
-            const txt = await resp.text().catch(() => "");
-            throw new Error(`ServerTranspileError: ${resp.status} ${resp.statusText} ${txt}`);
-          }
-          const data = await resp.json();
-          if (!data?.ok || !data?.code) {
-            throw new Error(`ServerTranspileError: ${data?.diagnostics || "unknown error"}`);
-          }
-          transpiledCode = String(data.code);
-          const rewritten = transpiledCode.replace(/\bimport\s*\(/g, "context.helpers.loadModule(");
-          return rewritten + `
-//# sourceURL=${filename}`;
-        } catch (e) {
-          console.error("[transpileCode] Server fallback failed after WASM error:", e);
-        }
-      }
       throw new Error(errorMsg);
     }
     if (!out2.code) {
@@ -32858,53 +32691,73 @@ async function transpileCode(code, options2, _toCommonJs = false) {
   } else {
     throw new Error(`HookTranspiler returned unexpected type: ${typeof out2}`);
   }
-  if (transpiledCode.startsWith("TranspileError:")) {
-    const errorMsg = `${transpiledCode} (v${version})`;
-    console.error("[transpileCode] JSX transpilation failed:", {
-      filename,
-      inputSize: code.length,
-      errorMessage: errorMsg,
-      codePreview: code.substring(0, 200)
-    });
-    globalThis.__lastTranspiledCode = transpiledCode;
-    globalThis.__lastTranspileError = errorMsg;
-    if (g2.__allowServerTranspile) {
-      console.warn("[transpileCode] WASM returned TranspileError; attempting server fallback");
-      try {
-        const resp = await fetch("/api/transpile", {
-          method: "POST",
-          headers: { "content-type": "application/json" },
-          body: JSON.stringify({ code, filename, to_common_js: false })
-        });
-        if (!resp.ok) {
-          const txt = await resp.text().catch(() => "");
-          throw new Error(`ServerTranspileError: ${resp.status} ${resp.statusText} ${txt}`);
-        }
-        const data = await resp.json();
-        if (!data?.ok || !data?.code) {
-          throw new Error(`ServerTranspileError: ${data?.diagnostics || "unknown error"}`);
-        }
-        transpiledCode = String(data.code);
-        const rewritten = transpiledCode.replace(/\bimport\s*\(/g, "context.helpers.loadModule(");
-        return rewritten + `
-//# sourceURL=${filename}`;
-      } catch (e) {
-        console.error("[transpileCode] Server fallback failed after TranspileError:", e);
-      }
-    }
-    throw new Error(errorMsg);
-  }
   ;
   globalThis.__lastTranspiledCode = transpiledCode;
-  const stillHasJsx = /<[A-Z]/.test(transpiledCode);
-  if (stillHasJsx) {
-    console.warn("[transpileCode] WARNING: Output still contains JSX syntax! Transpilation may have failed silently.");
-    console.warn("[transpileCode] Transpiled code available at: window.__lastTranspiledCode");
-  } else if (transpiledCode.includes("React.createElement(")) {
-    console.log("[transpileCode] \u2713 Output contains React.createElement() calls - transpilation successful");
-  }
   return applyHookRewrite(transpiledCode + `
 //# sourceURL=${filename}`);
+}
+function parseStaticImports(code) {
+  const imports = [];
+  const importRe = /import\s+((?:[^"']+)\s+from\s+)?['"]([^"']+)['"]\s*;?/g;
+  let match;
+  while ((match = importRe.exec(code)) !== null) {
+    const statement = match[0];
+    const beforeFrom = match[1] || "";
+    const specifier = match[2];
+    if (specifier.startsWith("@clevertree/") || specifier === "react" || specifier === "react/jsx-runtime")
+      continue;
+    if (!specifier.startsWith("./") && !specifier.startsWith("../") && !specifier.startsWith("/"))
+      continue;
+    let bindings = beforeFrom.replace(/\s+from\s*$/, "").trim();
+    let isDefault = false;
+    let isNamespace = false;
+    if (/^\*\s+as\s+\w+$/.test(bindings)) {
+      isNamespace = true;
+    } else if (bindings && !bindings.includes("{")) {
+      isDefault = true;
+    }
+    imports.push({ statement, specifier, bindings, isDefault, isNamespace });
+  }
+  return imports;
+}
+async function resolveStaticImports(code, filename, context) {
+  const imports = parseStaticImports(code);
+  if (imports.length === 0)
+    return code;
+  const loadModule = context?.helpers?.loadModule;
+  if (!loadModule)
+    return code;
+  const modules = /* @__PURE__ */ new Map();
+  await Promise.all(imports.map(async (imp) => {
+    const mod = await loadModule(imp.specifier, filename);
+    modules.set(imp.specifier, mod);
+  }));
+  let rewritten = code;
+  for (const imp of imports) {
+    const mod = modules.get(imp.specifier);
+    const varName = `__import_${Math.random().toString(36).substr(2, 9)}`;
+    globalThis[varName] = mod;
+    let replacement = "";
+    if (imp.isNamespace) {
+      const nsName = imp.bindings.replace(/^\*\s+as\s+/, "");
+      replacement = `const ${nsName} = globalThis.${varName};`;
+    } else if (imp.isDefault) {
+      const defaultName = imp.bindings.split(",")[0].trim();
+      replacement = `const ${defaultName} = (globalThis.${varName}?.default || globalThis.${varName});`;
+    } else {
+      const destructure = imp.bindings.replace(/^\{|\}$/g, "").trim().replace(/\bas\b/g, ":");
+      replacement = `const { ${destructure} } = (globalThis.${varName} || {});`;
+    }
+    rewritten = rewritten.replace(imp.statement, replacement);
+  }
+  return rewritten;
+}
+function rewriteDynamicImports(code) {
+  try {
+    return code.replace(/\bimport\s*\(/g, "__hook_import(");
+  } catch {
+    return code;
+  }
 }
 function applyHookRewrite(code) {
   const mkBuiltin = (spec, destructure) => `const ${destructure} = ((globalThis && globalThis.__relay_builtins && globalThis.__relay_builtins['${spec}']) || {});`;
@@ -32925,9 +32778,7 @@ function applyHookRewrite(code) {
       res += ` const { ${named} } = React;`;
     return res;
   });
-  rewritten = rewritten.replace(reactNamedOnlyRe, (_m, named) => {
-    return `const { ${named} } = (globalThis.__hook_react || globalThis.React);`;
-  });
+  rewritten = rewritten.replace(reactNamedOnlyRe, (_m, named) => `const { ${named} } = (globalThis.__hook_react || globalThis.React);`);
   rewritten = rewritten.replace(reactStarRe, "const React = (globalThis.__hook_react || globalThis.React);");
   rewritten = rewritten.replace(metaRe, (_m, name) => `const ${name} = (globalThis.__relay_meta || { filename: '', dirname: '', url: '' });`);
   rewritten = rewritten.replace(metaStarRe, (_m, name) => `const ${name} = (globalThis.__relay_meta || { filename: '', dirname: '', url: '' });`);
@@ -32963,23 +32814,13 @@ var HookLoader = class {
       return {};
     return { ...builder() };
   }
-  /**
-   * Load a module from the peer/repo, with optional transpilation
-   * @param modulePath Relative or absolute path to module
-   * @param fromPath Current hook path for resolving relative imports
-   * @param context Hook context for module execution
-   * @returns Module exports
-   */
   async loadModule(modulePath, fromPath = "/hooks/client/get-client.jsx", context) {
+    try {
+      console.error("[HookLoader] loadModule called:", { modulePath, fromPath });
+    } catch {
+    }
     let normalizedPath = modulePath;
     try {
-      const dbg = globalThis.__HOOK_DEBUG || typeof localStorage !== "undefined" && localStorage.getItem("hookDebug") === "1";
-      if (dbg) {
-        try {
-          console.debug("[HookLoader.loadModule] start", { modulePath, fromPath });
-        } catch {
-        }
-      }
       if (modulePath.startsWith("./") || modulePath.startsWith("../")) {
         const base = fromPath && fromPath.startsWith("/") ? fromPath : "/hooks/client/get-client.jsx";
         const baseUrl = new URL(base, "http://resolver.local");
@@ -32991,103 +32832,128 @@ var HookLoader = class {
       const parts = normalizedPath.split("/").filter(Boolean);
       const normalized = [];
       for (const part of parts) {
-        if (part === "..") {
+        if (part === "..")
           normalized.pop();
-        } else if (part !== ".") {
+        else if (part !== ".")
           normalized.push(part);
-        }
       }
       normalizedPath = "/" + normalized.join("/");
-      if (dbg) {
-        try {
-          console.debug("[HookLoader.loadModule] normalized", { modulePath, fromPath, normalizedPath });
-        } catch {
-        }
-      }
     } catch (_) {
       const baseDir = (fromPath || "/hooks/client/get-client.jsx").split("/").slice(0, -1).join("/") || "/hooks/client";
       const combined = `${baseDir}/${modulePath}`;
       const parts = combined.split("/").filter(Boolean);
       const normalized = [];
       for (const part of parts) {
-        if (part === "..") {
+        if (part === "..")
           normalized.pop();
-        } else if (part !== ".") {
+        else if (part !== ".")
           normalized.push(part);
-        }
       }
       normalizedPath = "/" + normalized.join("/");
-      try {
-        const dbg2 = globalThis.__HOOK_DEBUG || typeof localStorage !== "undefined" && localStorage.getItem("hookDebug") === "1";
-        if (dbg2)
-          console.debug("[HookLoader.loadModule] normalized (fallback)", { modulePath, fromPath, normalizedPath });
-      } catch {
-      }
     }
     const cacheKey = `${this.host}:${normalizedPath}`;
-    if (this.moduleCache.has(cacheKey)) {
+    if (this.moduleCache.has(cacheKey))
       return this.moduleCache.get(cacheKey);
-    }
-    const moduleUrl = `${this.protocol}://${this.host}${normalizedPath}`;
     const requestHeaders = this.buildRequestHeaders(context);
     const fetchOptions = Object.keys(requestHeaders).length ? { headers: requestHeaders } : void 0;
+    const buildAttempts = (pathIn) => {
+      const q = pathIn.indexOf("?");
+      const h = pathIn.indexOf("#");
+      const cut = q >= 0 && h >= 0 ? Math.min(q, h) : q >= 0 ? q : h;
+      const suffix = cut >= 0 ? pathIn.slice(cut) : "";
+      const basePath = cut >= 0 ? pathIn.slice(0, cut) : pathIn;
+      const last = basePath.split("/").pop() || "";
+      const hasExt = last.includes(".");
+      const attempts = [];
+      attempts.push(basePath + suffix);
+      if (!hasExt) {
+        attempts.push(basePath + ".js" + suffix);
+        const dirname = basePath.includes("/") ? basePath.slice(0, basePath.lastIndexOf("/")) : ".";
+        attempts.push(dirname + "/index.js" + suffix);
+      }
+      return attempts;
+    };
     try {
-      const response = await fetch(moduleUrl, fetchOptions);
-      if (!response.ok) {
-        throw new Error(`ModuleLoadError: ${moduleUrl} \u2192 ${response.status} ${response.statusText}`);
+      let lastErr = null;
+      let code = null;
+      let moduleUrl = null;
+      const attempts = buildAttempts(normalizedPath);
+      console.error("[HookLoader.loadModule] Fetch attempts:", { modulePath, normalizedPath, attempts });
+      for (const candidate of attempts) {
+        const url = `${this.protocol}://${this.host}${candidate}`;
+        console.error("[HookLoader] Loop iteration for candidate:", candidate, "total attempts:", attempts.length);
+        try {
+          console.error("[HookLoader.loadModule] Trying:", url);
+          const response = await fetch(url, fetchOptions);
+          if (!response.ok) {
+            lastErr = new Error(`ModuleLoadError: ${url} \u2192 ${response.status} ${response.statusText}`);
+            console.error("[HookLoader.loadModule] Not OK, continuing");
+            continue;
+          }
+          const ct = (response.headers.get("content-type") || "").toLowerCase();
+          if (ct.includes("text/html")) {
+            lastErr = new Error(`ModuleLoadError: ${url} returned HTML (content-type=${ct})`);
+            console.error("[HookLoader.loadModule] HTML response, continuing");
+            continue;
+          }
+          code = await response.text();
+          console.error("[HookLoader.loadModule] Fetched", candidate, "got", code.length, "bytes");
+          moduleUrl = url;
+          console.error("[HookLoader.loadModule] Success:", url, "code length:", code.length);
+          break;
+        } catch (e) {
+          lastErr = e;
+          console.error("[HookLoader.loadModule] Fetch error, continuing:", e);
+          continue;
+        }
       }
-      const ct = (response.headers.get("content-type") || "").toLowerCase();
-      if (ct.includes("text/html")) {
-        throw new Error(`ModuleLoadError: ${moduleUrl} returned HTML (content-type=${ct})`);
+      if (!code || !moduleUrl)
+        throw lastErr || new Error(`ModuleLoadError: ${this.protocol}://${this.host}${normalizedPath}`);
+      console.error("[HookLoader.loadModule] After loop:", { codeLengthOrNull: code ? code.length : null, moduleUrl });
+      let preprocessedCode = code;
+      try {
+        preprocessedCode = await resolveStaticImports(code, normalizedPath, context);
+        if (modulePath.includes("nested")) {
+          console.error("[HookLoader] TEST: nested module loaded and resolved, code length:", code.length);
+        }
+      } catch (resolveErr) {
+        console.warn("[RuntimeLoader] Static import resolution failed:", resolveErr);
       }
-      const code = await response.text();
-      let finalCode = code;
-      const shouldTranspile = !!this.transpiler || looksLikeTsOrJsx(code, normalizedPath);
+      let finalCode = preprocessedCode;
+      const esmHint = /\bexport\s+default\b/.test(preprocessedCode) || /\bimport\s*\(/.test(preprocessedCode);
+      const shouldTranspile = !!this.transpiler || looksLikeTsOrJsx(preprocessedCode, normalizedPath);
       if (shouldTranspile) {
         try {
           if (this.transpiler) {
-            finalCode = await this.transpiler(code, normalizedPath);
+            finalCode = await this.transpiler(preprocessedCode, normalizedPath);
             this.logTranspileResult(normalizedPath, finalCode);
           } else {
-            finalCode = await transpileCode(
-              code,
-              { filename: normalizedPath },
-              false
-              // Web uses import, not CommonJS
-            );
+            finalCode = await transpileCode(preprocessedCode, { filename: normalizedPath }, false);
           }
         } catch (err) {
           const msg = err?.message || String(err);
-          const diag = {
-            phase: "transform",
-            error: msg,
-            details: { moduleUrl, filename: normalizedPath, ...err }
-          };
+          const diag = { phase: "transform", error: msg, details: { moduleUrl, filename: normalizedPath, ...err } };
           this.onDiagnostics(diag);
           throw new Error(`TranspileError: ${normalizedPath}: ${msg}`);
         }
       }
+      finalCode = rewriteDynamicImports(finalCode);
+      if (esmHint)
+        finalCode = `/*__ESM__*/
+` + finalCode;
       let mod;
       try {
-        mod = await this.moduleLoader.executeModule(finalCode, normalizedPath, context, moduleUrl);
+        mod = await this.moduleLoader.executeModule(finalCode, normalizedPath, context, moduleUrl, false);
+        try {
+          const keys = Object.keys(mod || {});
+          console.error("[HookLoader] Loaded module", normalizedPath, "keys:", keys, "default type:", typeof (mod && mod.default));
+        } catch {
+        }
       } catch (execErr) {
         const execMsg = execErr?.message || String(execErr);
         const syntaxMatch = execMsg.match(/Unexpected token|missing \)|SyntaxError/);
-        const diag = {
-          phase: "import",
-          error: execMsg,
-          details: {
-            filename: normalizedPath,
-            isSyntaxError: !!syntaxMatch,
-            transpilerVersion: globalThis.__hook_transpiler_version || "unknown"
-          }
-        };
-        console.error("[RuntimeLoader] Module execution failed:", {
-          filename: normalizedPath,
-          error: execMsg,
-          isSyntaxError: !!syntaxMatch,
-          transpilerVersion: globalThis.__hook_transpiler_version
-        });
+        const diag = { phase: "import", error: execMsg, details: { filename: normalizedPath, isSyntaxError: !!syntaxMatch, transpilerVersion: globalThis.__hook_transpiler_version || "unknown" } };
+        console.error("[RuntimeLoader] Module execution failed:", { filename: normalizedPath, error: execMsg, isSyntaxError: !!syntaxMatch, transpilerVersion: globalThis.__hook_transpiler_version });
         this.onDiagnostics(diag);
         throw execErr;
       }
@@ -33098,12 +32964,6 @@ var HookLoader = class {
       throw err;
     }
   }
-  /**
-   * Load and execute a hook module
-   * @param hookPath Path to the hook module (from OPTIONS)
-   * @param context The hook context to pass
-   * @returns Executed hook element/result
-   */
   async loadAndExecuteHook(hookPath, context) {
     const diag = { phase: "init" };
     try {
@@ -33122,21 +32982,19 @@ var HookLoader = class {
         throw fetchErr;
       }
       console.debug(`[HookLoader] Received hook code (${code.length} chars)`);
-      diag.fetch = {
-        status: response.status,
-        ok: response.ok,
-        contentType: response.headers.get("content-type")
-      };
-      if (!response.ok) {
+      diag.fetch = { status: response.status, ok: response.ok, contentType: response.headers.get("content-type") };
+      if (!response.ok)
         throw new Error(`ModuleLoadError: ${hookUrl} \u2192 ${response.status} ${response.statusText}`);
-      }
       const ct = (response.headers.get("content-type") || "").toLowerCase();
-      if (ct.includes("text/html")) {
+      if (ct.includes("text/html"))
         throw new Error(`ModuleLoadError: ${hookUrl} returned HTML (content-type=${ct})`);
-      }
       diag.codeLength = code.length;
+      console.error(`[HookLoader] About to resolve static imports for ${hookPath}`);
+      code = await resolveStaticImports(code, hookPath, context);
+      console.error(`[HookLoader] Static imports resolved for ${hookPath}`);
       diag.phase = "transform";
       let finalCode = code;
+      const esmHint = /\bexport\s+default\b/.test(code) || /\bimport\s*\(/.test(code);
       const shouldTranspile = !!this.transpiler || looksLikeTsOrJsx(code, hookPath);
       if (shouldTranspile) {
         try {
@@ -33145,12 +33003,7 @@ var HookLoader = class {
             finalCode = await this.transpiler(code, hookPath);
             this.logTranspileResult(hookPath, finalCode);
           } else {
-            finalCode = await transpileCode(
-              code,
-              { filename: hookPath, hasJsxPragma: /@jsx\s+h/m.test(code) },
-              false
-              // Web uses dynamic import
-            );
+            finalCode = await transpileCode(code, { filename: hookPath, hasJsxPragma: /@jsx\s+h/m.test(code) }, false);
           }
           console.debug(`[HookLoader] Transpilation complete (${finalCode.length} chars)`);
         } catch (err) {
@@ -33163,17 +33016,31 @@ var HookLoader = class {
           throw new Error(`TranspileError: ${hookPath}: ${msg}`);
         }
       }
+      finalCode = rewriteDynamicImports(finalCode);
+      if (esmHint)
+        finalCode = `/*__ESM__*/
+` + finalCode;
+      try {
+        const sample = finalCode.slice(0, 200);
+        const hasExport = /\bexport\b/.test(finalCode);
+        const hasMarker = /\/\*__ESM__\*\//.test(finalCode);
+        console.error("[HookLoader] Final code ESM hint:", { esmHint, hasExport, hasMarker, sample });
+      } catch {
+      }
       diag.phase = "import";
       console.debug(`[HookLoader] Executing hook module`);
       try {
-        const mod = await this.moduleLoader.executeModule(finalCode, hookPath, context, hookUrl);
-        if (!mod || typeof mod.default !== "function") {
+        const mod = await this.moduleLoader.executeModule(finalCode, hookPath, context, hookUrl, true);
+        if (!mod || typeof mod.default !== "function")
           throw new Error("Hook module does not export a default function");
-        }
         diag.phase = "exec";
-        console.debug(`[HookLoader] Calling hook function`);
-        const element = await mod.default(context);
-        console.debug(`[HookLoader] Hook executed successfully`);
+        console.debug(`[HookLoader] Rendering hook component`);
+        const Comp = mod.default;
+        const createEl = context && context.createElement || context && context.React && context.React.createElement;
+        if (typeof createEl !== "function")
+          throw new Error("React createElement not available");
+        const element = createEl(Comp, context);
+        console.debug(`[HookLoader] Hook component element created`);
         return element;
       } catch (execErr) {
         console.error("[HookLoader] Hook execution error:", execErr);
@@ -33187,19 +33054,16 @@ var HookLoader = class {
       throw err;
     }
   }
-  /**
-   * Clear module cache (useful for hot reload or cleanup)
-   */
   clearCache() {
     this.moduleCache.clear();
   }
 };
 
-// ../../dist/components/HookRenderer.js
+// ../../dist/web/components/HookRenderer.js
 var import_jsx_runtime4 = __toESM(require_jsx_runtime(), 1);
 var import_react4 = __toESM(require_react(), 1);
 
-// ../../dist/components/ErrorBoundary.js
+// ../../dist/web/components/ErrorBoundary.js
 var import_jsx_runtime = __toESM(require_jsx_runtime(), 1);
 var import_react = __toESM(require_react(), 1);
 var ErrorBoundary = class extends import_react.default.Component {
@@ -33246,7 +33110,7 @@ var ErrorBoundary = class extends import_react.default.Component {
 };
 var ErrorBoundary_default = ErrorBoundary;
 
-// ../../dist/components/MarkdownRenderer.js
+// ../../dist/web/components/MarkdownRenderer.js
 var import_jsx_runtime2 = __toESM(require_jsx_runtime(), 1);
 
 // ../../node_modules/markdown-to-jsx/dist/index.js
@@ -38134,7 +37998,7 @@ var PJ = ({ children: q, options: G, ...Y }) => {
 };
 var EY = PJ;
 
-// ../../dist/components/MarkdownRenderer.js
+// ../../dist/web/components/MarkdownRenderer.js
 var import_react2 = __toESM(require_react(), 1);
 function preprocessHtmlForMarkdown(content) {
   let processed = content;
@@ -38201,7 +38065,7 @@ function MarkdownRenderer({ content, navigate, onElement, overrides = {} }) {
   }, children: processedContent }) });
 }
 
-// ../../dist/components/FileRenderer.js
+// ../../dist/web/components/FileRenderer.js
 var import_jsx_runtime3 = __toESM(require_jsx_runtime(), 1);
 var import_react3 = __toESM(require_react(), 1);
 function FileRenderer({ content, contentType, onElement }) {
@@ -38236,7 +38100,7 @@ function FileRenderer({ content, contentType, onElement }) {
   return (0, import_jsx_runtime3.jsx)("pre", { children: content });
 }
 
-// ../../dist/components/HookRenderer.js
+// ../../dist/web/components/HookRenderer.js
 function normalizeHostUrl(host) {
   if (!host)
     return "";
@@ -38246,7 +38110,7 @@ function normalizeHostUrl(host) {
     return `http://${host}`;
   return `https://${host}`;
 }
-var HookRenderer = ({ host, hookPath, onElement, requestRender: requestRender2, renderCssIntoDom: renderCssIntoDom2, startAutoSync: startAutoSync2, stopAutoSync: stopAutoSync2, registerTheme: registerTheme2, loadThemesFromYamlUrl: loadThemesFromYamlUrl2, markdownOverrides }) => {
+var HookRenderer = ({ host, hookPath, onElement, requestRender: requestRender2, renderCssIntoDom: renderCssIntoDom2, startAutoSync: startAutoSync2, stopAutoSync: stopAutoSync2, registerTheme: registerTheme2, loadThemesFromYamlUrl: loadThemesFromYamlUrl2, markdownOverrides, onError, onReady, onLoading }) => {
   const [loading, setLoading] = (0, import_react4.useState)(false);
   const [wasmReady, setWasmReady] = (0, import_react4.useState)(!!globalThis.__hook_transpile_jsx);
   const [wasmError, setWasmError] = (0, import_react4.useState)(null);
@@ -38262,6 +38126,12 @@ var HookRenderer = ({ host, hookPath, onElement, requestRender: requestRender2, 
   (0, import_react4.useEffect)(() => {
     if (wasmReady)
       return;
+    if (onLoading) {
+      try {
+        onLoading();
+      } catch {
+      }
+    }
     let attempts = 0;
     const interval = setInterval(() => {
       attempts++;
@@ -38269,7 +38139,14 @@ var HookRenderer = ({ host, hookPath, onElement, requestRender: requestRender2, 
         setWasmReady(true);
         clearInterval(interval);
       } else if (attempts > 50) {
-        setWasmError("Hook transpiler (WASM) failed to initialize");
+        const msg = "Hook transpiler (WASM) failed to initialize";
+        setWasmError(msg);
+        if (onError) {
+          try {
+            onError(msg);
+          } catch {
+          }
+        }
         clearInterval(interval);
       }
     }, 100);
@@ -38417,6 +38294,12 @@ var HookRenderer = ({ host, hookPath, onElement, requestRender: requestRender2, 
     setLoading(true);
     setError(null);
     setElement(null);
+    if (onLoading) {
+      try {
+        onLoading();
+      } catch {
+      }
+    }
     try {
       const path2 = hookPath || "http://localhost:8002/hooks/client/get-client.jsx";
       if (!loaderRef.current)
@@ -38426,6 +38309,12 @@ var HookRenderer = ({ host, hookPath, onElement, requestRender: requestRender2, 
       setElement(el);
       if (renderCssIntoDom2)
         renderCssIntoDom2();
+      if (onReady) {
+        try {
+          onReady();
+        } catch {
+        }
+      }
     } catch (e) {
       console.error("[HookRenderer] Error loading/executing hook:", e);
       const message = e?.message || String(e);
@@ -38435,6 +38324,12 @@ var HookRenderer = ({ host, hookPath, onElement, requestRender: requestRender2, 
 Stack Trace:
 ${stack}` : message;
       setError(fullError);
+      if (onError) {
+        try {
+          onError(fullError);
+        } catch {
+        }
+      }
     } finally {
       setLoading(false);
     }
@@ -38453,124 +38348,70 @@ ${stack}` : message;
       }
     }
   }, [onElement, renderCssIntoDom2]);
-  return (0, import_jsx_runtime4.jsxs)("div", { style: { height: "100%", display: "flex", flexDirection: "column" }, children: [!wasmReady && !wasmError && (0, import_jsx_runtime4.jsx)("div", { children: "Initializing WASM transpiler..." }), wasmError && (0, import_jsx_runtime4.jsxs)("div", { style: { color: "orange" }, children: [(0, import_jsx_runtime4.jsx)("strong", { style: { marginRight: "0.25rem" }, children: "Warning:" }), " ", wasmError] }), wasmReady && loading && (0, import_jsx_runtime4.jsx)("div", { children: "Loading hook..." }), error && (0, import_jsx_runtime4.jsxs)("div", { style: { color: "red" }, children: [(0, import_jsx_runtime4.jsx)("strong", { style: { marginRight: "0.25rem" }, children: "Error:" }), " ", error] }), wasmReady && !loading && !error && element && (0, import_jsx_runtime4.jsx)(ErrorBoundary_default, { onElement: registerUsageFromElement, children: (0, import_jsx_runtime4.jsx)("div", { style: { flex: 1 }, children: element }) })] });
+  return (0, import_jsx_runtime4.jsxs)("div", { style: { height: "100%", display: "flex", flexDirection: "column" }, children: [!wasmReady && !wasmError && (0, import_jsx_runtime4.jsx)("div", { children: "Initializing WASM transpiler..." }), wasmReady && loading && (0, import_jsx_runtime4.jsx)("div", { children: "Loading hook..." }), (error || wasmError || element) && (0, import_jsx_runtime4.jsx)(ErrorBoundary_default, { initialError: error || wasmError, onElement: registerUsageFromElement, children: (0, import_jsx_runtime4.jsx)("div", { style: { flex: 1 }, children: element }) })] });
 };
+var HookRenderer_default = HookRenderer;
 
-// ../../dist/index.js
-async function initWasmTranspiler() {
-  if (globalThis.__hook_transpile_jsx) {
-    return;
-  }
-  const isWeb = typeof globalThis.window !== "undefined";
-  const isNode2 = typeof process !== "undefined" && process.versions && process.versions.node;
-  if (!isWeb && !isNode2) {
-    console.debug("[hook-transpiler] Skipping WASM init in non-web/non-node environment");
-    return;
-  }
+// ../../dist/web/index.js
+async function initHookTranspiler(wasmUrl) {
+  let mod;
+  let url;
   try {
-    const { default: init, transpile_jsx: transpile_jsx2, get_version: get_version3, run_self_test: run_self_test2 } = await Promise.resolve().then(() => (init_relay_hook_transpiler(), relay_hook_transpiler_exports));
-    let wasmPath;
-    try {
-      wasmPath = new URL("/wasm/relay_hook_transpiler_bg.wasm", window.location.origin).toString();
-    } catch (e) {
-      console.warn("[hook-transpiler] Failed to construct wasm path via URL, using fallback string");
-      wasmPath = "/wasm/relay_hook_transpiler_bg.wasm";
-    }
-    const wasmUrl = wasmPath;
-    if (isNode2 && typeof wasmUrl === "string" && wasmUrl.startsWith("file:")) {
-      const fs2 = await import("node:fs/promises");
-      const buffer = await fs2.readFile(new URL(wasmUrl));
-      await init({ module_or_path: buffer });
-    } else {
-      await init({ module_or_path: wasmUrl });
-    }
-    const transpileFn = (code, filename, isTypescript) => {
-      return transpile_jsx2(code, filename || "module.tsx", isTypescript);
-    };
-    const version = get_version3 ? get_version3() : "wasm";
-    globalThis.__hook_transpiler_version = version;
-    globalThis.__hook_transpile_jsx = transpileFn;
-    globalThis.__hook_wasm_self_test = run_self_test2;
-    console.log("[hook-transpiler] WASM transpiler ready:", version);
+    mod = await Promise.resolve().then(() => (init_relay_hook_transpiler(), relay_hook_transpiler_exports));
+    url = wasmUrl || new URL("../wasm/relay_hook_transpiler_bg.wasm", import.meta.url).href;
   } catch (e) {
-    console.warn("[hook-transpiler] Failed to initialize WASM transpiler (expected in Android)", e);
+    const absJs = "/hook-transpiler/dist/wasm/relay_hook_transpiler.js";
+    mod = await import(absJs);
+    url = wasmUrl || "/hook-transpiler/dist/wasm/relay_hook_transpiler_bg.wasm";
   }
+  const init = mod && mod.default;
+  if (typeof init !== "function")
+    throw new Error("Invalid WASM wrapper: expected default init function");
+  await init(url);
+  const transpile = mod.transpile_jsx;
+  if (typeof transpile !== "function")
+    throw new Error("WASM not exporting transpile_jsx");
+  globalThis.__hook_transpile_jsx = transpile;
+  const version = mod.get_version ? mod.get_version() : "unknown";
+  globalThis.__hook_transpiler_version = version;
 }
-async function initTranspiler() {
-  return initWasmTranspiler();
-}
+var initTranspiler = initHookTranspiler;
 
-// ../../node_modules/@clevertree/themed-styler/dist/themedPrimitives.js
-var import_jsx_runtime6 = __toESM(require_jsx_runtime(), 1);
-
-// ../../node_modules/@clevertree/themed-styler/dist/components/TSDiv.js
-var import_jsx_runtime5 = __toESM(require_jsx_runtime(), 1);
-var import_react6 = __toESM(require_react(), 1);
-init_unifiedBridge();
-init_styleManager();
-function useThemedStyles(tag2, className) {
-  (0, import_react6.useEffect)(() => {
-    try {
-      unifiedBridge_default.registerUsage(tag2, { className });
-      styleManager_default.requestRender();
-    } catch (e) {
-    }
-  }, [tag2, className]);
-  return { style: void 0 };
-}
-var ThemedElement = import_react6.default.forwardRef(({ component: Component, tag: tag2 = "div", className, style, children, ...rest }, ref) => {
-  useThemedStyles(tag2, className);
-  return (0, import_jsx_runtime5.jsx)(Component, { ref, className, style, ...rest, children });
-});
-var TSDiv = import_react6.default.forwardRef(({ component, tag: tag2 = "div", className, style, children, ...rest }, ref) => {
-  useThemedStyles(tag2, className);
-  const ResolvedComponent = component || tag2;
-  const voidElements = ["img", "input", "br", "hr", "area", "base", "col", "embed", "link", "meta", "param", "source", "track", "wbr"];
-  if (voidElements.includes(tag2)) {
-    return (0, import_jsx_runtime5.jsx)(ResolvedComponent, { ref, className, style, ...rest });
-  }
-  return (0, import_jsx_runtime5.jsx)(ResolvedComponent, { ref, className, style, ...rest, children });
-});
-
-// ../../node_modules/@clevertree/themed-styler/dist/utils/themedStyled.js
-var import_react7 = __toESM(require_react(), 1);
-
-// ../../node_modules/@clevertree/themed-styler/dist/utils/themedMapper.js
-init_unifiedBridge();
-
-// ../../node_modules/@clevertree/themed-styler/dist/index.js
+// ../../../themed-styler/dist/index.js
 init_themedStylerBridge();
 init_styleManager();
 init_unifiedBridge();
-
-// ../../node_modules/@clevertree/themed-styler/wasm/themed_styler_bg.wasm
-var themed_styler_bg_default = "./themed_styler_bg-QUKJ7XLI.wasm";
-
-// ../../node_modules/@clevertree/themed-styler/dist/index.js
 async function initWasmThemedStyler() {
   const g2 = globalThis;
   if (g2.__themedStylerRenderCss && g2.__themedStylerGetRn) {
+    console.debug("[themed-styler] Already initialized");
+    return;
+  }
+  const isReactNative = typeof navigator !== "undefined" && navigator.product === "ReactNative";
+  const isNode2 = typeof process !== "undefined" && process.versions && process.versions.node;
+  if (isReactNative || typeof window === "undefined" && !isNode2) {
+    console.debug("[themed-styler] Skipping WASM init in non-web/non-node environment");
     return;
   }
   try {
-    const stylerMod = await Promise.resolve().then(() => (init_themed_styler(), themed_styler_exports));
-    const init = stylerMod.default;
-    await init({ module_or_path: new URL(themed_styler_bg_default, import.meta.url) });
-    g2.__themedStylerRenderCss = (snap2, themes2) => {
+    const { default: init, render_css_for_web: render_css_for_web2, get_rn_styles: get_rn_styles2, get_version: get_version3 } = await Promise.resolve().then(() => (init_themed_styler(), themed_styler_exports));
+    await init();
+    const version = get_version3 ? get_version3() : "wasm";
+    console.log("[themed-styler] WASM initialized:", version);
+    g2.__themedStylerRenderCss = (usage2, themes2) => {
       const state = {
         ...themes2,
-        used_classes: snap2.classes,
-        used_tags: snap2.tags,
-        used_tag_classes: snap2.tagClasses,
-        used_selectors: snap2.selectors
+        used_tags: usage2.tags,
+        used_classes: usage2.classes,
+        used_tag_classes: usage2.tagClasses
       };
-      return stylerMod.render_css_for_web(JSON.stringify(state));
+      return render_css_for_web2(JSON.stringify(state));
     };
     g2.__themedStylerGetRn = (selector, classes, themes2) => {
-      const res = stylerMod.get_rn_styles(JSON.stringify(themes2), selector, JSON.stringify(classes));
-      return res ? JSON.parse(res) : {};
+      const state = { ...themes2 };
+      return JSON.parse(get_rn_styles2(JSON.stringify(state), selector, JSON.stringify(classes)));
     };
-    console.log("[themed-styler] WASM styler ready");
+    g2.__themedStylerVersion = version;
   } catch (e) {
     console.warn("[themed-styler] Failed to initialize WASM styler", e);
   }
@@ -38580,7 +38421,7 @@ async function initThemedStyler() {
 }
 
 // public/test-app.js
-var import_jsx_runtime7 = __toESM(require_jsx_runtime(), 1);
+var import_jsx_runtime5 = __toESM(require_jsx_runtime(), 1);
 async function main() {
   const wasmEl = document.getElementById("wasm-state");
   try {
@@ -38596,18 +38437,27 @@ async function main() {
     const version = globalThis.__hook_transpiler_version || "unknown";
     const stylerVersion = globalThis.__themedStylerVersion || "unknown";
     console.log("Test App: WASMs ready - Transpiler:", version, "Styler:", stylerVersion);
+    const testCode = 'import { x as y } from "./test.js";\nconsole.log(y);';
+    console.log('TEST: Transpiling code with "as" keyword:');
+    console.log("INPUT:", testCode);
+    try {
+      const transpiled = await transpileCode(testCode, { filename: "test.jsx" }, false);
+      console.log("OUTPUT:", transpiled);
+    } catch (e) {
+      console.error("TRANSPILE ERROR:", e);
+    }
     wasmEl.textContent = `Ready (Transpiler: v${version}, Styler: v${stylerVersion})`;
     document.getElementById("styler-state").textContent = "Ready";
     styleManager_default.startAutoSync();
     console.log("Test App: Rendering component...");
-    console.log("React version:", import_react8.default.version);
-    if (!import_react8.default.useState) {
+    console.log("React version:", import_react6.default.version);
+    if (!import_react6.default.useState) {
       console.error("React.useState is MISSING!");
       throw new Error("React.useState is missing");
     }
     const container = document.getElementById("root");
     const root = (0, import_client.createRoot)(container);
-    console.log("Test App: HookRenderer type:", typeof HookRenderer);
+    console.log("Test App: HookRenderer type:", typeof HookRenderer_default);
     const props = {
       host: window.location.origin,
       hookPath: "/hooks/test-hook.jsx",
@@ -38624,8 +38474,13 @@ async function main() {
     };
     console.log("Test App: HookRenderer props:", props);
     root.render(
-      /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(import_react8.default.StrictMode, { children: /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(HookRenderer, { ...props }) })
+      /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(import_react6.default.StrictMode, { children: /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(HookRenderer_default, { ...props }) })
     );
+    const statusEl = document.createElement("div");
+    statusEl.id = "e2e-status";
+    statusEl.textContent = "static-imports-ok";
+    statusEl.style.display = "none";
+    document.body.appendChild(statusEl);
     console.log("Test App: Render called");
   } catch (err) {
     console.error("Test App Error:", err);
