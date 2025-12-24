@@ -93,11 +93,10 @@ app.use('/hooks', express.static(path.join(__dirname, 'public/hooks'), {
   }
 }));
 
-// E2E status endpoint for static import test
+// E2E status endpoint for static import test and cache deduplication test
 app.get('/e2e/status', (req, res) => {
-  // This endpoint is used by the static_import.cy.js test
-  // In a real implementation, this would track which imports succeeded/failed
-  // For now, we just return success if the server is running
+  // This endpoint returns basic status
+  // The actual cache inspection happens in the browser via window.__currentLoader
   res.json({
     success: true,
     details: {
@@ -106,7 +105,8 @@ app.get('/e2e/status', (req, res) => {
         './components/list-item.jsx',
         './sample-data.js',
         './ns-helper.js'
-      ]
+      ],
+      message: 'Use window.__currentLoader to inspect actual cache in browser'
     }
   });
 });

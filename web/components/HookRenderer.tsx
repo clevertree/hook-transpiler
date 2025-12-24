@@ -95,6 +95,11 @@ export const HookRenderer: React.FC<HookRendererProps> = ({
             transpiler: (code, filename) => transpileCode(code, { filename })
         })
 
+        // Expose loader for e2e testing
+        if (typeof window !== 'undefined' && process.env.NODE_ENV !== 'production') {
+            (window as any).__currentLoader = loaderRef.current
+        }
+
         if (startAutoSync) {
             try {
                 startAutoSync()

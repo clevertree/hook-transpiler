@@ -31551,10 +31551,10 @@ var init_browser = __esm({
   }
 });
 
-// ../../../themed-styler/dist/theme.js
+// ../../../themed-styler/dist/shared/theme.js
 var themeYaml;
 var init_theme = __esm({
-  "../../../themed-styler/dist/theme.js"() {
+  "../../../themed-styler/dist/shared/theme.js"() {
     "use strict";
     themeYaml = `themes:
   default:
@@ -31667,7 +31667,7 @@ default_theme: default
   }
 });
 
-// ../../../themed-styler/dist/styleManager.js
+// ../../../themed-styler/dist/web/styleManager.js
 var styleManager_exports = {};
 __export(styleManager_exports, {
   default: () => styleManager_default,
@@ -31821,7 +31821,7 @@ function onChange(cb) {
 }
 var import_react5, styleEl, syncInterval, lastSnapshotJson, debounceTimer, forceRenderNext, emitter, isDevMode, styleManager_default;
 var init_styleManager = __esm({
-  "../../../themed-styler/dist/styleManager.js"() {
+  "../../../themed-styler/dist/web/styleManager.js"() {
     "use strict";
     init_unifiedBridge();
     import_react5 = __toESM(require_react(), 1);
@@ -31847,7 +31847,7 @@ var init_styleManager = __esm({
   }
 });
 
-// ../../../themed-styler/dist/themedStylerBridge.js
+// ../../../themed-styler/dist/shared/themedStylerBridge.js
 function registerUsage(tag2, props, hierarchy) {
   const cls = props ? props.className || props.class || "" : "";
   const classes = typeof cls === "string" && cls.trim().length ? cls.split(/\s+/).map((c) => c.trim()).filter(Boolean) : [];
@@ -32017,7 +32017,7 @@ function getRnStyles(selector, classes = []) {
 }
 var usage, themes, currentTheme, _defaults_loaded, themedStylerBridge_default;
 var init_themedStylerBridge = __esm({
-  "../../../themed-styler/dist/themedStylerBridge.js"() {
+  "../../../themed-styler/dist/shared/themedStylerBridge.js"() {
     "use strict";
     init_browser();
     init_theme();
@@ -32046,10 +32046,10 @@ var init_themedStylerBridge = __esm({
   }
 });
 
-// ../../../themed-styler/dist/unifiedBridge.js
+// ../../../themed-styler/dist/shared/unifiedBridge.js
 var unifiedBridge, unifiedBridge_default;
 var init_unifiedBridge = __esm({
-  "../../../themed-styler/dist/unifiedBridge.js"() {
+  "../../../themed-styler/dist/shared/unifiedBridge.js"() {
     "use strict";
     init_themedStylerBridge();
     unifiedBridge = {
@@ -32081,299 +32081,6 @@ var init_unifiedBridge = __esm({
       loadThemesFromYamlText
     };
     unifiedBridge_default = unifiedBridge;
-  }
-});
-
-// ../../../themed-styler/wasm/themed_styler.js
-var themed_styler_exports = {};
-__export(themed_styler_exports, {
-  default: () => themed_styler_default,
-  get_android_styles: () => get_android_styles,
-  get_default_state_json: () => get_default_state_json,
-  get_rn_styles: () => get_rn_styles,
-  get_theme_list_json: () => get_theme_list_json,
-  get_version: () => get_version2,
-  initSync: () => initSync2,
-  register_theme_json: () => register_theme_json,
-  render_css_for_web: () => render_css_for_web,
-  set_theme_json: () => set_theme_json
-});
-function getStringFromWasm02(ptr, len) {
-  ptr = ptr >>> 0;
-  return decodeText2(ptr, len);
-}
-function getUint8ArrayMemory02() {
-  if (cachedUint8ArrayMemory02 === null || cachedUint8ArrayMemory02.byteLength === 0) {
-    cachedUint8ArrayMemory02 = new Uint8Array(wasm2.memory.buffer);
-  }
-  return cachedUint8ArrayMemory02;
-}
-function passStringToWasm02(arg, malloc, realloc) {
-  if (realloc === void 0) {
-    const buf = cachedTextEncoder2.encode(arg);
-    const ptr2 = malloc(buf.length, 1) >>> 0;
-    getUint8ArrayMemory02().subarray(ptr2, ptr2 + buf.length).set(buf);
-    WASM_VECTOR_LEN2 = buf.length;
-    return ptr2;
-  }
-  let len = arg.length;
-  let ptr = malloc(len, 1) >>> 0;
-  const mem = getUint8ArrayMemory02();
-  let offset = 0;
-  for (; offset < len; offset++) {
-    const code = arg.charCodeAt(offset);
-    if (code > 127)
-      break;
-    mem[ptr + offset] = code;
-  }
-  if (offset !== len) {
-    if (offset !== 0) {
-      arg = arg.slice(offset);
-    }
-    ptr = realloc(ptr, len, len = offset + arg.length * 3, 1) >>> 0;
-    const view = getUint8ArrayMemory02().subarray(ptr + offset, ptr + len);
-    const ret = cachedTextEncoder2.encodeInto(arg, view);
-    offset += ret.written;
-    ptr = realloc(ptr, len, offset, 1) >>> 0;
-  }
-  WASM_VECTOR_LEN2 = offset;
-  return ptr;
-}
-function decodeText2(ptr, len) {
-  numBytesDecoded2 += len;
-  if (numBytesDecoded2 >= MAX_SAFARI_DECODE_BYTES2) {
-    cachedTextDecoder2 = new TextDecoder("utf-8", { ignoreBOM: true, fatal: true });
-    cachedTextDecoder2.decode();
-    numBytesDecoded2 = len;
-  }
-  return cachedTextDecoder2.decode(getUint8ArrayMemory02().subarray(ptr, ptr + len));
-}
-function get_android_styles(state_json, selector, classes_json) {
-  let deferred4_0;
-  let deferred4_1;
-  try {
-    const ptr0 = passStringToWasm02(state_json, wasm2.__wbindgen_malloc, wasm2.__wbindgen_realloc);
-    const len0 = WASM_VECTOR_LEN2;
-    const ptr1 = passStringToWasm02(selector, wasm2.__wbindgen_malloc, wasm2.__wbindgen_realloc);
-    const len1 = WASM_VECTOR_LEN2;
-    const ptr2 = passStringToWasm02(classes_json, wasm2.__wbindgen_malloc, wasm2.__wbindgen_realloc);
-    const len2 = WASM_VECTOR_LEN2;
-    const ret = wasm2.get_android_styles(ptr0, len0, ptr1, len1, ptr2, len2);
-    deferred4_0 = ret[0];
-    deferred4_1 = ret[1];
-    return getStringFromWasm02(ret[0], ret[1]);
-  } finally {
-    wasm2.__wbindgen_free(deferred4_0, deferred4_1, 1);
-  }
-}
-function get_default_state_json() {
-  let deferred1_0;
-  let deferred1_1;
-  try {
-    const ret = wasm2.get_default_state_json();
-    deferred1_0 = ret[0];
-    deferred1_1 = ret[1];
-    return getStringFromWasm02(ret[0], ret[1]);
-  } finally {
-    wasm2.__wbindgen_free(deferred1_0, deferred1_1, 1);
-  }
-}
-function get_rn_styles(state_json, selector, classes_json) {
-  let deferred4_0;
-  let deferred4_1;
-  try {
-    const ptr0 = passStringToWasm02(state_json, wasm2.__wbindgen_malloc, wasm2.__wbindgen_realloc);
-    const len0 = WASM_VECTOR_LEN2;
-    const ptr1 = passStringToWasm02(selector, wasm2.__wbindgen_malloc, wasm2.__wbindgen_realloc);
-    const len1 = WASM_VECTOR_LEN2;
-    const ptr2 = passStringToWasm02(classes_json, wasm2.__wbindgen_malloc, wasm2.__wbindgen_realloc);
-    const len2 = WASM_VECTOR_LEN2;
-    const ret = wasm2.get_rn_styles(ptr0, len0, ptr1, len1, ptr2, len2);
-    deferred4_0 = ret[0];
-    deferred4_1 = ret[1];
-    return getStringFromWasm02(ret[0], ret[1]);
-  } finally {
-    wasm2.__wbindgen_free(deferred4_0, deferred4_1, 1);
-  }
-}
-function get_theme_list_json(state_json) {
-  let deferred2_0;
-  let deferred2_1;
-  try {
-    const ptr0 = passStringToWasm02(state_json, wasm2.__wbindgen_malloc, wasm2.__wbindgen_realloc);
-    const len0 = WASM_VECTOR_LEN2;
-    const ret = wasm2.get_theme_list_json(ptr0, len0);
-    deferred2_0 = ret[0];
-    deferred2_1 = ret[1];
-    return getStringFromWasm02(ret[0], ret[1]);
-  } finally {
-    wasm2.__wbindgen_free(deferred2_0, deferred2_1, 1);
-  }
-}
-function get_version2() {
-  let deferred1_0;
-  let deferred1_1;
-  try {
-    const ret = wasm2.get_version();
-    deferred1_0 = ret[0];
-    deferred1_1 = ret[1];
-    return getStringFromWasm02(ret[0], ret[1]);
-  } finally {
-    wasm2.__wbindgen_free(deferred1_0, deferred1_1, 1);
-  }
-}
-function register_theme_json(state_json, theme_json) {
-  let deferred3_0;
-  let deferred3_1;
-  try {
-    const ptr0 = passStringToWasm02(state_json, wasm2.__wbindgen_malloc, wasm2.__wbindgen_realloc);
-    const len0 = WASM_VECTOR_LEN2;
-    const ptr1 = passStringToWasm02(theme_json, wasm2.__wbindgen_malloc, wasm2.__wbindgen_realloc);
-    const len1 = WASM_VECTOR_LEN2;
-    const ret = wasm2.register_theme_json(ptr0, len0, ptr1, len1);
-    deferred3_0 = ret[0];
-    deferred3_1 = ret[1];
-    return getStringFromWasm02(ret[0], ret[1]);
-  } finally {
-    wasm2.__wbindgen_free(deferred3_0, deferred3_1, 1);
-  }
-}
-function render_css_for_web(state_json) {
-  let deferred2_0;
-  let deferred2_1;
-  try {
-    const ptr0 = passStringToWasm02(state_json, wasm2.__wbindgen_malloc, wasm2.__wbindgen_realloc);
-    const len0 = WASM_VECTOR_LEN2;
-    const ret = wasm2.render_css_for_web(ptr0, len0);
-    deferred2_0 = ret[0];
-    deferred2_1 = ret[1];
-    return getStringFromWasm02(ret[0], ret[1]);
-  } finally {
-    wasm2.__wbindgen_free(deferred2_0, deferred2_1, 1);
-  }
-}
-function set_theme_json(state_json, theme_name) {
-  let deferred3_0;
-  let deferred3_1;
-  try {
-    const ptr0 = passStringToWasm02(state_json, wasm2.__wbindgen_malloc, wasm2.__wbindgen_realloc);
-    const len0 = WASM_VECTOR_LEN2;
-    const ptr1 = passStringToWasm02(theme_name, wasm2.__wbindgen_malloc, wasm2.__wbindgen_realloc);
-    const len1 = WASM_VECTOR_LEN2;
-    const ret = wasm2.set_theme_json(ptr0, len0, ptr1, len1);
-    deferred3_0 = ret[0];
-    deferred3_1 = ret[1];
-    return getStringFromWasm02(ret[0], ret[1]);
-  } finally {
-    wasm2.__wbindgen_free(deferred3_0, deferred3_1, 1);
-  }
-}
-async function __wbg_load2(module, imports) {
-  if (typeof Response === "function" && module instanceof Response) {
-    if (typeof WebAssembly.instantiateStreaming === "function") {
-      try {
-        return await WebAssembly.instantiateStreaming(module, imports);
-      } catch (e) {
-        const validResponse = module.ok && EXPECTED_RESPONSE_TYPES2.has(module.type);
-        if (validResponse && module.headers.get("Content-Type") !== "application/wasm") {
-          console.warn("`WebAssembly.instantiateStreaming` failed because your server does not serve Wasm with `application/wasm` MIME type. Falling back to `WebAssembly.instantiate` which is slower. Original error:\n", e);
-        } else {
-          throw e;
-        }
-      }
-    }
-    const bytes = await module.arrayBuffer();
-    return await WebAssembly.instantiate(bytes, imports);
-  } else {
-    const instance = await WebAssembly.instantiate(module, imports);
-    if (instance instanceof WebAssembly.Instance) {
-      return { instance, module };
-    } else {
-      return instance;
-    }
-  }
-}
-function __wbg_get_imports2() {
-  const imports = {};
-  imports.wbg = {};
-  imports.wbg.__wbindgen_init_externref_table = function() {
-    const table = wasm2.__wbindgen_externrefs;
-    const offset = table.grow(4);
-    table.set(0, void 0);
-    table.set(offset + 0, void 0);
-    table.set(offset + 1, null);
-    table.set(offset + 2, true);
-    table.set(offset + 3, false);
-  };
-  return imports;
-}
-function __wbg_finalize_init2(instance, module) {
-  wasm2 = instance.exports;
-  __wbg_init2.__wbindgen_wasm_module = module;
-  cachedUint8ArrayMemory02 = null;
-  wasm2.__wbindgen_start();
-  return wasm2;
-}
-function initSync2(module) {
-  if (wasm2 !== void 0)
-    return wasm2;
-  if (typeof module !== "undefined") {
-    if (Object.getPrototypeOf(module) === Object.prototype) {
-      ({ module } = module);
-    } else {
-      console.warn("using deprecated parameters for `initSync()`; pass a single object instead");
-    }
-  }
-  const imports = __wbg_get_imports2();
-  if (!(module instanceof WebAssembly.Module)) {
-    module = new WebAssembly.Module(module);
-  }
-  const instance = new WebAssembly.Instance(module, imports);
-  return __wbg_finalize_init2(instance, module);
-}
-async function __wbg_init2(module_or_path) {
-  if (wasm2 !== void 0)
-    return wasm2;
-  if (typeof module_or_path !== "undefined") {
-    if (Object.getPrototypeOf(module_or_path) === Object.prototype) {
-      ({ module_or_path } = module_or_path);
-    } else {
-      console.warn("using deprecated parameters for the initialization function; pass a single object instead");
-    }
-  }
-  if (typeof module_or_path === "undefined") {
-    module_or_path = new URL("themed_styler_bg.wasm", import.meta.url);
-  }
-  const imports = __wbg_get_imports2();
-  if (typeof module_or_path === "string" || typeof Request === "function" && module_or_path instanceof Request || typeof URL === "function" && module_or_path instanceof URL) {
-    module_or_path = fetch(module_or_path);
-  }
-  const { instance, module } = await __wbg_load2(await module_or_path, imports);
-  return __wbg_finalize_init2(instance, module);
-}
-var wasm2, cachedUint8ArrayMemory02, cachedTextDecoder2, MAX_SAFARI_DECODE_BYTES2, numBytesDecoded2, cachedTextEncoder2, WASM_VECTOR_LEN2, EXPECTED_RESPONSE_TYPES2, themed_styler_default;
-var init_themed_styler = __esm({
-  "../../../themed-styler/wasm/themed_styler.js"() {
-    "use strict";
-    cachedUint8ArrayMemory02 = null;
-    cachedTextDecoder2 = new TextDecoder("utf-8", { ignoreBOM: true, fatal: true });
-    cachedTextDecoder2.decode();
-    MAX_SAFARI_DECODE_BYTES2 = 2146435072;
-    numBytesDecoded2 = 0;
-    cachedTextEncoder2 = new TextEncoder();
-    if (!("encodeInto" in cachedTextEncoder2)) {
-      cachedTextEncoder2.encodeInto = function(arg, view) {
-        const buf = cachedTextEncoder2.encode(arg);
-        view.set(buf);
-        return {
-          read: arg.length,
-          written: buf.length
-        };
-      };
-    }
-    WASM_VECTOR_LEN2 = 0;
-    EXPECTED_RESPONSE_TYPES2 = /* @__PURE__ */ new Set(["basic", "cors", "default"]);
-    themed_styler_default = __wbg_init2;
   }
 });
 
@@ -32801,6 +32508,7 @@ var HookLoader = class {
   }
   constructor(options2) {
     this.moduleCache = /* @__PURE__ */ new Map();
+    this.pendingFetches = /* @__PURE__ */ new Map();
     this.host = options2.host;
     this.protocol = options2.protocol;
     this.moduleLoader = options2.moduleLoader;
@@ -32814,46 +32522,74 @@ var HookLoader = class {
       return {};
     return { ...builder() };
   }
+  normalizeToAbsolutePath(modulePath, fromPath) {
+    let normalized = modulePath;
+    try {
+      if (modulePath.startsWith("./") || modulePath.startsWith("../")) {
+        const baseDir = fromPath.substring(0, fromPath.lastIndexOf("/")) || "/hooks/client";
+        normalized = new URL(modulePath, `http://localhost${baseDir}/`).pathname;
+      } else if (!modulePath.startsWith("/")) {
+        normalized = `/hooks/client/${modulePath}`;
+      } else {
+        normalized = modulePath;
+      }
+    } catch (_) {
+      const baseDir = fromPath.substring(0, fromPath.lastIndexOf("/")) || "/hooks/client";
+      if (modulePath.startsWith("./")) {
+        normalized = `${baseDir}/${modulePath.slice(2)}`;
+      } else if (modulePath.startsWith("../")) {
+        const parts2 = modulePath.split("/");
+        let current = baseDir.split("/").filter(Boolean);
+        for (const part of parts2) {
+          if (part === "..")
+            current.pop();
+          else if (part !== ".")
+            current.push(part);
+        }
+        normalized = "/" + current.join("/");
+      } else if (!modulePath.startsWith("/")) {
+        normalized = `/hooks/client/${modulePath}`;
+      } else {
+        normalized = modulePath;
+      }
+    }
+    const parts = normalized.split("/").filter(Boolean);
+    const resolved = [];
+    for (const part of parts) {
+      if (part === "..")
+        resolved.pop();
+      else if (part !== ".")
+        resolved.push(part);
+    }
+    return "/" + resolved.join("/");
+  }
   async loadModule(modulePath, fromPath = "/hooks/client/get-client.jsx", context) {
     try {
       console.error("[HookLoader] loadModule called:", { modulePath, fromPath });
     } catch {
     }
-    let normalizedPath = modulePath;
-    try {
-      if (modulePath.startsWith("./") || modulePath.startsWith("../")) {
-        const base = fromPath && fromPath.startsWith("/") ? fromPath : "/hooks/client/get-client.jsx";
-        const baseUrl = new URL(base, "http://resolver.local");
-        const resolved = new URL(modulePath, baseUrl);
-        normalizedPath = resolved.pathname;
-      } else if (!modulePath.startsWith("/")) {
-        normalizedPath = `/hooks/client/${modulePath}`;
-      }
-      const parts = normalizedPath.split("/").filter(Boolean);
-      const normalized = [];
-      for (const part of parts) {
-        if (part === "..")
-          normalized.pop();
-        else if (part !== ".")
-          normalized.push(part);
-      }
-      normalizedPath = "/" + normalized.join("/");
-    } catch (_) {
-      const baseDir = (fromPath || "/hooks/client/get-client.jsx").split("/").slice(0, -1).join("/") || "/hooks/client";
-      const combined = `${baseDir}/${modulePath}`;
-      const parts = combined.split("/").filter(Boolean);
-      const normalized = [];
-      for (const part of parts) {
-        if (part === "..")
-          normalized.pop();
-        else if (part !== ".")
-          normalized.push(part);
-      }
-      normalizedPath = "/" + normalized.join("/");
-    }
+    const normalizedPath = this.normalizeToAbsolutePath(modulePath, fromPath);
     const cacheKey = `${this.host}:${normalizedPath}`;
-    if (this.moduleCache.has(cacheKey))
+    if (this.moduleCache.has(cacheKey)) {
+      console.error("[HookLoader] Module cache HIT:", cacheKey);
       return this.moduleCache.get(cacheKey);
+    }
+    if (this.pendingFetches.has(cacheKey)) {
+      console.error("[HookLoader] Pending fetch HIT (avoiding duplicate):", cacheKey);
+      return this.pendingFetches.get(cacheKey);
+    }
+    console.error("[HookLoader] Starting NEW fetch:", cacheKey);
+    const fetchPromise = this._doLoadModule(normalizedPath, context, cacheKey);
+    this.pendingFetches.set(cacheKey, fetchPromise);
+    try {
+      const result = await fetchPromise;
+      this.moduleCache.set(cacheKey, result);
+      return result;
+    } finally {
+      this.pendingFetches.delete(cacheKey);
+    }
+  }
+  async _doLoadModule(normalizedPath, context, cacheKey) {
     const requestHeaders = this.buildRequestHeaders(context);
     const fetchOptions = Object.keys(requestHeaders).length ? { headers: requestHeaders } : void 0;
     const buildAttempts = (pathIn) => {
@@ -32878,7 +32614,7 @@ var HookLoader = class {
       let code = null;
       let moduleUrl = null;
       const attempts = buildAttempts(normalizedPath);
-      console.error("[HookLoader.loadModule] Fetch attempts:", { modulePath, normalizedPath, attempts });
+      console.error("[HookLoader._doLoadModule] Fetch attempts:", { normalizedPath, attempts });
       for (const candidate of attempts) {
         const url = `${this.protocol}://${this.host}${candidate}`;
         console.error("[HookLoader] Loop iteration for candidate:", candidate, "total attempts:", attempts.length);
@@ -32913,9 +32649,6 @@ var HookLoader = class {
       let preprocessedCode = code;
       try {
         preprocessedCode = await resolveStaticImports(code, normalizedPath, context);
-        if (modulePath.includes("nested")) {
-          console.error("[HookLoader] TEST: nested module loaded and resolved, code length:", code.length);
-        }
       } catch (resolveErr) {
         console.warn("[RuntimeLoader] Static import resolution failed:", resolveErr);
       }
@@ -32957,10 +32690,9 @@ var HookLoader = class {
         this.onDiagnostics(diag);
         throw execErr;
       }
-      this.moduleCache.set(cacheKey, mod);
       return mod;
     } catch (err) {
-      console.error("[HookLoader.loadModule] Failed:", modulePath, err);
+      console.error("[HookLoader._doLoadModule] Failed:", normalizedPath, err);
       throw err;
     }
   }
@@ -33056,6 +32788,7 @@ var HookLoader = class {
   }
   clearCache() {
     this.moduleCache.clear();
+    this.pendingFetches.clear();
   }
 };
 
@@ -38164,6 +37897,9 @@ var HookRenderer = ({ host, hookPath, onElement, requestRender: requestRender2, 
       moduleLoader: webLoader,
       transpiler: (code, filename) => transpileCode(code, { filename })
     });
+    if (typeof window !== "undefined" && true) {
+      window.__currentLoader = loaderRef.current;
+    }
     if (startAutoSync2) {
       try {
         startAutoSync2();
@@ -38377,7 +38113,7 @@ async function initHookTranspiler(wasmUrl) {
 }
 var initTranspiler = initHookTranspiler;
 
-// ../../../themed-styler/dist/index.js
+// ../../../themed-styler/dist/web/index.js
 init_themedStylerBridge();
 init_styleManager();
 init_unifiedBridge();
@@ -38387,16 +38123,16 @@ async function initWasmThemedStyler() {
     console.debug("[themed-styler] Already initialized");
     return;
   }
-  const isReactNative = typeof navigator !== "undefined" && navigator.product === "ReactNative";
+  const isNativeApp = typeof navigator !== "undefined" && (navigator.product === "AndroidNative" || navigator.product === "iOSNative");
   const isNode2 = typeof process !== "undefined" && process.versions && process.versions.node;
-  if (isReactNative || typeof window === "undefined" && !isNode2) {
+  if (isNativeApp || typeof window === "undefined" && !isNode2) {
     console.debug("[themed-styler] Skipping WASM init in non-web/non-node environment");
     return;
   }
   try {
-    const { default: init, render_css_for_web: render_css_for_web2, get_rn_styles: get_rn_styles2, get_version: get_version3 } = await Promise.resolve().then(() => (init_themed_styler(), themed_styler_exports));
+    const { default: init, render_css_for_web, get_rn_styles, get_version: get_version2 } = await import("../wasm/themed_styler.js");
     await init();
-    const version = get_version3 ? get_version3() : "wasm";
+    const version = get_version2 ? get_version2() : "wasm";
     console.log("[themed-styler] WASM initialized:", version);
     g2.__themedStylerRenderCss = (usage2, themes2) => {
       const state = {
@@ -38405,11 +38141,11 @@ async function initWasmThemedStyler() {
         used_classes: usage2.classes,
         used_tag_classes: usage2.tagClasses
       };
-      return render_css_for_web2(JSON.stringify(state));
+      return render_css_for_web(JSON.stringify(state));
     };
     g2.__themedStylerGetRn = (selector, classes, themes2) => {
       const state = { ...themes2 };
-      return JSON.parse(get_rn_styles2(JSON.stringify(state), selector, JSON.stringify(classes)));
+      return JSON.parse(get_rn_styles(JSON.stringify(state), selector, JSON.stringify(classes)));
     };
     g2.__themedStylerVersion = version;
   } catch (e) {
@@ -38476,6 +38212,11 @@ async function main() {
     root.render(
       /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(import_react6.default.StrictMode, { children: /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(HookRenderer_default, { ...props }) })
     );
+    setTimeout(() => {
+      if (window.__currentLoader) {
+        console.log("Test App: Loader exposed for e2e tests");
+      }
+    }, 1e3);
     const statusEl = document.createElement("div");
     statusEl.id = "e2e-status";
     statusEl.textContent = "static-imports-ok";

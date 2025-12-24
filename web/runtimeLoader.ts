@@ -466,6 +466,7 @@ export class HookLoader {
     private transpiler?: (code: string, filename: string) => Promise<string>
     private onDiagnostics: (diag: LoaderDiagnostics) => void
     private moduleCache: Map<string, any> = new Map()
+    private pendingFetches: Map<string, Promise<any>> = new Map()
     private logTranspileResult(filename: string, code: string): void {
         const containsExport = /\bexport\b/.test(code)
         const sample = code.substring(0, 200).replace(/\n/g, '\\n')
@@ -487,40 +488,83 @@ export class HookLoader {
         return { ...builder() }
     }
 
+    private normalizeToAbsolutePath(modulePath: string, fromPath: string): string {
+        let normalized = modulePath
+
+        try {
+            if (modulePath.startsWith('./') || modulePath.startsWith('../')) {
+                const baseDir = fromPath.substring(0, fromPath.lastIndexOf('/')) || '/hooks/client'
+                normalized = new URL(modulePath, `http://localhost${baseDir}/`).pathname
+            } else if (!modulePath.startsWith('/')) {
+                normalized = `/hooks/client/${modulePath}`
+            } else {
+                normalized = modulePath
+            }
+        } catch (_) {
+            // Fallback: manual path resolution
+            const baseDir = fromPath.substring(0, fromPath.lastIndexOf('/')) || '/hooks/client'
+            if (modulePath.startsWith('./')) {
+                normalized = `${baseDir}/${modulePath.slice(2)}`
+            } else if (modulePath.startsWith('../')) {
+                const parts = modulePath.split('/')
+                let current = baseDir.split('/').filter(Boolean)
+                for (const part of parts) {
+                    if (part === '..') current.pop()
+                    else if (part !== '.') current.push(part)
+                }
+                normalized = '/' + current.join('/')
+            } else if (!modulePath.startsWith('/')) {
+                normalized = `/hooks/client/${modulePath}`
+            } else {
+                normalized = modulePath
+            }
+        }
+
+        // Remove redundant './' and '../' segments
+        const parts = normalized.split('/').filter(Boolean)
+        const resolved: string[] = []
+        for (const part of parts) {
+            if (part === '..') resolved.pop()
+            else if (part !== '.') resolved.push(part)
+        }
+
+        return '/' + resolved.join('/')
+    }
+
     async loadModule(modulePath: string, fromPath: string = '/hooks/client/get-client.jsx', context: HookContext): Promise<any> {
         try { console.error('[HookLoader] loadModule called:', { modulePath, fromPath }) } catch { }
 
-        let normalizedPath = modulePath
-        try {
-            if (modulePath.startsWith('./') || modulePath.startsWith('../')) {
-                const base = fromPath && fromPath.startsWith('/') ? fromPath : '/hooks/client/get-client.jsx'
-                const baseUrl = new URL(base, 'http://resolver.local')
-                const resolved = new URL(modulePath, baseUrl)
-                normalizedPath = resolved.pathname
-            } else if (!modulePath.startsWith('/')) {
-                normalizedPath = `/hooks/client/${modulePath}`
-            }
-            const parts = normalizedPath.split('/').filter(Boolean)
-            const normalized: string[] = []
-            for (const part of parts) {
-                if (part === '..') normalized.pop()
-                else if (part !== '.') normalized.push(part)
-            }
-            normalizedPath = '/' + normalized.join('/')
-        } catch (_) {
-            const baseDir = (fromPath || '/hooks/client/get-client.jsx').split('/').slice(0, -1).join('/') || '/hooks/client'
-            const combined = `${baseDir}/${modulePath}`
-            const parts = combined.split('/').filter(Boolean)
-            const normalized: string[] = []
-            for (const part of parts) {
-                if (part === '..') normalized.pop()
-                else if (part !== '.') normalized.push(part)
-            }
-            normalizedPath = '/' + normalized.join('/')
+        // Normalize path early for consistent cache key
+        const normalizedPath = this.normalizeToAbsolutePath(modulePath, fromPath)
+        const cacheKey = `${this.host}:${normalizedPath}`
+
+        // Check completed module cache first
+        if (this.moduleCache.has(cacheKey)) {
+            console.error('[HookLoader] Module cache HIT:', cacheKey)
+            return this.moduleCache.get(cacheKey)
         }
 
-        const cacheKey = `${this.host}:${normalizedPath}`
-        if (this.moduleCache.has(cacheKey)) return this.moduleCache.get(cacheKey)
+        // Check if fetch is already in progress
+        if (this.pendingFetches.has(cacheKey)) {
+            console.error('[HookLoader] Pending fetch HIT (avoiding duplicate):', cacheKey)
+            return this.pendingFetches.get(cacheKey)!
+        }
+
+        // Start new fetch and cache the promise
+        console.error('[HookLoader] Starting NEW fetch:', cacheKey)
+        const fetchPromise = this._doLoadModule(normalizedPath, context, cacheKey)
+        this.pendingFetches.set(cacheKey, fetchPromise)
+
+        try {
+            const result = await fetchPromise
+            this.moduleCache.set(cacheKey, result)
+            return result
+        } finally {
+            this.pendingFetches.delete(cacheKey)
+        }
+    }
+
+    private async _doLoadModule(normalizedPath: string, context: HookContext, cacheKey: string): Promise<any> {
 
         const requestHeaders = this.buildRequestHeaders(context)
         const fetchOptions = Object.keys(requestHeaders).length ? { headers: requestHeaders } : undefined
@@ -549,7 +593,7 @@ export class HookLoader {
             let code: string | null = null
             let moduleUrl: string | null = null
             const attempts = buildAttempts(normalizedPath)
-            console.error('[HookLoader.loadModule] Fetch attempts:', { modulePath, normalizedPath, attempts })
+            console.error('[HookLoader._doLoadModule] Fetch attempts:', { normalizedPath, attempts })
             for (const candidate of attempts) {
                 const url = `${this.protocol}://${this.host}${candidate}`
                 console.error('[HookLoader] Loop iteration for candidate:', candidate, 'total attempts:', attempts.length)
@@ -617,10 +661,9 @@ export class HookLoader {
                 this.onDiagnostics(diag)
                 throw execErr
             }
-            this.moduleCache.set(cacheKey, mod)
             return mod
         } catch (err) {
-            console.error('[HookLoader.loadModule] Failed:', modulePath, err)
+            console.error('[HookLoader._doLoadModule] Failed:', normalizedPath, err)
             throw err
         }
     }
@@ -714,5 +757,8 @@ export class HookLoader {
         }
     }
 
-    clearCache(): void { this.moduleCache.clear() }
+    clearCache(): void { 
+        this.moduleCache.clear() 
+        this.pendingFetches.clear()
+    }
 }

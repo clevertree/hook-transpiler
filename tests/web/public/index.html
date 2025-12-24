@@ -1,16 +1,17 @@
 <!DOCTYPE html>
 <html>
+
 <head>
-    <title>Hook Transpiler E2E Test</title>
+    <title>Themed Styler E2E Test</title>
     <script>
-        window.onerror = function(msg, url, line, col, error) {
+        window.onerror = function (msg, url, line, col, error) {
             console.error('GLOBAL ERROR:', msg, url, line);
             const errDiv = document.createElement('div');
             errDiv.style.color = 'red';
             errDiv.textContent = 'GLOBAL ERROR: ' + msg + ' at ' + url + ':' + line;
             document.body.appendChild(errDiv);
         };
-        window.onunhandledrejection = function(event) {
+        window.onunhandledrejection = function (event) {
             console.error('UNHANDLED REJECTION:', event.reason);
             const errDiv = document.createElement('div');
             errDiv.style.color = 'red';
@@ -19,12 +20,33 @@
         };
     </script>
     <style>
-        body { margin: 0; font-family: sans-serif; display: flex; flex-direction: column; height: 100vh; }
-        #header { padding: 1rem; background: #333; color: white; }
-        #root { flex: 1; }
-        #stats { padding: 0.5rem; background: #eee; font-size: 0.8rem; border-top: 1px solid #ccc; }
+        body {
+            margin: 0;
+            font-family: sans-serif;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        #header {
+            padding: 1rem;
+            background: #333;
+            color: white;
+        }
+
+        #root {
+            flex: 1;
+        }
+
+        #stats {
+            padding: 0.5rem;
+            background: #eee;
+            font-size: 0.8rem;
+            border-top: 1px solid #ccc;
+        }
     </style>
 </head>
+
 <body>
     <div id="header" style="display: flex; align-items: center; gap: 10px;">
         <img src="icon.png" width="32" height="32" alt="Relay Icon">
@@ -32,9 +54,10 @@
     </div>
     <div id="root">Loading...</div>
     <div id="stats">
-        WASM State: <span id="wasm-state">Initializing...</span> | 
+        WASM State: <span id="wasm-state">Initializing...</span> |
         Styler State: <span id="styler-state">Not Ready</span>
     </div>
     <script type="module" src="test-app.bundle.js"></script>
 </body>
+
 </html>

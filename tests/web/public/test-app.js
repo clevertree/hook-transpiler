@@ -79,6 +79,13 @@ async function main() {
       </React.StrictMode>
     );
 
+    // Expose loader for e2e testing (wait a bit for HookRenderer to initialize)
+    setTimeout(() => {
+      if (window.__currentLoader) {
+        console.log('Test App: Loader exposed for e2e tests');
+      }
+    }, 1000);
+
     // Add e2e status indicator for tests
     const statusEl = document.createElement('div');
     statusEl.id = 'e2e-status';

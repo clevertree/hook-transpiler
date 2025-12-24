@@ -386,7 +386,7 @@
   if (g) {
     g.Act = Act;
     g.React = Act;
-    g.ReactNative = {
+    g.Android/iOS Native = {
       View,
       Text,
       Image,

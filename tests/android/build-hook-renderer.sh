@@ -14,7 +14,7 @@ npx esbuild \
   --format=iife \
   --global-name=HookTranspilerAndroid \
   --external:react \
-  --external:react-native \
+  --external:android-ios-native \
   --external:yaml \
   --external:themedStylerBridge \
   --external:styleManager \

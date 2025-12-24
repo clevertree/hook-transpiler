@@ -1,4 +1,4 @@
-const { View, Text, StyleSheet } = ReactNative;
+const { View, Text, StyleSheet } = Android/iOS Native;
 
 const styles = StyleSheet.create({
   container: {
@@ -14,7 +14,7 @@ const styles = StyleSheet.create({
 module.exports.default = function() {
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>ReactNative Parity Test</Text>
+      <Text style={styles.title}>Android/iOS Native Parity Test</Text>
       <Text text="Using bridge-based components" />
     </View>
   );

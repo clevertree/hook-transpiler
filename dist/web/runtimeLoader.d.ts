@@ -69,10 +69,13 @@ export declare class HookLoader {
     private transpiler?;
     private onDiagnostics;
     private moduleCache;
+    private pendingFetches;
     private logTranspileResult;
     constructor(options: HookLoaderOptions);
     private buildRequestHeaders;
+    private normalizeToAbsolutePath;
     loadModule(modulePath: string, fromPath: string | undefined, context: HookContext): Promise<any>;
+    private _doLoadModule;
     loadAndExecuteHook(hookPath: string, context: HookContext): Promise<any>;
     clearCache(): void;
 }

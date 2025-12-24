@@ -71,7 +71,7 @@ class ActInstrumentationTest {
     }
 
     @Test
-    fun testReactNativeParityOnDevice() {
+    fun testAndroid/iOS NativeParityOnDevice() {
         val latch = CountDownLatch(1)
         var error: Throwable? = null
 
@@ -93,7 +93,7 @@ class ActInstrumentationTest {
         val count = AndroidRenderer.getNodeCount()
         // rn-parity.jsx has:
         // 1. Root view (tag 1)
-        // 2. Text (tag 2) - "ReactNative Parity Test"
+        // 2. Text (tag 2) - "Android/iOS Native Parity Test"
         // 3. Text (tag 3) - "Using bridge-based components"
         assertTrue("Expected at least 3 nodes created, got $count", count >= 3)
     }

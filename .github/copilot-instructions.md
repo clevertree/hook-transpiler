@@ -145,7 +145,6 @@ Check `filename` ends in `.jsx`/`.tsx` or source contains `<` character
 - Web dev: `npm run web:dev` or `npm run web:dev:full` (full script).
 - Web build: `npm run web:build` (or `web:build:debug`).
 - Server dev: `npm run dev:server` (cargo run). Release server build: `npm run build:server`.
-- React Native prep: `npm run rn:prep-hook-transpiler` to copy latest transpiler assets before mobile builds; Android/iOS starts via `npm run rn:android` / `npm run rn:ios`.
 - Tests: `npm test` (workspace `cargo test`). Playwright e2e: `npm run test:e2e` (ensure server + static assets built if scenario requires).
 
 ### relay-client-android

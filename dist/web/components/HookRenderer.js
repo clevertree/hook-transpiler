@@ -68,6 +68,10 @@ export const HookRenderer = ({ host, hookPath, onElement, requestRender, renderC
             moduleLoader: webLoader,
             transpiler: (code, filename) => transpileCode(code, { filename })
         });
+        // Expose loader for e2e testing
+        if (typeof window !== 'undefined' && process.env.NODE_ENV !== 'production') {
+            window.__currentLoader = loaderRef.current;
+        }
         if (startAutoSync) {
             try {
                 startAutoSync();
