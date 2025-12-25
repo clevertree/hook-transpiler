@@ -19,6 +19,12 @@ export interface HookRendererProps {
     onError?: (msg?: string) => void
     onReady?: () => void
     onLoading?: () => void
+    // Runtime switching (optional, web-only feature)
+    runtimeMode?: 'web' | 'node'
+    onRuntimeChange?: (runtime: 'web' | 'node', version: string) => void
+    showRuntimeFooter?: boolean
+    showVersionInfo?: boolean
+    availableRuntimes?: ('web' | 'node')[]
 }
 
 function normalizeHostUrl(host: string) {
@@ -78,6 +84,11 @@ export const HookRenderer: React.FC<HookRendererProps> = ({
     onError,
     onReady,
     onLoading,
+    runtimeMode = 'web',
+    onRuntimeChange,
+    showRuntimeFooter = true,
+    showVersionInfo = true,
+    availableRuntimes = ['web'],
 }) => {
     const [loading, setLoading] = useState(false)
     const [wasmReady, setWasmReady] = useState(!!globalThis.__hook_transpile_jsx)
@@ -85,8 +96,47 @@ export const HookRenderer: React.FC<HookRendererProps> = ({
     const [error, setError] = useState<string | null>(null)
     const [element, setElement] = useState<React.ReactNode | null>(null)
     const [resolvedHookPath, setResolvedHookPath] = useState<string | null>(hookPath || null)
+    const [activeRuntime, setActiveRuntime] = useState<'web' | 'node'>(runtimeMode)
+    const [runtimeVersion, setRuntimeVersion] = useState<string>('1.0.0')
     const normalizedHost = useMemo(() => normalizeHostUrl(host), [host])
     const loaderRef = useRef<HookLoader | null>(null)
+
+    // Track runtime version
+    useEffect(() => {
+        const version = activeRuntime === 'web'
+            ? (globalThis as any).__web_runtime_version || '1.0.0'
+            : (globalThis as any).__node_runtime_version || '1.0.0'
+        setRuntimeVersion(version)
+    }, [activeRuntime])
+
+    // Handle runtime switching
+    const handleRuntimeSwitch = useCallback((newRuntime: 'web' | 'node') => {
+        if (newRuntime === activeRuntime || availableRuntimes.length <= 1) return
+
+        console.log(`[HookRenderer] Switching runtime from ${activeRuntime} to ${newRuntime}`)
+
+        // Reset state
+        setElement(null)
+        setError(null)
+        setLoading(true)
+
+        // Switch runtime
+        setActiveRuntime(newRuntime)
+
+        // Notify parent
+        if (onRuntimeChange) {
+            try {
+                onRuntimeChange(newRuntime, runtimeVersion)
+            } catch (e) {
+                console.debug('[HookRenderer] onRuntimeChange callback failed:', e)
+            }
+        }
+
+        // Re-render hook with new runtime
+        setTimeout(() => {
+            void tryRender()
+        }, 100)
+    }, [activeRuntime, runtimeVersion, onRuntimeChange, availableRuntimes])
 
     useEffect(() => {
         if (!onElement) {
@@ -250,6 +300,8 @@ export const HookRenderer: React.FC<HookRendererProps> = ({
             onElement: registerUsageFromElement,
             FileRenderer: FileRendererAdapter,
             Layout: undefined,
+            __runtime: activeRuntime,
+            __runtimeVersion: runtimeVersion,
             helpers: {
                 buildPeerUrl: buildPeer,
                 loadModule,
@@ -258,9 +310,15 @@ export const HookRenderer: React.FC<HookRendererProps> = ({
                     if (renderCssIntoDom) renderCssIntoDom()
                 },
                 registerThemesFromYaml,
+                getRuntimeInfo: () => ({
+                    runtime: activeRuntime,
+                    version: runtimeVersion,
+                    isWeb: activeRuntime === 'web',
+                    isNode: activeRuntime === 'node'
+                })
             }
         }
-    }, [normalizedHost, onElement, registerUsageFromElement, loadThemesFromYamlUrl, renderCssIntoDom, registerTheme])
+    }, [normalizedHost, onElement, registerUsageFromElement, loadThemesFromYamlUrl, renderCssIntoDom, registerTheme, activeRuntime, runtimeVersion])
 
     const resolveHookPath = useCallback(async (): Promise<string> => {
         if (!normalizedHost) throw new Error('Host is required to resolve hook path')
@@ -315,18 +373,78 @@ export const HookRenderer: React.FC<HookRendererProps> = ({
         }
     }, [onElement, renderCssIntoDom])
 
+    // Runtime Footer Component
+    const RuntimeFooter = React.useMemo(() => {
+        if (!showRuntimeFooter) return null
+
+        return (
+            <div
+                style={{
+                    display: 'flex',
+                    height: '50px',
+                    borderTop: '1px solid #ddd',
+                    backgroundColor: '#f5f5f5',
+                    alignItems: 'center',
+                    padding: '0 12px',
+                    justifyContent: 'space-between',
+                    fontSize: '12px'
+                }}
+            >
+                {/* Left: Runtime info */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span style={{ color: '#666' }}>
+                        Runtime: {activeRuntime === 'web' ? 'Web WASM' : 'Node.js'}
+                    </span>
+                    {showVersionInfo && (
+                        <span style={{ color: '#999', fontSize: '11px' }}>
+                            v{runtimeVersion}
+                        </span>
+                    )}
+                </div>
+
+                {/* Right: Runtime switch buttons */}
+                {availableRuntimes.length > 1 && (
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                        {availableRuntimes.map((rt) => (
+                            <button
+                                key={rt}
+                                onClick={() => handleRuntimeSwitch(rt)}
+                                style={{
+                                    padding: '4px 8px',
+                                    borderRadius: '4px',
+                                    border: 'none',
+                                    backgroundColor: activeRuntime === rt ? '#007AFF' : '#e5e5e5',
+                                    color: activeRuntime === rt ? '#fff' : '#333',
+                                    fontSize: '11px',
+                                    fontWeight: activeRuntime === rt ? 'bold' : 'normal',
+                                    cursor: 'pointer',
+                                    transition: 'all 0.2s ease'
+                                }}
+                            >
+                                {rt === 'web' ? 'WASM' : 'Node'}
+                            </button>
+                        ))}
+                    </div>
+                )}
+            </div>
+        )
+    }, [showRuntimeFooter, activeRuntime, runtimeVersion, showVersionInfo, availableRuntimes, handleRuntimeSwitch])
+
     return (
         <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-            {!wasmReady && !wasmError && <div>Initializing WASM transpiler...</div>}
-            {wasmReady && loading && <div>Loading hook...</div>}
-            {(error || wasmError || element) && (
-                <ErrorBoundary
-                    initialError={error || wasmError}
-                    onElement={registerUsageFromElement}
-                >
-                    <div style={{ flex: 1 }}>{element}</div>
-                </ErrorBoundary>
-            )}
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+                {!wasmReady && !wasmError && <div>Initializing WASM transpiler...</div>}
+                {wasmReady && loading && <div>Loading hook...</div>}
+                {(error || wasmError || element) && (
+                    <ErrorBoundary
+                        initialError={error || wasmError}
+                        onElement={registerUsageFromElement}
+                    >
+                        <div style={{ flex: 1 }}>{element}</div>
+                    </ErrorBoundary>
+                )}
+            </div>
+            {RuntimeFooter}
         </div>
     )
 }

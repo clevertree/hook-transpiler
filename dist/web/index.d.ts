@@ -1,14 +1,18 @@
-export { HookLoader } from './runtimeLoader.js';
-export { WebModuleLoader } from './runtimeLoader.js';
-export { transpileCode, looksLikeTsOrJsx, applyHookRewrite, createHookReact } from './runtimeLoader.js';
-export { default as HookRenderer } from './components/HookRenderer';
-export { FileRenderer } from './components/FileRenderer';
-export { MarkdownRenderer } from './components/MarkdownRenderer';
-export { default as HookApp } from './components/HookApp';
-export { ErrorBoundary } from './components/ErrorBoundary';
-export declare function initHookTranspiler(wasmUrl?: string): Promise<void>;
-/**
- * Preload @clevertree/* packages to make them available to hooks
- */
-export declare function preloadPackages(): Promise<void>;
-export declare const initTranspiler: typeof initHookTranspiler;
+export { type TransformOptions, type ComponentType, type HookContext, type HookHelpers, type LoaderDiagnostics, type ModuleLoader, type HookLoaderOptions, WebModuleLoader, transpileCode, createHookReact, looksLikeTsOrJsx, applyHookRewrite, HookLoader, } from './runtimeLoader.js';
+export { HookRenderer, type HookRendererProps } from './components/HookRenderer.js';
+export { HookApp, type HookAppProps } from './components/HookApp.js';
+export { ErrorBoundary } from './components/ErrorBoundary.js';
+export { MarkdownRenderer } from './components/MarkdownRenderer.js';
+export { FileRenderer } from './components/FileRenderer.js';
+export { ES6ImportHandler, type ImportHandlerOptions } from '../shared/es6ImportHandler.js';
+export { buildPeerUrl, buildRepoHeaders } from '../shared/urlBuilder.js';
+export declare function initWasmTranspiler(): Promise<void>;
+export declare function initTranspiler(): Promise<void>;
+export declare function initWeb(): Promise<void>;
+export declare function transpileHook(code: string, filename?: string, isTypescript?: boolean): Promise<any>;
+export declare function runSelfCheck(): Promise<{
+    ok: boolean;
+    version?: string;
+    error?: string;
+    wasmResults?: string[];
+}>;

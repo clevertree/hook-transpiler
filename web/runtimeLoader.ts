@@ -2,6 +2,8 @@
  * Unified Runtime Loader for Relay Hooks (Web)
  */
 
+import { ES6ImportHandler, type ImportHandlerOptions } from '../shared/es6ImportHandler.js'
+
 // Provide type definitions for global scope (for React and process availability)
 declare const global: any
 
@@ -41,6 +43,7 @@ export interface HookHelpers {
     registerThemeStyles?: (themeName: string, definitions?: Record<string, unknown>) => void
     registerThemesFromYaml?: (path: string) => Promise<void>
     buildRepoHeaders?: (branch?: string, repo?: string) => Record<string, string>
+    getRuntimeInfo?: () => { runtime: string; version: string; isWeb?: boolean; isNode?: boolean }
 }
 
 export type ComponentType<P = any> = (props: P) => any
@@ -52,6 +55,8 @@ export interface HookContext {
     params?: Record<string, any>
     helpers: HookHelpers
     onElement?: (tag: string, props: any) => void
+    __runtime?: 'web' | 'node'
+    __runtimeVersion?: string
     [key: string]: any
 }
 
@@ -598,9 +603,10 @@ export class HookLoader {
                 try {
                     // console.debug('[HookLoader.loadModule] Trying:', url)
                     const response = await fetch(url, fetchOptions)
-                    if (!response.ok) { lastErr = new Error(`ModuleLoadError: ${url} → ${response.status} ${response.statusText}`);
+                    if (!response.ok) {
+                        lastErr = new Error(`ModuleLoadError: ${url} → ${response.status} ${response.statusText}`);
                         // console.debug('[HookLoader.loadModule] Not OK, continuing');
-                         continue;
+                        continue;
                     }
                     const ct = (response.headers.get('content-type') || '').toLowerCase()
                     if (ct.includes('text/html')) {

@@ -25,7 +25,9 @@
   "exclude": [
     "node_modules",
     "dist",
-    "src/**/*"
+    "src/**/*",
+    "**/*.test.ts",
+    "**/*.test.tsx"
   ],
   "ts-node": {
     "compilerOptions": {

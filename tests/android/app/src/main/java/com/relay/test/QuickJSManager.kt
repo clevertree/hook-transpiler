@@ -31,6 +31,7 @@ class QuickJSManager(private val context: Context) {
     private var lastAsset: String? = "test-hook.jsx"
     private var lastProps: Map<String, Any> = emptyMap()
     private var themesJson: String = "{}"
+    private var rendererMode: String = "react"  // Default to React mode
     var userMessageHandler: ((String, Boolean) -> Unit)? = null
 
     fun initialize() {
@@ -72,6 +73,11 @@ class QuickJSManager(private val context: Context) {
     }
 
     fun getThemesJson(): String = themesJson
+
+    fun setRendererMode(mode: String) {
+        rendererMode = mode
+        Log.i(TAG, "Renderer mode set to: $mode")
+    }
 
     private fun resetEngine() {
         quickJs?.close()
@@ -159,14 +165,24 @@ class QuickJSManager(private val context: Context) {
             "const { $named } = (globalThis.__hook_react || globalThis.React);"
         }
 
-        // Export rewrite
-        rewritten = rewritten.replace(Regex("export\\s+default\\s+function\\s*\\("), "module.exports.default = function (")
-        rewritten = rewritten.replace(Regex("export\\s+default\\s+function\\s+(\\w+)"), "function $1") // and then add to exports later? No, this is tricky.
-        
-        // Simpler approach for export default:
-        if (rewritten.contains("export default")) {
-            rewritten = rewritten.replace("export default", "module.exports.default = ")
+        // Strip other imports and inject lightweight stubs for test-hook dependencies
+        val strippedImports = Regex("(?m)^import[^;]+;\\s*")
+        rewritten = strippedImports.replace(rewritten, "")
+        val stubImports = """
+            const ListItem = globalThis.__mock_ListItem || ((props) => React.createElement('text', { text: (props && props.item && props.item.name) || 'Item', className: 'text-sm' }));
+            const sample = globalThis.__mock_sample || { items: [], meta: { title: 'Sample Data', subtitle: 'Stubbed dataset' }, mapNote: 'stub map note' };
+            const { namespaceValue: nsValue, tags: nsTags } = globalThis.__mock_ns || { namespaceValue: 'stub', tags: [] };
+        """.trimIndent()
+        rewritten = stubImports + "\n" + rewritten
+
+        // Export rewrite - ensure module.exports.default is set for all export default forms
+        val exportDefaultNamed = Regex("export\\s+default\\s+function\\s+(\\w+)\\s*\\(")
+        rewritten = exportDefaultNamed.replace(rewritten) { match ->
+            val name = match.groups[1]?.value ?: ""
+            "module.exports.default = function $name("
         }
+        rewritten = rewritten.replace(Regex("export\\s+default\\s+function\\s*\\("), "module.exports.default = function (")
+        rewritten = rewritten.replace(Regex("export\\s+default\\s+(\\w+)"), "module.exports.default = $1")
 
         return rewritten
     }
@@ -176,7 +192,21 @@ class QuickJSManager(private val context: Context) {
         lastProps = props
         val engine = quickJs ?: return
 
+        // Clear all previous views and state before rendering new content
         AndroidRenderer.clearAll()
+        engine.evaluate(
+            """
+            // Clear previous Act state
+            if (globalThis.Act && globalThis.Act.unmount) {
+                globalThis.Act.unmount();
+            }
+            // Reset component state
+            globalThis.__last_module__ = null;
+            globalThis.__last_error__ = null;
+            globalThis.__last_transpiled = null;
+            """.trimIndent(),
+            "clear_state.js"
+        )
         
         Log.i(TAG, "Loading hook from asset: $asset")
         
@@ -213,6 +243,7 @@ class QuickJSManager(private val context: Context) {
                     }
                     
                     var transpiled = globalThis.__transpileSync.transpile(hookCode, '$asset');
+                    globalThis.__last_transpiled = transpiled;
                     console.log('[HookRenderer] Transpilation successful, output size=' + transpiled.length);
                     console.log('[HookRenderer] Module execution starting with proper scope');
                     
@@ -242,6 +273,7 @@ class QuickJSManager(private val context: Context) {
                     
                     // Get the exported hook component
                     var HookComponent = globalThis.__last_module__.default;
+                    console.log('[HookRenderer] HookComponent type: ' + typeof HookComponent + ', HookComponent.name: ' + (HookComponent && HookComponent.name ? HookComponent.name : '?'));
                     if (typeof HookComponent !== 'function') {
                         throw new Error('Hook must export default function, got: ' + typeof HookComponent);
                     }
@@ -251,15 +283,32 @@ class QuickJSManager(private val context: Context) {
                         throw new Error('Act.render is not available or not a function. ACT runtime may not be properly initialized.');
                     }
                     
-                    // Render using ACT runtime
-                    var renderResult = Act.render(HookComponent, {});
-                    console.log('[HookRenderer] Act.render completed');
+                    // Validate bridge is available
+                    var bridge = globalThis.bridge || globalThis.nativeBridge;
+                    if (!bridge) {
+                        throw new Error('Native bridge not available - cannot render to Android views');
+                    }
+                    console.log('[HookRenderer] Bridge available, methods: ' + Object.keys(bridge).join(', '));
                     
-                    console.log('[HookRenderer] Hook rendered successfully');
+                    // Call HookComponent to get the JSX element tree
+                    console.log('[HookRenderer] Calling HookComponent to generate JSX tree');
+                    var context = globalThis.__hook_props || {};
+                    var jsxElement = HookComponent(context);
+                    console.log('[HookRenderer] HookComponent returned JSX element type: ' + (jsxElement && jsxElement.type ? jsxElement.type : '?'));
+                    
+                    // Now render the element using Act
+                    console.log('[HookRenderer] Calling Act.render with JSX element');
+                    Act.render(jsxElement, {});
+                    
+                    console.log('[HookRenderer] Hook rendered successfully, checking bridge calls...');
                 } catch(e) {
                     var errMsg = '[HookRenderer] ERROR: ' + (e.message || String(e));
                     if (e.stack) {
                         errMsg += '\n' + e.stack;
+                    }
+                    if (globalThis.__last_transpiled) {
+                        var snippet = String(globalThis.__last_transpiled).slice(0, 400);
+                        errMsg += '\n[Transpiled snippet]\n' + snippet;
                     }
                     console.error(errMsg);
 
@@ -316,6 +365,116 @@ class QuickJSManager(private val context: Context) {
         }
         
         Log.d(TAG, "[HookRenderer] Message queue drained after $attempts iterations")
+    }
+
+    // Overload for fragments that pass FrameLayout container
+    fun renderHook(asset: String, container: android.widget.FrameLayout) {
+        AndroidRenderer.initialize(context, container)
+        renderHook(asset)
+    }
+
+    // Remote hook rendering - takes hook source code directly
+    fun renderRemoteHook(hookSource: String, container: android.widget.FrameLayout) {
+        AndroidRenderer.initialize(context, container)
+        val engine = quickJs ?: return
+
+        // Clear all previous views and state
+        AndroidRenderer.clearAll()
+        engine.evaluate(
+            """
+            if (globalThis.Act && globalThis.Act.unmount) {
+                globalThis.Act.unmount();
+            }
+            globalThis.__last_module__ = null;
+            globalThis.__last_error__ = null;
+            globalThis.__last_transpiled = null;
+            """.trimIndent(),
+            "clear_state.js"
+        )
+        
+        Log.i(TAG, "Rendering remote hook, source size=${hookSource.length}")
+        
+        // Rewrite the hook code
+        var rewrittenCode = applyHookRewrite(hookSource)
+        
+        val renderScript = """
+            (function(){
+                try {
+                    if (!globalThis.Act || typeof Act.render !== 'function') {
+                        throw new Error('ACT runtime not available.');
+                    }
+                    
+                    console.log('[HookRenderer] Transpiling remote hook code');
+                    
+                    var hookCode = ${gson.toJson(rewrittenCode)};
+                    
+                    if (!globalThis.__transpileSync) {
+                        throw new Error('Transpiler not available.');
+                    }
+                    
+                    var transpiled = globalThis.__transpileSync.transpile(hookCode, 'remote-hook.jsx');
+                    globalThis.__last_transpiled = transpiled;
+                    console.log('[HookRenderer] Remote hook transpilation successful, output size=' + transpiled.length);
+                    
+                    (function() {
+                        var module = { exports: {} };
+                        var exports = module.exports;
+                        var React = globalThis.React;
+                        var __runtime = globalThis.__runtime;
+                        var __hook_jsx_runtime = globalThis.__hook_jsx_runtime;
+                        var __hook_props = globalThis.__hook_props || {};
+                        
+                        eval(transpiled);
+                        
+                        globalThis.__last_module__ = module.exports;
+                        globalThis.__last_error__ = null;
+                    })();
+                    
+                    var HookComponent = globalThis.__last_module__.default;
+                    if (typeof HookComponent !== 'function') {
+                        throw new Error('Hook must export default function');
+                    }
+                    
+                    if (!Act || typeof Act.render !== 'function') {
+                        throw new Error('Act.render is not available');
+                    }
+                    
+                    var bridge = globalThis.bridge || globalThis.nativeBridge;
+                    if (!bridge) {
+                        throw new Error('Native bridge not available');
+                    }
+                    console.log('[HookRenderer] Bridge available, rendering...');
+                    
+                    var context = globalThis.__hook_props || {};
+                    var jsxElement = HookComponent(context);
+                    
+                    Act.render(jsxElement, {});
+                    
+                    console.log('[HookRenderer] Remote hook rendered successfully');
+                } catch(e) {
+                    console.error('[HookRenderer] Remote hook error: ' + (e.message || String(e)));
+                    if (e.stack) {
+                        console.error(e.stack);
+                    }
+                }
+            })();
+        """.trimIndent()
+        
+        engine.evaluate(renderScript, "render_remote_hook")
+        
+        // Process message queue
+        var attempts = 0
+        var hasMessages = true
+        while (hasMessages && attempts < 10) {
+            processMessageQueue(engine)
+            attempts++
+            Thread.sleep(10)
+            
+            val queueCheck = engine.evaluate("globalThis.__messageQueue.length") as? Double ?: 0.0
+            hasMessages = queueCheck > 0
+        }
+        
+        Log.d(TAG, "[HookRenderer] Remote hook message queue drained")
     }
 
     private fun showError(engine: QuickJs, message: String) {
@@ -548,15 +707,36 @@ class QuickJSManager(private val context: Context) {
         engine.evaluate(
             """
             (function(){
+              var callCount = 0;
               var bridgeImpl = {
                 transpile: function(code, filename) { return globalThis.__nativeTranspile(code, filename); },
-                createView: function(tag, type, props) { globalThis.__nativeCreateView(tag, type, JSON.stringify(props || {})); },
-                updateProps: function(tag, props) { globalThis.__nativeUpdateProps(tag, JSON.stringify(props || {})); },
-                removeView: function(tag) { globalThis.__nativeRemoveView(tag); },
-                addChild: function(parent, child, index) { globalThis.__nativeAddChild(parent, child, index != null ? index : -1); },
-                removeChild: function(parent, child) { globalThis.__nativeRemoveChild(parent, child); },
-                clear: function() { globalThis.__nativeClearViews(); },
+                createView: function(tag, type, props) { 
+                    callCount++;
+                    console.log('[Bridge] createView call #' + callCount + ': tag=' + tag + ', type=' + type + ', props keys: ' + Object.keys(props || {}).join(','));
+                    globalThis.__nativeCreateView(tag, type, JSON.stringify(props || {})); 
+                },
+                updateProps: function(tag, props) { 
+                    console.log('[Bridge] updateProps: tag=' + tag);
+                    globalThis.__nativeUpdateProps(tag, JSON.stringify(props || {})); 
+                },
+                removeView: function(tag) { 
+                    console.log('[Bridge] removeView: tag=' + tag);
+                    globalThis.__nativeRemoveView(tag); 
+                },
+                addChild: function(parent, child, index) { 
+                    console.log('[Bridge] addChild: parent=' + parent + ', child=' + child + ', index=' + index);
+                    globalThis.__nativeAddChild(parent, child, index != null ? index : -1); 
+                },
+                removeChild: function(parent, child) { 
+                    console.log('[Bridge] removeChild: parent=' + parent + ', child=' + child);
+                    globalThis.__nativeRemoveChild(parent, child); 
+                },
+                clear: function() { 
+                    console.log('[Bridge] clear called');
+                    globalThis.__nativeClearViews(); 
+                },
                 addEventListener: function(tag, eventName, callback) {
+                    console.log('[Bridge] addEventListener: tag=' + tag + ', event=' + eventName);
                     if (!globalThis.__eventCallbacks) globalThis.__eventCallbacks = {};
                     if (!globalThis.__eventCallbacks[tag]) globalThis.__eventCallbacks[tag] = {};
                     globalThis.__eventCallbacks[tag][eventName] = callback;

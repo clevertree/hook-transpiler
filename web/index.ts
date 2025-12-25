@@ -1,70 +1,139 @@
-// Web entry for @clevertree/hook-transpiler
+import { transpileCode } from './runtimeLoader.js'
 
-export { HookLoader } from './runtimeLoader.js'
-export { WebModuleLoader } from './runtimeLoader.js'
-export { transpileCode, looksLikeTsOrJsx, applyHookRewrite, createHookReact } from './runtimeLoader.js'
+export {
+  type TransformOptions,
+  type ComponentType,
+  type HookContext,
+  type HookHelpers,
+  type LoaderDiagnostics,
+  type ModuleLoader,
+  type HookLoaderOptions,
+  WebModuleLoader,
+  transpileCode,
+  createHookReact,
+  looksLikeTsOrJsx,
+  applyHookRewrite,
+  HookLoader,
+} from './runtimeLoader.js'
 
-export { default as HookRenderer } from './components/HookRenderer'
-export { FileRenderer } from './components/FileRenderer'
-export { MarkdownRenderer } from './components/MarkdownRenderer'
-export { default as HookApp } from './components/HookApp'
-export { ErrorBoundary } from './components/ErrorBoundary'
+export { HookRenderer, type HookRendererProps } from './components/HookRenderer.js'
+export { HookApp, type HookAppProps } from './components/HookApp.js'
+export { ErrorBoundary } from './components/ErrorBoundary.js'
+export { MarkdownRenderer } from './components/MarkdownRenderer.js'
+export { FileRenderer } from './components/FileRenderer.js'
 
-export async function initHookTranspiler(wasmUrl?: string): Promise<void> {
-    let mod: any
-    let url: string
+export { ES6ImportHandler, type ImportHandlerOptions } from '../shared/es6ImportHandler.js'
+export { buildPeerUrl, buildRepoHeaders } from '../shared/urlBuilder.js'
+
+// WASM-based transpiler for web - Android uses native JSI binding instead
+export async function initWasmTranspiler(): Promise<void> {
+  // This is a no-op for Android
+  // Android apps should use the native JSI module initialized separately
+  if ((globalThis as any).__hook_transpile_jsx) {
+    return
+  }
+
+  // Only attempt web-based WASM loading in non-Android environments
+  const isWeb = typeof (globalThis as any).window !== 'undefined'
+  const isNode = typeof process !== 'undefined' && process.versions && process.versions.node
+  if (!isWeb && !isNode) {
+    console.debug('[hook-transpiler] Skipping WASM init in non-web/non-node environment')
+    return
+  }
+
+  try {
+    // @ts-ignore - this will be resolved by the bundler in the web app
+    const { default: init, transpile_jsx, get_version, run_self_test } = await import('../wasm/relay_hook_transpiler.js')
+
+    // Get WASM module path - only for web builds
+    let wasmPath;
     try {
-        mod = await import('../wasm/relay_hook_transpiler.js')
-        url = wasmUrl || new URL('../wasm/relay_hook_transpiler_bg.wasm', import.meta.url).href
+      // Use the unified /wasm/ path for reliable loading in various environments
+      wasmPath = new URL('/wasm/relay_hook_transpiler_bg.wasm', window.location.origin).toString();
     } catch (e) {
-        // Fallback to server-served absolute path used by tests; build path dynamically to avoid TS resolution
-        const absJs = '/hook-transpiler/dist/wasm/relay_hook_transpiler.js' + ''
-        mod = await import(absJs as any)
-        url = wasmUrl || ('/hook-transpiler/dist/wasm/relay_hook_transpiler_bg.wasm' + '')
-    }
-    const init = mod && (mod as any).default
-    if (typeof init !== 'function') throw new Error('Invalid WASM wrapper: expected default init function')
-    // Pass options object to avoid deprecated init signature warning
-    await init({ module_or_path: url })
-    const transpile = (mod as any).transpile_jsx
-    if (typeof transpile !== 'function') throw new Error('WASM not exporting transpile_jsx')
-        ; (globalThis as any).__hook_transpile_jsx = transpile
-
-    // Also expose the metadata version if available
-    const transpileWithMetadata = (mod as any).transpile_jsx_with_metadata
-    if (typeof transpileWithMetadata === 'function') {
-        (globalThis as any).__hook_transpile_jsx_with_metadata = transpileWithMetadata
+      console.warn('[hook-transpiler] Failed to construct wasm path via URL, using fallback string');
+      wasmPath = '/wasm/relay_hook_transpiler_bg.wasm';
     }
 
-    const version = (mod as any).get_version ? (mod as any).get_version() : 'unknown'
-        ; (globalThis as any).__hook_transpiler_version = version
+    // Workaround for esbuild: if wasmPath is an object, convert to string
+    const wasmUrl = wasmPath;
+
+    if (isNode && typeof wasmUrl === 'string' && wasmUrl.startsWith('file:')) {
+      const fs = await import('node:fs/promises')
+      const buffer = await fs.readFile(new URL(wasmUrl))
+      await init({ module_or_path: buffer })
+    } else {
+      // Pass as an object to avoid deprecation warning
+      await init({ module_or_path: wasmUrl })
+    }
+
+    const transpileFn = (code: string, filename: string, isTypescript?: boolean) => {
+      return transpile_jsx(code, filename || 'module.tsx', isTypescript)
+    }
+
+    const version = get_version ? get_version() : 'wasm'
+      ; (globalThis as any).__hook_transpiler_version = version
+      ; (globalThis as any).__hook_transpile_jsx = transpileFn
+      ; (globalThis as any).__hook_wasm_self_test = run_self_test
+    console.log('[hook-transpiler] WASM transpiler ready:', version)
+  } catch (e) {
+    console.warn('[hook-transpiler] Failed to initialize WASM transpiler (expected in Android)', e)
+  }
 }
 
-/**
- * Preload @clevertree/* packages to make them available to hooks
- */
-export async function preloadPackages(): Promise<void> {
-    if ((globalThis as any).__relay_packages) {
-        return // Already loaded
-    }
-
-    const packages: Record<string, any> = {}
-
-    // Dynamically import packages without requiring them to be listed in tsconfig
-    const packageNames = ['@clevertree/themed-styler', '@clevertree/hook-transpiler']
-
-    for (const pkgName of packageNames) {
-        try {
-            const pkg = await import(pkgName)
-            packages[pkgName] = pkg
-        } catch (e) {
-            console.warn(`[preloadPackages] Failed to load ${pkgName}:`, e)
-        }
-    }
-
-    // Store packages globally
-    (globalThis as any).__relay_packages = packages
+export async function initTranspiler(): Promise<void> {
+  return initWasmTranspiler()
 }
 
-// Backwards-compatible alias for tests and existing clients
-export const initTranspiler = initHookTranspiler
+// Convenience init wrapper for web clients.
+export async function initWeb(): Promise<void> {
+  return initWasmTranspiler()
+}
+
+// Unified transpile helper that prefers the global WASM binding.
+export async function transpileHook(code: string, filename = 'module.jsx', isTypescript = false): Promise<any> {
+  const g: any = globalThis
+  if (typeof g.__hook_transpile_jsx === 'function') {
+    return g.__hook_transpile_jsx(code, filename, isTypescript)
+  }
+  // Fallback to JS-based transpileCode (slower, but keeps clients working without glue)
+  return transpileCode(code, { filename, isTypescript })
+}
+
+export async function runSelfCheck(): Promise<{ ok: boolean; version?: string; error?: string; wasmResults?: string[] }> {
+  try {
+    await initTranspiler()
+    const g: any = globalThis
+    if (typeof g.__hook_transpile_jsx !== 'function') {
+      throw new Error('__hook_transpile_jsx not found on globalThis after init')
+    }
+
+    let wasmResults: string[] = []
+    if (typeof g.__hook_wasm_self_test === 'function') {
+      wasmResults = g.__hook_wasm_self_test()
+      const failed = wasmResults.filter(r => r.startsWith('FAIL') || r.startsWith('ERROR'))
+      if (failed.length > 0) {
+        throw new Error(`WASM self-test failed: ${failed.join(', ')}`)
+      }
+    }
+
+    const testCode = 'const a = <div>Hello</div>'
+    const result = await g.__hook_transpile_jsx(testCode, 'test.jsx')
+
+    let code = ''
+    if (typeof result === 'string') {
+      code = result
+    } else if (result && typeof result.code === 'string') {
+      code = result.code
+    }
+
+    if (!code.includes('__hook_jsx_runtime')) {
+      console.error('Self-check transpilation result:', result)
+      throw new Error('Transpilation failed: output does not contain expected JSX runtime calls')
+    }
+
+    return { ok: true, version: g.__hook_transpiler_version, wasmResults }
+  } catch (e: any) {
+    return { ok: false, error: e.message }
+  }
+}

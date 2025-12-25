@@ -163,7 +163,7 @@
       if (!("value" in hook)) {
         hook.value = typeof initialValue === "function" ? initialValue() : initialValue;
       }
-      var setter = function(next) {
+      var setter = function (next) {
         var nextValue = typeof next === "function" ? next(hook.value) : next;
         hook.value = nextValue;
         scheduleRender();
@@ -175,8 +175,8 @@
       var stateHook = useState(initialState);
       var state = stateHook[0];
       var setState = stateHook[1];
-      var dispatch = function(action) {
-        setState(function(currentState) {
+      var dispatch = function (action) {
+        setState(function (currentState) {
           return reducer(currentState, action);
         });
       };
@@ -211,14 +211,14 @@
       return hook.value;
     }
     function useCallback(fn, deps) {
-      return useMemo(function() {
+      return useMemo(function () {
         return fn;
       }, deps);
     }
     function createContext(defaultValue) {
       var context = {
         _currentValue: defaultValue,
-        Provider: function(props) {
+        Provider: function (props) {
           if ("value" in props) {
             context._currentValue = props.value;
           }
@@ -257,7 +257,7 @@
       hookCursor = {};
     }
     var StyleSheet2 = {
-      create: function(styles) {
+      create: function (styles) {
         return styles;
       }
     };
@@ -275,10 +275,10 @@
       createContext,
       useContext,
       Fragment: "div",
-      memo: function(comp) {
+      memo: function (comp) {
         return comp;
       },
-      forwardRef: function(comp) {
+      forwardRef: function (comp) {
         return comp;
       },
       StyleSheet: StyleSheet2,
@@ -344,14 +344,24 @@
           kids = Array.isArray(node.props.children) ? node.props.children : [node.props.children];
         }
       }
+      var flatKids = [];
       for (var i = 0; i < kids.length; i++) {
-        mountNode(kids[i], tag, i, type, helpers.makePath(path, i), helpers);
+        if (Array.isArray(kids[i])) {
+          for (var j = 0; j < kids[i].length; j++) {
+            flatKids.push(kids[i][j]);
+          }
+        } else {
+          flatKids.push(kids[i]);
+        }
+      }
+      for (var i = 0; i < flatKids.length; i++) {
+        mountNode(flatKids[i], tag, i, type, helpers.makePath(path, i), helpers);
       }
       nb.addChild(parentTag, tag, index);
     }
     return {
       mountNode,
-      clear: function() {
+      clear: function () {
         var g2 = typeof globalThis !== "undefined" ? globalThis : typeof window !== "undefined" ? window : {};
         if (typeof g2.__clearViews === "function") {
           g2.__clearViews();
@@ -386,7 +396,7 @@
   if (g) {
     g.Act = Act;
     g.React = Act;
-    g.Android/iOS Native = {
+    g.ReactNative = {
       View,
       Text,
       Image,

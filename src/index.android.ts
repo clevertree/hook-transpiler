@@ -27,8 +27,8 @@ export { HookApp, type HookAppProps } from './components/android/HookApp.js'
 
 export { ES6ImportHandler, type ImportHandlerOptions } from './es6ImportHandler.js'
 export { buildPeerUrl, buildRepoHeaders } from './urlBuilder.js'
-export { installWebApiShims, type WebApiShimOptions } from './android/webApiShims.js'
-export { createQuickJsContext, type QuickJsModuleContext, formatTranspiledCode } from './android/quickJsContext.js'
+export { installWebApiShims, type WebApiShimOptions } from '../android/webApiShims.js'
+export { createQuickJsContext, type QuickJsModuleContext, formatTranspiledCode } from '../android/quickJsContext.js'
 
 // ThemedStyler Android exports - TODO: Re-enable when themed-styler Android module is available
 // export { initAndroidThemedStyler, createAndroidTheme, applyAndroidThemeStyle } from '@clevertree/themed-styler/android'

@@ -2,87 +2,30 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:padding="16dp">
+    android:orientation="vertical">
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Relay Android Test"
         android:textSize="24sp"
-        android:textStyle="bold" />
+        android:textStyle="bold"
+        android:padding="16dp" />
 
-    <RadioGroup
-        android:id="@+id/mode_group"
+    <com.google.android.material.tabs.TabLayout
+        android:id="@+id/tab_layout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal">
-        <RadioButton
-            android:id="@+id/radio_jni"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="JNI"
-            android:checked="true" />
-        <RadioButton
-            android:id="@+id/radio_ffi"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="FFI (JNA)" />
-    </RadioGroup>
+        android:background="#f0f0f0">
+        <com.google.android.material.tabs.TabItem
+            android:text="Local Hook Test" />
+        <com.google.android.material.tabs.TabItem
+            android:text="Remote Hook" />
+    </com.google.android.material.tabs.TabLayout>
 
-    <Button
-        android:id="@+id/btn_test_transpile"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Test Transpile" />
-
-    <Button
-        android:id="@+id/btn_test_styler"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Test Styler" />
-
-    <Button
-        android:id="@+id/btn_render_ui"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Render UI" />
-
-    <Button
-        android:id="@+id/btn_test_repro"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Test Repro Issue" />
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Output:"
-        android:layout_marginTop="16dp" />
-
-    <ScrollView
+    <androidx.viewpager2.widget.ViewPager2
+        android:id="@+id/view_pager"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="1">
-        <TextView
-            android:id="@+id/tv_output"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:fontFamily="monospace"
-            android:text="Ready." />
-    </ScrollView>
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="UI Render Container:"
-        android:layout_marginTop="16dp" />
-
-    <FrameLayout
-        android:id="@+id/js_container"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="2"
-        android:background="#eeeeee"
-        android:layout_marginTop="8dp" />
+        android:layout_weight="1" />
 </LinearLayout>

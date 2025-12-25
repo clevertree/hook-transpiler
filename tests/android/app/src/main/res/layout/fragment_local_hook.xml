@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Transpiler Backend:"
+        android:textStyle="bold" />
+
+    <RadioGroup
+        android:id="@+id/mode_group"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+        <RadioButton
+            android:id="@+id/radio_jni"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="JNI"
+            android:checked="true" />
+        <RadioButton
+            android:id="@+id/radio_ffi"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="FFI (JNA)" />
+    </RadioGroup>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Renderer Mode:"
+        android:textStyle="bold"
+        android:layout_marginTop="12dp" />
+
+    <RadioGroup
+        android:id="@+id/renderer_mode_group"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+        <RadioButton
+            android:id="@+id/radio_react"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="React"
+            android:checked="true" />
+        <RadioButton
+            android:id="@+id/radio_act"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Act/Android" />
+    </RadioGroup>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Output:"
+        android:layout_marginTop="16dp" />
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+        <TextView
+            android:id="@+id/tv_output"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:fontFamily="monospace"
+            android:text="Ready." />
+    </ScrollView>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="UI Render Container:"
+        android:layout_marginTop="16dp" />
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="2"
+        android:background="#eeeeee"
+        android:layout_marginTop="8dp">
+        <FrameLayout
+            android:id="@+id/js_container"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+    </ScrollView>
+</LinearLayout>

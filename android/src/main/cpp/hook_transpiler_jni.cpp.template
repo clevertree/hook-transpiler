@@ -1,0 +1,246 @@
+/**
+ * JNI Bindings for Hook Transpiler
+ * 
+ * These are the native method declarations that Kotlin uses to call C++/Rust code.
+ * The actual implementation would be in jni/hook_transpiler_jni.cpp
+ * 
+ * Build flow:
+ * 1. Rust code compiles to native library (libfusd_hook_transpiler.so)
+ * 2. CMakeLists.txt creates JNI wrapper
+ * 3. JNI wrapper is packaged into APK
+ * 4. At runtime, System.loadLibrary loads the native library
+ * 5. Kotlin calls native methods via JNI
+ */
+
+// File: android/src/main/cpp/hook_transpiler_jni.cpp
+// This is a reference implementation template
+
+#include <jni.h>
+#include <string>
+#include <vector>
+#include <relay_hook_transpiler.h>  // From Rust crate
+
+// Global reference to Rust transpiler instance
+static RelayHookTranspiler* g_transpiler = nullptr;
+
+/**
+ * JNI Transpiler Methods
+ * Implements com.clevertree.hooktranspiler.jni.TranspilerBridge
+ */
+
+extern "C" JNIEXPORT jstring JNICALL
+Java_com_clevertree_hooktranspiler_jni_TranspilerBridge_transpileJsx(
+    JNIEnv* env, jclass clazz,
+    jstring source, jstring filename) {
+  
+  const char* source_str = env->GetStringUTFChars(source, nullptr);
+  const char* filename_str = env->GetStringUTFChars(filename, nullptr);
+  
+  try {
+    std::string result = relay_hook_transpiler::transpile(source_str, filename_str);
+    jstring result_str = env->NewStringUTF(result.c_str());
+    
+    env->ReleaseStringUTFChars(source, source_str);
+    env->ReleaseStringUTFChars(filename, filename_str);
+    
+    return result_str;
+  } catch (const std::exception& e) {
+    env->ReleaseStringUTFChars(source, source_str);
+    env->ReleaseStringUTFChars(filename, filename_str);
+    
+    env->ThrowNew(
+      env->FindClass("java/lang/RuntimeException"),
+      e.what()
+    );
+    return nullptr;
+  }
+}
+
+extern "C" JNIEXPORT jobjectArray JNICALL
+Java_com_clevertree_hooktranspiler_jni_TranspilerBridge_extractImports(
+    JNIEnv* env, jclass clazz,
+    jstring source) {
+  
+  const char* source_str = env->GetStringUTFChars(source, nullptr);
+  
+  try {
+    std::vector<std::string> imports = relay_hook_transpiler::extract_imports(source_str);
+    
+    jclass stringClass = env->FindClass("java/lang/String");
+    jobjectArray result = env->NewObjectArray(imports.size(), stringClass, nullptr);
+    
+    for (size_t i = 0; i < imports.size(); ++i) {
+      jstring import_str = env->NewStringUTF(imports[i].c_str());
+      env->SetObjectArrayElement(result, i, import_str);
+      env->DeleteLocalRef(import_str);
+    }
+    
+    env->ReleaseStringUTFChars(source, source_str);
+    return result;
+  } catch (const std::exception& e) {
+    env->ReleaseStringUTFChars(source, source_str);
+    env->ThrowNew(
+      env->FindClass("java/lang/RuntimeException"),
+      e.what()
+    );
+    return nullptr;
+  }
+}
+
+extern "C" JNIEXPORT jstring JNICALL
+Java_com_clevertree_hooktranspiler_jni_TranspilerBridge_getVersion(
+    JNIEnv* env, jclass clazz) {
+  
+  std::string version = relay_hook_transpiler::get_version();
+  return env->NewStringUTF(version.c_str());
+}
+
+extern "C" JNIEXPORT jboolean JNICALL
+Java_com_clevertree_hooktranspiler_jni_TranspilerBridge_runSelfTest(
+    JNIEnv* env, jclass clazz) {
+  
+  try {
+    bool result = relay_hook_transpiler::run_self_test();
+    return result ? JNI_TRUE : JNI_FALSE;
+  } catch (const std::exception& e) {
+    env->ThrowNew(
+      env->FindClass("java/lang/RuntimeException"),
+      e.what()
+    );
+    return JNI_FALSE;
+  }
+}
+
+extern "C" JNIEXPORT jboolean JNICALL
+Java_com_clevertree_hooktranspiler_jni_TranspilerBridge_isReady(
+    JNIEnv* env, jclass clazz) {
+  
+  return JNI_TRUE;  // In production, would check actual state
+}
+
+/**
+ * JNI JS Executor Methods
+ * Implements com.clevertree.hooktranspiler.jni.JsExecutor
+ * Uses QuickJS or similar JS engine
+ */
+
+extern "C" JNIEXPORT jboolean JNICALL
+Java_com_clevertree_hooktranspiler_jni_JsExecutor_initialize(
+    JNIEnv* env, jclass clazz) {
+  
+  try {
+    // Initialize QuickJS runtime
+    // This would be implementation-specific
+    return JNI_TRUE;
+  } catch (const std::exception& e) {
+    env->ThrowNew(
+      env->FindClass("java/lang/RuntimeException"),
+      e.what()
+    );
+    return JNI_FALSE;
+  }
+}
+
+extern "C" JNIEXPORT jstring JNICALL
+Java_com_clevertree_hooktranspiler_jni_JsExecutor_executeJs(
+    JNIEnv* env, jclass clazz,
+    jstring code, jstring filename) {
+  
+  const char* code_str = env->GetStringUTFChars(code, nullptr);
+  const char* filename_str = env->GetStringUTFChars(filename, nullptr);
+  
+  try {
+    // Execute code in QuickJS runtime
+    std::string result = quickjs_execute(code_str, filename_str);
+    jstring result_str = env->NewStringUTF(result.c_str());
+    
+    env->ReleaseStringUTFChars(code, code_str);
+    env->ReleaseStringUTFChars(filename, filename_str);
+    
+    return result_str;
+  } catch (const std::exception& e) {
+    env->ReleaseStringUTFChars(code, code_str);
+    env->ReleaseStringUTFChars(filename, filename_str);
+    
+    env->ThrowNew(
+      env->FindClass("java/lang/RuntimeException"),
+      e.what()
+    );
+    return nullptr;
+  }
+}
+
+extern "C" JNIEXPORT jboolean JNICALL
+Java_com_clevertree_hooktranspiler_jni_JsExecutor_setGlobal(
+    JNIEnv* env, jclass clazz,
+    jstring name, jobject value) {
+  
+  const char* name_str = env->GetStringUTFChars(name, nullptr);
+  
+  try {
+    // Set global variable in QuickJS runtime
+    quickjs_set_global(name_str, value);
+    env->ReleaseStringUTFChars(name, name_str);
+    return JNI_TRUE;
+  } catch (const std::exception& e) {
+    env->ReleaseStringUTFChars(name, name_str);
+    return JNI_FALSE;
+  }
+}
+
+extern "C" JNIEXPORT jobject JNICALL
+Java_com_clevertree_hooktranspiler_jni_JsExecutor_getGlobal(
+    JNIEnv* env, jclass clazz,
+    jstring name) {
+  
+  const char* name_str = env->GetStringUTFChars(name, nullptr);
+  
+  try {
+    jobject value = quickjs_get_global(name_str);
+    env->ReleaseStringUTFChars(name, name_str);
+    return value;
+  } catch (const std::exception& e) {
+    env->ReleaseStringUTFChars(name, name_str);
+    return nullptr;
+  }
+}
+
+extern "C" JNIEXPORT jboolean JNICALL
+Java_com_clevertree_hooktranspiler_jni_JsExecutor_injectHelpers(
+    JNIEnv* env, jclass clazz) {
+  
+  try {
+    // Inject React-like helpers into global scope
+    quickjs_inject_helpers();
+    return JNI_TRUE;
+  } catch (const std::exception& e) {
+    return JNI_FALSE;
+  }
+}
+
+extern "C" JNIEXPORT jboolean JNICALL
+Java_com_clevertree_hooktranspiler_jni_JsExecutor_reset(
+    JNIEnv* env, jclass clazz) {
+  
+  try {
+    quickjs_reset();
+    return JNI_TRUE;
+  } catch (const std::exception& e) {
+    return JNI_FALSE;
+  }
+}
+
+extern "C" JNIEXPORT jboolean JNICALL
+Java_com_clevertree_hooktranspiler_jni_JsExecutor_isInitialized(
+    JNIEnv* env, jclass clazz) {
+  
+  return JNI_TRUE;  // Would check actual state
+}
+
+extern "C" JNIEXPORT jstring JNICALL
+Java_com_clevertree_hooktranspiler_jni_JsExecutor_getEngineVersion(
+    JNIEnv* env, jclass clazz) {
+  
+  std::string version = quickjs_get_version();
+  return env->NewStringUTF(version.c_str());
+}
