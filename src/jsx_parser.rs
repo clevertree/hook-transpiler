@@ -1241,6 +1241,363 @@ pub fn extract_imports_and_features(source: &str) -> (Vec<crate::ImportMetadata>
     (imports, has_jsx, has_dynamic_import)
 }
 
+/// Transform ES6 modules (import/export) to CommonJS (require/module.exports)
+/// This allows the transpiler output to be executable in CommonJS environments
+/// Metadata about imports in a module
+#[derive(Debug, Clone, PartialEq)]
+pub struct ImportMetadata {
+    pub module: String,
+    pub imported: Vec<String>, // e.g., ["useState", "useEffect"]
+    pub is_default: bool,      // true if importing default export
+    pub is_namespace: bool,    // true if import * as X
+    pub is_lazy: bool,         // true if import() dynamic
+}
+
+/// Extract all imports from source code without executing it
+pub fn extract_imports(source: &str) -> Vec<ImportMetadata> {
+    let mut imports = Vec::new();
+    
+    for line in source.lines() {
+        let trimmed = line.trim_start();
+        
+        // Skip empty lines and comments
+        if trimmed.is_empty() || trimmed.starts_with("//") {
+            continue;
+        }
+        
+        // Static imports: import X from 'module'
+        if trimmed.starts_with("import ") {
+            let rest = &trimmed[7..];
+            
+            // Skip if it's a nested import() call (dynamic import)
+            if rest.trim_start().starts_with("(") {
+                continue;
+            }
+            
+            // Side-effect import: import 'module' or import "module"
+            if rest.starts_with('"') || rest.starts_with('\'') {
+                let quote = if rest.starts_with('"') { '"' } else { '\'' };
+                if let Some(closing) = rest[1..].find(quote) {
+                    let module = rest[1..closing+1].to_string();
+                    imports.push(ImportMetadata {
+                        module,
+                        imported: vec![],
+                        is_default: false,
+                        is_namespace: false,
+                        is_lazy: false,
+                    });
+                }
+                continue;
+            }
+            
+            // Regular import with from clause
+            if let Some(from_pos) = rest.rfind("from") {
+                let module_part = rest[from_pos + 4..].trim();
+                if let Some(quote_start) = module_part.find('"').or_else(|| module_part.find('\'')) {
+                    let quote = module_part.chars().nth(quote_start).unwrap();
+                    if let Some(quote_end) = module_part[quote_start + 1..].find(quote) {
+                        let module = module_part[quote_start + 1..quote_start + 1 + quote_end].to_string();
+                        let import_spec = rest[..from_pos].trim();
+                        
+                        let (imported, is_default, is_namespace) = parse_import_spec(import_spec);
+                        
+                        imports.push(ImportMetadata {
+                            module,
+                            imported,
+                            is_default,
+                            is_namespace,
+                            is_lazy: false,
+                        });
+                    }
+                }
+            }
+        }
+        
+        // Lazy/dynamic imports: import('module')
+        if let Some(import_paren) = line.find("import(") {
+            let rest = &line[import_paren + 7..];
+            let quotes = [('"', '"'), ('\'', '\''), ('`', '`')];
+            
+            for (open, close) in &quotes {
+                if let Some(start) = rest.find(*open) {
+                    if let Some(end) = rest[start + 1..].find(*close) {
+                        let module = rest[start + 1..start + 1 + end].to_string();
+                        imports.push(ImportMetadata {
+                            module,
+                            imported: vec![],
+                            is_default: true,
+                            is_namespace: false,
+                            is_lazy: true,
+                        });
+                        break;
+                    }
+                }
+            }
+        }
+    }
+    
+    imports
+}
+
+/// Parse import specification to extract what's being imported
+fn parse_import_spec(spec: &str) -> (Vec<String>, bool, bool) {
+    let spec = spec.trim();
+    
+    // import * as X from 'module'
+    if spec.starts_with("* as ") {
+        return (vec![spec[5..].to_string()], false, true);
+    }
+    
+    // import X from 'module' (default)
+    if !spec.contains('{') && !spec.contains(',') {
+        return (vec![spec.to_string()], true, false);
+    }
+    
+    // import { a, b, c as C } from 'module'
+    if let Some(start) = spec.find('{') {
+        if let Some(end) = spec.find('}') {
+            let items = &spec[start + 1..end];
+            let imported = items
+                .split(',')
+                .map(|item| {
+                    let item = item.trim();
+                    if item.contains(" as ") {
+                        item.split(" as ").nth(1).unwrap_or(item).trim().to_string()
+                    } else {
+                        item.to_string()
+                    }
+                })
+                .filter(|s| !s.is_empty())
+                .collect();
+            return (imported, false, false);
+        }
+    }
+    
+    (vec![], false, false)
+}
+
+pub fn transform_es6_modules(source: &str) -> String {
+    // First, handle dynamic imports
+    let mut source = source.to_string();
+    source = transform_dynamic_imports(&source);
+    
+    let mut output = String::new();
+    
+    for line in source.lines() {
+        let trimmed = line.trim_start();
+        
+        // Transform export default
+        if trimmed.starts_with("export default ") {
+            let rest = &trimmed[15..]; // len("export default ") = 15
+            output.push_str("module.exports.default = ");
+            output.push_str(rest);
+            output.push('\n');
+            continue;
+        }
+        
+        // Transform named exports: export { a, b, c } or export const/function/class
+        if trimmed.starts_with("export ") {
+            let rest = &trimmed[7..]; // len("export ") = 7
+            
+            // export { a, b as c }
+            if rest.starts_with('{') {
+                if let Some(closing) = rest.find('}') {
+                    let exports = &rest[1..closing].trim();
+                    for item in exports.split(',') {
+                        let item = item.trim();
+                        if item.is_empty() { continue; }
+                        
+                        let (name, alias) = if item.contains(" as ") {
+                            let parts: Vec<&str> = item.split(" as ").collect();
+                            (parts[0].trim(), parts[1].trim())
+                        } else {
+                            (item, item)
+                        };
+                        
+                        output.push_str("module.exports.");
+                        output.push_str(alias);
+                        output.push_str(" = ");
+                        output.push_str(name);
+                        output.push_str(";\n");
+                    }
+                    // Add any code after the closing brace
+                    if closing + 1 < rest.len() {
+                        output.push_str(&rest[closing+1..]);
+                        output.push('\n');
+                    }
+                }
+                continue;
+            }
+            
+            // export const/function/class X = ...
+            if rest.starts_with("const ") || rest.starts_with("function ") || rest.starts_with("class ") {
+                output.push_str(rest);
+                output.push('\n');
+                
+                // Extract the name for module.exports
+                if rest.starts_with("const ") {
+                    if let Some(eq_pos) = rest.find('=') {
+                        let name_part = &rest[6..eq_pos].trim();
+                        output.push_str("module.exports.");
+                        output.push_str(name_part);
+                        output.push_str(" = ");
+                        output.push_str(name_part);
+                        output.push_str(";\n");
+                    }
+                } else if rest.starts_with("function ") {
+                    if let Some(paren_pos) = rest.find('(') {
+                        let name = &rest[9..paren_pos].trim();
+                        output.push_str("module.exports.");
+                        output.push_str(name);
+                        output.push_str(" = ");
+                        output.push_str(name);
+                        output.push_str(";\n");
+                    }
+                } else if rest.starts_with("class ") {
+                    if let Some(space_pos) = rest[6..].find(' ') {
+                        let name = &rest[6..6+space_pos].trim();
+                        output.push_str("module.exports.");
+                        output.push_str(name);
+                        output.push_str(" = ");
+                        output.push_str(name);
+                        output.push_str(";\n");
+                    }
+                }
+                continue;
+            }
+        }
+        
+        // Transform import statements to require
+        if trimmed.starts_with("import ") {
+            let rest = &trimmed[7..]; // len("import ") = 7
+            
+            // import 'module' (side effect)
+            if rest.starts_with('"') || rest.starts_with('\'') {
+                let quote = if rest.starts_with('"') { '"' } else { '\'' };
+                if let Some(closing) = rest[1..].find(quote) {
+                    let module = &rest[1..closing+1];
+                    output.push_str("require(");
+                    output.push(quote);
+                    output.push_str(module);
+                    output.push(quote);
+                    output.push_str(");\n");
+                }
+                continue;
+            }
+            
+            // import X from 'module'
+            if let Some(from_pos) = rest.find(" from ") {
+                let bindings = rest[..from_pos].trim();
+                let module_part = rest[from_pos + 6..].trim();
+                
+                let module = if let Some(semi_pos) = module_part.rfind(';') {
+                    &module_part[..semi_pos]
+                } else {
+                    module_part
+                };
+
+                if bindings.contains(',') && !bindings.trim().starts_with('{') {
+                    // Handle mixed imports: import React, { useState } from 'react'
+                    if let Some(comma_pos) = bindings.find(',') {
+                        let default_binding = bindings[..comma_pos].trim();
+                        let named_bindings = bindings[comma_pos+1..].trim();
+                        
+                        output.push_str("const ");
+                        output.push_str(default_binding);
+                        output.push_str(" = require(");
+                        output.push_str(module);
+                        output.push_str(");\n");
+                        
+                        let mut named = named_bindings.to_string();
+                        if named.starts_with('{') && named.ends_with('}') {
+                            named = named.replace(" as ", ": ");
+                        }
+                        
+                        output.push_str("const ");
+                        output.push_str(&named);
+                        output.push_str(" = ");
+                        output.push_str(default_binding);
+                        output.push_str(";\n");
+                    }
+                } else {
+                    let mut bindings_str = bindings.to_string();
+                    if bindings_str.starts_with('{') && bindings_str.ends_with('}') {
+                        bindings_str = bindings_str.replace(" as ", ": ");
+                    } else if bindings_str.starts_with("* as ") {
+                        bindings_str = bindings_str[5..].to_string();
+                    }
+                    
+                    output.push_str("const ");
+                    output.push_str(&bindings_str);
+                    output.push_str(" = require(");
+                    output.push_str(module);
+                    output.push_str(");\n");
+                }
+                continue;
+            }
+        }
+        
+        // Pass through non-module lines
+        output.push_str(line);
+        output.push('\n');
+    }
+    
+    output
+}
+
+/// Transform dynamic import() calls to Promise-wrapped require() calls
+/// This allows code like: import('./module').then(m => ...) to work in CommonJS
+fn transform_dynamic_imports(source: &str) -> String {
+    let mut output = String::new();
+    let chars: Vec<char> = source.chars().collect();
+    let mut i = 0;
+    
+    while i < chars.len() {
+        // Look for 'import' keyword
+        if i + 6 <= chars.len() && &chars[i..i+6].iter().collect::<String>() == "import" {
+            // Check if it's followed by '('
+            let mut j = i + 6;
+            while j < chars.len() && chars[j].is_whitespace() {
+                j += 1;
+            }
+            
+            if j < chars.len() && chars[j] == '(' {
+                // This is a dynamic import!
+                // Find the closing parenthesis
+                let mut paren_count = 1;
+                j += 1;
+                let import_start = j;
+                
+                while j < chars.len() && paren_count > 0 {
+                    if chars[j] == '(' { paren_count += 1; }
+                    else if chars[j] == ')' { paren_count -= 1; }
+                    j += 1;
+                }
+                
+                if paren_count == 0 {
+                    // Extract the module path
+                    let module_expr = chars[import_start..j-1].iter().collect::<String>();
+                    
+                    // Replace: import(...) -> __hook_import(...)
+                    // This uses the bridge's dynamic import handler which returns the full module object
+                    output.push_str("__hook_import(");
+                    output.push_str(module_expr.trim());
+                    output.push_str(")");
+                    
+                    i = j;
+                    continue;
+                }
+            }
+        }
+        
+        // Not a dynamic import, copy character as-is
+        output.push(chars[i]);
+        i += 1;
+    }
+    
+    output
+}
+
 fn parse_quoted_spec(s: &str) -> Option<&str> {
     let bytes = s.as_bytes();
     let first = *bytes.get(0)?;
@@ -1477,6 +1834,246 @@ const element = <div user={user as any} />;"#;
         let input = "<>Fragment content</>";
         let output = transpile_jsx(input, &TranspileOptions::default()).unwrap();
         assert!(output.contains("Fragment content"));
+    }
+
+    // ========== Import/Export Module Tests ==========
+
+    #[test]
+    fn test_extract_imports_default() {
+        let source = "import React from 'react';";
+        let imports = extract_imports(source);
+        
+        assert_eq!(imports.len(), 1);
+        assert_eq!(imports[0].module, "react");
+        assert_eq!(imports[0].imported, vec!["React"]);
+        assert!(imports[0].is_default);
+        assert!(!imports[0].is_namespace);
+        assert!(!imports[0].is_lazy);
+    }
+
+    #[test]
+    fn test_extract_imports_named() {
+        let source = "import { useState, useEffect } from 'react';";
+        let imports = extract_imports(source);
+        
+        assert_eq!(imports.len(), 1);
+        assert_eq!(imports[0].module, "react");
+        assert_eq!(imports[0].imported.len(), 2);
+        assert!(imports[0].imported.contains(&"useState".to_string()));
+        assert!(imports[0].imported.contains(&"useEffect".to_string()));
+        assert!(!imports[0].is_default);
+        assert!(!imports[0].is_namespace);
+        assert!(!imports[0].is_lazy);
+    }
+
+    #[test]
+    fn test_extract_imports_named_with_alias() {
+        let source = "import { foo as bar, baz as qux } from 'module';";
+        let imports = extract_imports(source);
+        
+        assert_eq!(imports.len(), 1);
+        assert_eq!(imports[0].module, "module");
+        assert_eq!(imports[0].imported.len(), 2);
+        assert!(imports[0].imported.contains(&"bar".to_string()));
+        assert!(imports[0].imported.contains(&"qux".to_string()));
+        assert!(!imports[0].is_default);
+    }
+
+    #[test]
+    fn test_extract_imports_namespace() {
+        let source = "import * as React from 'react';";
+        let imports = extract_imports(source);
+        
+        assert_eq!(imports.len(), 1);
+        assert_eq!(imports[0].module, "react");
+        assert_eq!(imports[0].imported, vec!["React"]);
+        assert!(!imports[0].is_default);
+        assert!(imports[0].is_namespace);
+    }
+
+    #[test]
+    fn test_extract_imports_lazy() {
+        let source = r#"const MyComponent = lazy(() => import('./MyComponent'));"#;
+        let imports = extract_imports(source);
+        
+        assert_eq!(imports.len(), 1);
+        assert_eq!(imports[0].module, "./MyComponent");
+        assert!(imports[0].is_lazy);
+        assert!(imports[0].is_default);
+        assert!(imports[0].imported.is_empty());
+    }
+
+    #[test]
+    fn test_extract_imports_lazy_with_single_quotes() {
+        let source = "const mod = import('./module');";
+        let imports = extract_imports(source);
+        
+        assert_eq!(imports.len(), 1);
+        assert_eq!(imports[0].module, "./module");
+        assert!(imports[0].is_lazy);
+    }
+
+    #[test]
+    fn test_extract_multiple_imports() {
+        let source = r#"
+import React from 'react';
+import { useState } from 'react';
+import * as Utils from './utils';
+const lazyComp = import('./Component');
+"#;
+        let imports = extract_imports(source);
+        
+        assert_eq!(imports.len(), 4);
+        assert_eq!(imports[0].module, "react");
+        assert!(imports[0].is_default);
+        assert_eq!(imports[1].module, "react");
+        assert!(!imports[1].is_default);
+        assert_eq!(imports[2].module, "./utils");
+        assert!(imports[2].is_namespace);
+        assert_eq!(imports[3].module, "./Component");
+        assert!(imports[3].is_lazy);
+    }
+
+    #[test]
+    fn test_transform_import_default() {
+        let source = "import React from 'react';";
+        let output = transform_es6_modules(source);
+        
+        assert!(output.contains("const React = require('react')"));
+    }
+
+    #[test]
+    fn test_transform_import_named() {
+        let source = "import { useState, useEffect } from 'react';";
+        let output = transform_es6_modules(source);
+        
+        assert!(output.contains("const { useState, useEffect } = require('react')"));
+    }
+
+    #[test]
+    fn test_transform_import_named_with_alias() {
+        let source = "import { foo as bar } from 'module';";
+        let output = transform_es6_modules(source);
+        
+        assert!(output.contains("const { foo: bar } = require('module')"));
+    }
+
+    #[test]
+    fn test_transform_import_namespace() {
+        let source = "import * as React from 'react';";
+        let output = transform_es6_modules(source);
+        
+        assert!(output.contains("const React = require('react')"));
+    }
+
+    #[test]
+    fn test_transform_import_side_effect() {
+        let source = "import 'styles.css';";
+        let output = transform_es6_modules(source);
+        
+        assert!(output.contains("require('styles.css')"));
+    }
+
+    #[test]
+    fn test_transform_export_default() {
+        let source = "export default function MyComponent() { return null; }";
+        let output = transform_es6_modules(source);
+        
+        assert!(output.contains("module.exports.default = function MyComponent()"));
+    }
+
+    #[test]
+    fn test_transform_export_named() {
+        let source = "export { foo, bar as baz };";
+        let output = transform_es6_modules(source);
+        
+        assert!(output.contains("module.exports.foo = foo"));
+        assert!(output.contains("module.exports.baz = bar"));
+    }
+
+    #[test]
+    fn test_transform_export_const() {
+        let source = "export const myVar = 42;";
+        let output = transform_es6_modules(source);
+        
+        assert!(output.contains("const myVar = 42"));
+        assert!(output.contains("module.exports.myVar = myVar"));
+    }
+
+    #[test]
+    fn test_transform_export_function() {
+        let source = "export function myFunc() {}";
+        let output = transform_es6_modules(source);
+        
+        assert!(output.contains("function myFunc()"));
+        assert!(output.contains("module.exports.myFunc = myFunc"));
+    }
+
+    #[test]
+    fn test_transform_export_class() {
+        let source = "export class MyClass {}";
+        let output = transform_es6_modules(source);
+        
+        assert!(output.contains("class MyClass"));
+        assert!(output.contains("module.exports.MyClass = MyClass"));
+    }
+
+    #[test]
+    fn test_transform_complex_module() {
+        let source = r#"
+import React, { useState } from 'react';
+import * as Utils from './utils';
+import 'styles.css';
+
+export const useMyHook = () => {
+  const [state, setState] = useState(null);
+  return state;
+};
+
+export default function MyComponent() {
+  return <div>Test</div>;
+}
+
+export { Helper };
+"#;
+        let output = transform_es6_modules(source);
+        
+        // Check imports
+        assert!(output.contains("require('react')"));
+        assert!(output.contains("require('./utils')"));
+        assert!(output.contains("require('styles.css')"));
+        
+        // Check exports
+        assert!(output.contains("module.exports.useMyHook"));
+        assert!(output.contains("module.exports.default"));
+        assert!(output.contains("module.exports.Helper"));
+    }
+
+    #[test]
+    fn test_import_metadata_single_quotes() {
+        let source = "import { x } from 'module';";
+        let imports = extract_imports(source);
+        
+        assert_eq!(imports.len(), 1);
+        assert_eq!(imports[0].module, "module");
+    }
+
+    #[test]
+    fn test_import_metadata_relative_paths() {
+        let source = "import { x } from '../../../utils';";
+        let imports = extract_imports(source);
+        
+        assert_eq!(imports.len(), 1);
+        assert_eq!(imports[0].module, "../../../utils");
+    }
+
+    #[test]
+    fn test_import_metadata_scoped_packages() {
+        let source = "import { x } from '@scope/package';";
+        let imports = extract_imports(source);
+        
+        assert_eq!(imports.len(), 1);
+        assert_eq!(imports[0].module, "@scope/package");
     }
 
 }

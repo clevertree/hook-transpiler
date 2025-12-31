@@ -47,12 +47,11 @@ pub fn transpile_jsx_with_metadata(source: &str, filename: &str, is_typescript: 
     let is_typescript = is_typescript.unwrap_or_else(|| {
         filename.ends_with(".ts") || filename.ends_with(".tsx")
     });
-    let opts = TranspileOptions { is_typescript };
     
-    let result = match crate::jsx_parser::transpile_jsx_with_metadata(source, &opts) {
-        Ok((code, metadata)) => WasmTranspileResultWithMetadata {
-            code: Some(code),
-            metadata: Some(metadata),
+    let result = match crate::transpile_jsx_with_metadata(source, Some(filename), is_typescript) {
+        Ok(transpile_result) => WasmTranspileResultWithMetadata {
+            code: Some(transpile_result.code),
+            metadata: Some(transpile_result.metadata),
             error: None,
         },
         Err(err) => WasmTranspileResultWithMetadata {

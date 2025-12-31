@@ -54,3 +54,4 @@ coverage/
 .parcel-cache/
 .eslintcache
 *.tsbuildinfo
+tests/cached/.gradle

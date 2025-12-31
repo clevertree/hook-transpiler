@@ -16,7 +16,7 @@ class JNITestActivity : AppCompatActivity() {
     private lateinit var tvResults: TextView
     private lateinit var jsContainer: FrameLayout
     private val results = StringBuilder()
-    private var quickJSManager: QuickJSManager? = null
+    private var jscManager: JSCManager? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -80,8 +80,8 @@ class JNITestActivity : AppCompatActivity() {
         AndroidRenderer.initialize(this, jsContainer)
         
         // Initialize QuickJS for hook rendering
-        quickJSManager = QuickJSManager(this)
-        quickJSManager?.initialize()
+        jscManager = JSCManager(this)
+        jscManager?.initialize()
         
         // Run tests and render hooks
         runTests()
@@ -121,7 +121,7 @@ class JNITestActivity : AppCompatActivity() {
     private fun renderHook() {
         android.util.Log.i("JNITestActivity", "Rendering advanced-test.jsx hook...")
         try {
-            quickJSManager?.renderHook("advanced-test.jsx")
+            jscManager?.renderHook("advanced-test.jsx")
             android.util.Log.i("JNITestActivity", "✓ Hook rendered successfully")
         } catch (e: Exception) {
             android.util.Log.e("JNITestActivity", "✗ Hook render failed", e)

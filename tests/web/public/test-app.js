@@ -24,6 +24,7 @@ function buildHookRendererProps(host, hookPath) {
 function renderDefaultHookRenderer() {
   const container = document.getElementById('root');
   if (!container) {
+    console.warn('Test App: root container not found');
     return;
   }
 
@@ -40,8 +41,49 @@ function renderDefaultHookRenderer() {
 
   root.render(
     <React.StrictMode>
-      <HookRenderer {...props} />
+      <div>
+        <h2>Local Hook Test</h2>
+        <HookRenderer {...props} />
+      </div>
     </React.StrictMode>
+  );
+}
+
+function HookRendererWithErrorBoundary({ rendererProps }) {
+  const [error, setError] = React.useState(null);
+  const [renderAttempts, setRenderAttempts] = React.useState(0);
+
+  React.useEffect(() => {
+    setRenderAttempts(prev => prev + 1);
+    console.log('[UrlHookTester] Rendering attempt #' + renderAttempts, { rendererProps });
+  }, [rendererProps.host, rendererProps.hookPath, renderAttempts]);
+
+  if (error) {
+    return (
+      <div style={{ padding: '1rem', background: '#fee', border: '2px solid red', borderRadius: '4px', color: '#c00' }}>
+        <h3>❌ Hook Rendering Failed</h3>
+        <p><strong>Error:</strong> {error.message}</p>
+        <details style={{ marginTop: '0.5rem', fontSize: '0.9rem' }}>
+          <summary>Stack trace</summary>
+          <pre style={{ background: '#f5f5f5', padding: '0.5rem', overflow: 'auto', maxHeight: '200px' }}>
+            {error.stack}
+          </pre>
+        </details>
+        <p style={{ marginTop: '0.5rem', fontSize: '0.9rem' }}>
+          Host: <code>{rendererProps.host}</code><br/>
+          Path: <code>{rendererProps.hookPath || '(OPTIONS discovery)'}</code>
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <React.Suspense fallback={<div style={{ padding: '1rem', color: '#666' }}>Loading hook...</div>}>
+      <HookRenderer 
+        {...rendererProps}
+        onError={setError}
+      />
+    </React.Suspense>
   );
 }
 
@@ -55,6 +97,7 @@ function UrlHookTester({ defaultHost, defaultPath }) {
     event.preventDefault();
     const nextHost = host.trim() || defaultHost;
     const trimmedPath = hookPath.trim();
+    console.log('[UrlHookTester] Form submitted', { nextHost, trimmedPath });
     setActiveHost(nextHost);
     // Allow blank path to trigger OPTIONS discovery in HookRenderer
     setActivePath(trimmedPath === '' ? undefined : trimmedPath || defaultPath);
@@ -63,6 +106,7 @@ function UrlHookTester({ defaultHost, defaultPath }) {
   const rendererProps = React.useMemo(() => {
     const resolvedHost = (activeHost || defaultHost || '').trim() || defaultHost;
     const resolvedPath = activePath === undefined ? undefined : (activePath || defaultPath);
+    console.log('[UrlHookTester] Renderer props updated', { resolvedHost, resolvedPath });
     return buildHookRendererProps(resolvedHost, resolvedPath);
   }, [activeHost, activePath, defaultHost, defaultPath]);
 
@@ -98,7 +142,7 @@ function UrlHookTester({ defaultHost, defaultPath }) {
       </div>
 
       <div className="renderer-container">
-        <HookRenderer {...rendererProps} />
+        <HookRendererWithErrorBoundary rendererProps={rendererProps} />
       </div>
     </div>
   );
@@ -144,6 +188,15 @@ async function main() {
     const stylerVersion = globalThis.__themedStylerVersion || 'unknown';
     console.log('Test App: WASMs ready - Transpiler:', version, 'Styler:', stylerVersion);
 
+    // Update Styler state
+    const stylerState = document.getElementById('styler-state');
+    if (stylerState) {
+      stylerState.textContent = 'Ready';
+    }
+
+    // Start auto-sync for styles
+    styleManager.startAutoSync();
+
     // TEST: Manually transpile code with 'as' keyword to see what happens
     const testCode = 'import { x as y } from "./test.js";\nconsole.log(y);';
     console.log('TEST: Transpiling code with "as" keyword:');
@@ -159,32 +212,39 @@ async function main() {
       wasmEl.textContent = `Ready (Transpiler: v${version}, Styler: v${stylerVersion})`;
     }
 
-    // 2. Themed Styler state
-    const stylerState = document.getElementById('styler-state');
-    if (stylerState) {
-      stylerState.textContent = 'Ready';
-    }
-
-    // Start auto-sync for styles
-    styleManager.startAutoSync();
-
     // 3. Render pages based on available containers
+    const isUrlTesterPage = window.location.pathname.includes('url-tester');
+    console.log('Test App: Page type:', isUrlTesterPage ? 'URL Tester' : 'Default Local');
+    
     renderDefaultHookRenderer();
     renderUrlTesterPage();
 
-    // Expose loader for e2e testing (wait a bit for HookRenderer to initialize)
+    // 4. Expose loader for e2e testing (wait a bit for HookRenderer to initialize)
     setTimeout(() => {
       if (window.__currentLoader) {
         console.log('Test App: Loader exposed for e2e tests');
       }
     }, 1000);
 
-    // Add e2e status indicator for tests
+    // 5. Add e2e status indicator for tests
     const statusEl = document.createElement('div');
     statusEl.id = 'e2e-status';
     statusEl.textContent = 'static-imports-ok';
     statusEl.style.display = 'none';
     document.body.appendChild(statusEl);
+
+    // 6. Debug: Check if containers rendered successfully
+    const remoteRoot = document.getElementById('remote-root');
+    const root = document.getElementById('root');
+    console.log('[Test App] Container check:', {
+      'remote-root': remoteRoot ? remoteRoot.childNodes.length + ' children' : 'NOT FOUND',
+      'root': root ? root.childNodes.length + ' children' : 'NOT FOUND',
+      urlTesterPage: isUrlTesterPage
+    });
+
+    if (isUrlTesterPage && remoteRoot && remoteRoot.textContent === 'Loading remote hook tester...') {
+      console.warn('[Test App] WARNING: remote-root still has loading text - renderUrlTesterPage may have failed');
+    }
 
     console.log('Test App: Render calls finished');
   } catch (err) {
@@ -193,7 +253,8 @@ async function main() {
     if (fallbackContainer) {
       fallbackContainer.innerHTML = `<div style="color: red; padding: 2rem;">
         <h2>Bootstrap Error</h2>
-        <pre>${err.message}\n${err.stack}</pre>
+        <p>${err.message}</p>
+        <pre style="background: #f5f5f5; padding: 1rem; overflow: auto; font-size: 0.9rem;">${err.stack}</pre>
     </div>`;
     }
   }

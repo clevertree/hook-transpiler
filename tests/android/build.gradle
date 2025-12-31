@@ -15,5 +15,9 @@ allprojects {
         mavenLocal()
         google()
         mavenCentral()
+        maven {
+            // React Native JSC from GitHub
+            url 'https://jitpack.io'
+        }
     }
 }

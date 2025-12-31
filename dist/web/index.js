@@ -23,7 +23,7 @@ export async function initWasmTranspiler() {
     }
     try {
         // @ts-ignore - this will be resolved by the bundler in the web app
-        const { default: init, transpile_jsx, get_version, run_self_test } = await import('../wasm/relay_hook_transpiler.js');
+        const { default: init, transpile_jsx, transpile_jsx_with_metadata, get_version, run_self_test } = await import('../wasm/relay_hook_transpiler.js');
         // Get WASM module path - only for web builds
         let wasmPath;
         try {
@@ -48,9 +48,13 @@ export async function initWasmTranspiler() {
         const transpileFn = (code, filename, isTypescript) => {
             return transpile_jsx(code, filename || 'module.tsx', isTypescript);
         };
+        const transpileWithMetadataFn = (code, filename, isTypescript) => {
+            return transpile_jsx_with_metadata(code, filename || 'module.tsx', isTypescript);
+        };
         const version = get_version ? get_version() : 'wasm';
         globalThis.__hook_transpiler_version = version;
         globalThis.__hook_transpile_jsx = transpileFn;
+        globalThis.__hook_transpile_jsx_with_metadata = transpileWithMetadataFn;
         globalThis.__hook_wasm_self_test = run_self_test;
         console.log('[hook-transpiler] WASM transpiler ready:', version);
     }

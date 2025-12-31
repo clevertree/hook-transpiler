@@ -22,6 +22,17 @@ for TARGET in "${TARGETS[@]}"; do
 
     mkdir -p "$JNI_LIBS_DIR/$JNI_DIR"
     cp "target/$TARGET/release/librelay_hook_transpiler.so" "$JNI_LIBS_DIR/$JNI_DIR/"
+    
+    # Also sync themed-styler if it exists
+    THEMED_STYLER_DIR="/home/ari/dev/themed-styler"
+    if [ -d "$THEMED_STYLER_DIR" ]; then
+        cp "$THEMED_STYLER_DIR/target/$TARGET/release/libthemed_styler.so" "$JNI_LIBS_DIR/$JNI_DIR/" || true
+    fi
+
+    # Also copy to test app
+    TEST_APP_JNI="tests/android/app/src/main/jniLibs/$JNI_DIR"
+    mkdir -p "$TEST_APP_JNI"
+    cp "$JNI_LIBS_DIR/$JNI_DIR/"*.so "$TEST_APP_JNI/"
 done
 
 echo "Android build complete. Libraries are in $JNI_LIBS_DIR"

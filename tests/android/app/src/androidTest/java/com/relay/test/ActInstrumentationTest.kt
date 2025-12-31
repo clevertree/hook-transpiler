@@ -13,7 +13,7 @@ import java.util.concurrent.TimeUnit
 
 @RunWith(AndroidJUnit4::class)
 class ActInstrumentationTest {
-    private lateinit var quickJSManager: QuickJSManager
+    private var jscManager: JSCManager? = null
     private val context = InstrumentationRegistry.getInstrumentation().targetContext
     private val mainHandler = Handler(Looper.getMainLooper())
 
@@ -21,12 +21,17 @@ class ActInstrumentationTest {
     fun setUp() {
         val latch = CountDownLatch(1)
         mainHandler.post {
-            // AndroidRenderer needs a container, we can use a dummy one for tests
-            val dummyContainer = android.widget.FrameLayout(context)
-            AndroidRenderer.initialize(context, dummyContainer)
-            quickJSManager = QuickJSManager(context)
-            quickJSManager.initialize()
-            latch.countDown()
+            try {
+                // AndroidRenderer needs a container, we can use a dummy one for tests
+                val dummyContainer = android.widget.FrameLayout(context)
+                AndroidRenderer.initialize(context, dummyContainer)
+                jscManager = JSCManager(context)
+                jscManager?.initialize()
+                latch.countDown()
+            } catch (e: Exception) {
+                e.printStackTrace()
+                latch.countDown()
+            }
         }
         latch.await(5, TimeUnit.SECONDS)
     }
@@ -39,7 +44,7 @@ class ActInstrumentationTest {
         mainHandler.post {
             try {
                 // We'll inject a test component and render it
-                quickJSManager.renderHook("test-hook.jsx")
+                jscManager?.renderHook("test-hook.jsx")
                 latch.countDown()
             } catch (e: Throwable) {
                 error = e
@@ -71,13 +76,13 @@ class ActInstrumentationTest {
     }
 
     @Test
-    fun testAndroid/iOS NativeParityOnDevice() {
+    fun testAndroidIOS_NativeParityOnDevice() {
         val latch = CountDownLatch(1)
         var error: Throwable? = null
 
         mainHandler.post {
             try {
-                quickJSManager.renderHook("rn-parity.jsx")
+                jscManager?.renderHook("rn-parity.jsx")
                 latch.countDown()
             } catch (e: Throwable) {
                 error = e

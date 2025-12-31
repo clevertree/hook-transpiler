@@ -26,7 +26,7 @@ pub struct ImportMetadata {
 
 #[cfg_attr(feature = "wasm", derive(Serialize, Deserialize))]
 #[derive(Debug, Clone, PartialEq)]
-#[serde(tag = "type", content = "value")]
+#[cfg_attr(feature = "wasm", serde(tag = "type", content = "value"))]
 pub enum ImportKind {
     Builtin,
     SpecialPackage,
@@ -43,7 +43,7 @@ pub struct ImportBinding {
 
 #[cfg_attr(feature = "wasm", derive(Serialize, Deserialize))]
 #[derive(Debug, Clone, PartialEq)]
-#[serde(tag = "type")]
+#[cfg_attr(feature = "wasm", serde(tag = "type"))]
 pub enum ImportBindingType {
     Default,
     Named,
@@ -74,6 +74,151 @@ pub fn transpile_jsx_simple(source: &str) -> Result<String, String> {
 /// Transpile JSX with options (e.g. TypeScript support)
 pub fn transpile_jsx_with_options(source: &str, opts: &TranspileOptions) -> Result<String, String> {
     jsx_parser::transpile_jsx(source, opts).map_err(|e| e.to_string())
+}
+
+/// Transform ES6 modules to CommonJS
+/// Converts: import X from 'mod' → const X = require('mod')
+/// Converts: export default X → module.exports.default = X
+pub fn transform_es6_modules(source: &str) -> String {
+    jsx_parser::transform_es6_modules(source)
+}
+
+/// Metadata about an import statement for static analysis
+#[cfg_attr(feature = "wasm", derive(Serialize, Deserialize))]
+#[derive(Debug, Clone, PartialEq)]
+pub struct StaticImportMetadata {
+    pub module: String,
+    pub imported: Vec<String>,
+    pub is_default: bool,
+    pub is_namespace: bool,
+    pub is_lazy: bool,
+}
+
+/// Extract import metadata from source without executing it
+/// Useful for pre-fetching imports or analyzing module dependencies
+pub fn extract_imports(source: &str) -> Vec<StaticImportMetadata> {
+    jsx_parser::extract_imports(source)
+        .into_iter()
+        .map(|m| StaticImportMetadata {
+            module: m.module,
+            imported: m.imported,
+            is_default: m.is_default,
+            is_namespace: m.is_namespace,
+            is_lazy: m.is_lazy,
+        })
+        .collect()
+}
+
+/// Transpile JSX and extract metadata in one call
+/// Returns both the transpiled code and import/JSX metadata
+#[cfg_attr(feature = "wasm", derive(Serialize, Deserialize))]
+#[derive(Debug, Clone)]
+pub struct TranspileResult {
+    pub code: String,
+    pub metadata: TranspileMetadata,
+}
+
+/// Transpile JSX with metadata extraction
+/// This is the primary entry point for web clients needing full analysis
+pub fn transpile_jsx_with_metadata(source: &str, _filename: Option<&str>, is_typescript: bool) -> Result<TranspileResult, String> {
+    // Detect if we have JSX
+    let has_jsx = source.contains('<') && source.contains('>') && 
+                  (source.contains("return") || source.contains("(") || source.contains("<"));
+    
+    // Detect dynamic imports
+    let has_dynamic_import = source.contains("import(");
+    
+    // Transpile the JSX
+    let opts = TranspileOptions {
+        is_typescript,
+    };
+    let code = transpile_jsx_with_options(source, &opts)?;
+    
+    // Extract imports for metadata with proper binding detection
+    let imports = extract_imports_with_bindings(source);
+    
+    Ok(TranspileResult {
+        code,
+        metadata: TranspileMetadata {
+            imports,
+            has_jsx,
+            has_dynamic_import,
+            version: version().to_string(),
+        },
+    })
+}
+
+/// Extract imports and detect binding types from source
+fn extract_imports_with_bindings(source: &str) -> Vec<ImportMetadata> {
+    jsx_parser::extract_imports(source)
+        .into_iter()
+        .map(|m| {
+            let kind = classify_import(&m.module);
+            
+            // Determine binding type based on extraction metadata
+            let bindings = if m.is_namespace {
+                m.imported.into_iter().map(|name| {
+                    ImportBinding {
+                        binding_type: ImportBindingType::Namespace,
+                        name,
+                        alias: None,
+                    }
+                }).collect()
+            } else if m.is_default {
+                m.imported.into_iter().map(|name| {
+                    ImportBinding {
+                        binding_type: ImportBindingType::Default,
+                        name,
+                        alias: None,
+                    }
+                }).collect()
+            } else {
+                // Named imports
+                m.imported.into_iter().map(|name| {
+                    // Check if there's an alias (format: "original as alias")
+                    if name.contains(" as ") {
+                        let parts: Vec<&str> = name.split(" as ").collect();
+                        ImportBinding {
+                            binding_type: ImportBindingType::Named,
+                            name: parts[0].trim().to_string(),
+                            alias: Some(parts[1].trim().to_string()),
+                        }
+                    } else {
+                        ImportBinding {
+                            binding_type: ImportBindingType::Named,
+                            name,
+                            alias: None,
+                        }
+                    }
+                }).collect()
+            };
+            
+            ImportMetadata {
+                source: m.module,
+                kind,
+                bindings,
+            }
+        })
+        .collect()
+}
+
+/// Classify an import source (builtin, special package, or regular module)
+fn classify_import(source: &str) -> ImportKind {
+    if source == "react" || source == "react-dom" || source == "react-native" {
+        ImportKind::SpecialPackage
+    } else if source.starts_with("@clevertree/") {
+        ImportKind::SpecialPackage
+    } else if source.starts_with("@") {
+        // Other scoped packages
+        ImportKind::Module
+    } else if source.starts_with(".") {
+        ImportKind::Module
+    } else if source.contains("/") {
+        ImportKind::Module
+    } else {
+        // Unscoped packages
+        ImportKind::Module
+    }
 }
 
 // WASM bindings for client-web (feature = "wasm")
@@ -186,5 +331,150 @@ mod tests {
         assert!(output.contains("default"));
         assert!(output.contains("import"));
         assert!(output.contains("export"));
+    }
+
+    #[test]
+    fn test_transform_es6_modules() {
+        let input = r#"import { useState } from 'react';
+export default function MyComponent() {
+  return <div>Test</div>;
+}"#;
+        let output = transform_es6_modules(input);
+        
+        // Should convert import to require
+        assert!(output.contains("const { useState } = require('react')"));
+        
+        // Should convert export default
+        assert!(output.contains("module.exports.default = function MyComponent()"));
+    }
+
+    #[test]
+    fn test_transform_es6_named_exports() {
+        let input = "export { foo, bar as baz };";
+        let output = transform_es6_modules(input);
+        
+        assert!(output.contains("module.exports.foo = foo"));
+        assert!(output.contains("module.exports.baz = bar"));
+    }
+
+    #[test]
+    fn test_transform_es6_side_effect_imports() {
+        let input = r#"import 'styles.css';"#;
+        let output = transform_es6_modules(input);
+        
+        assert!(output.contains("require('styles.css')"));
+    }
+
+    #[test]
+    fn test_extract_imports_for_prefetch() {
+        let input = r#"
+import React from 'react';
+import { useState, useEffect } from 'react';
+import * as Utils from './utils';
+const lazyComp = import('./LazyComponent');
+import 'styles.css';
+"#;
+        let imports = extract_imports(input);
+        
+        // Should have 5 imports (React default, React named, Utils namespace, LazyComponent lazy, styles side-effect)
+        assert_eq!(imports.len(), 5);
+        
+        // Verify each import can be used for pre-fetching
+        assert_eq!(imports[0].module, "react");
+        assert!(imports[0].is_default);
+        assert!(!imports[0].is_lazy);
+        
+        assert_eq!(imports[1].module, "react");
+        assert!(!imports[1].is_default);
+        assert_eq!(imports[1].imported.len(), 2);
+        
+        assert_eq!(imports[2].module, "./utils");
+        assert!(imports[2].is_namespace);
+        
+        assert_eq!(imports[3].module, "./LazyComponent");
+        assert!(imports[3].is_lazy);
+        
+        // Side-effect import (no imported names)
+        assert_eq!(imports[4].module, "styles.css");
+        assert!(imports[4].imported.is_empty());
+    }
+
+    #[test]
+    fn test_extract_imports_with_aliases() {
+        let input = "import { useState as State, useEffect as Effect } from 'react';";
+        let imports = extract_imports(input);
+        
+        assert_eq!(imports.len(), 1);
+        assert_eq!(imports[0].imported.len(), 2);
+        assert!(imports[0].imported.contains(&"State".to_string()));
+        assert!(imports[0].imported.contains(&"Effect".to_string()));
+    }
+
+    #[test]
+    fn test_extract_imports_scoped_packages() {
+        let input = "import { Logger } from '@myorg/logging';";
+        let imports = extract_imports(input);
+        
+        assert_eq!(imports.len(), 1);
+        assert_eq!(imports[0].module, "@myorg/logging");
+        assert_eq!(imports[0].imported, vec!["Logger"]);
+    }
+
+    #[test]
+    fn test_combined_module_transformation_and_extraction() {
+        let source = r#"
+import React, { useState } from 'react';
+import './styles.css';
+
+export const useMyHook = () => {
+  const [state, setState] = useState(null);
+  return state;
+};
+
+export default function Component() {
+  return <div>Test</div>;
+}
+"#;
+        
+        // Extract imports for static analysis
+        let imports = extract_imports(source);
+        
+        // Should have 2 imports: 
+        // 1. React and useState from react
+        // 2. styles.css side-effect
+        assert!(imports.len() >= 2);
+        
+        // Find the react import (may be split or combined depending on parser)
+        let react_imports: Vec<_> = imports.iter()
+            .filter(|i| i.module == "react")
+            .collect();
+        assert!(!react_imports.is_empty());
+        
+        // Find the styles import
+        let styles_import = imports.iter()
+            .find(|i| i.module == "./styles.css");
+        assert!(styles_import.is_some());
+        
+        // Transform to CommonJS
+        let transformed = transform_es6_modules(source);
+        assert!(transformed.contains("require('react')") || transformed.contains("require(\"react\")"));
+        assert!(transformed.contains("require('./styles.css')") || transformed.contains("require(\"./styles.css\")"));
+        assert!(transformed.contains("module.exports.useMyHook"));
+        assert!(transformed.contains("module.exports.default"));
+    }
+
+    #[test]
+    fn test_lazy_import_extraction() {
+        let source = r#"
+const lazyForm = import('./forms/FormComponent');
+const lazyModal = import('./modals/Modal');
+"#;
+        let imports = extract_imports(source);
+        
+        assert_eq!(imports.len(), 2);
+        assert!(imports[0].is_lazy);
+        assert!(imports[1].is_lazy);
+        assert_eq!(imports[0].module, "./forms/FormComponent");
+        assert_eq!(imports[1].module, "./modals/Modal");
     }
 }

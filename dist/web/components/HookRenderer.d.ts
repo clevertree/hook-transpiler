@@ -13,6 +13,11 @@ export interface HookRendererProps {
     onError?: (msg?: string) => void;
     onReady?: () => void;
     onLoading?: () => void;
+    runtimeMode?: 'web' | 'node';
+    onRuntimeChange?: (runtime: 'web' | 'node', version: string) => void;
+    showRuntimeFooter?: boolean;
+    showVersionInfo?: boolean;
+    availableRuntimes?: ('web' | 'node')[];
 }
 export declare const HookRenderer: React.FC<HookRendererProps>;
 export default HookRenderer;

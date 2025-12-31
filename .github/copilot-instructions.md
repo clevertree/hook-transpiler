@@ -19,33 +19,16 @@ Handles React JSX, TypeScript, dynamic/static imports, and special module rewrit
 
 ## Implementation Details
 
-### Import Rewriting (`StaticImportRewriter`)
-Maps special modules to globalThis:
-```
-'react' → globalThis.__hook_react
-'react/jsx-runtime' → globalThis.__hook_jsx_runtime
-'@clevertree/file-renderer' → globalThis.__hook_file_renderer
-'@clevertree/helpers' → globalThis.__hook_helpers
-'@clevertree/meta' → globalThis.__relay_meta
-```
-
-All other imports pass through unchanged.
-
-### Dynamic Import Rewriting (`ImportRewriter`)
-Converts:
-```javascript
-await import('./module.jsx')  →  await __hook_import('./module.jsx')
-```
-
 ### Process Order (CRITICAL)
 1. Parse source
 2. Resolve TypeScript/JSX scope
 3. Strip TypeScript (if .ts/.tsx)
 4. Apply React transform (if JSX detected)
-5. **Rewrite static imports** (AFTER React transform to catch jsx-runtime)
-6. Rewrite dynamic imports
+5. **Hook Transpiler Rewrites static imports** (AFTER React transform to catch jsx-runtime)
+6. Hook Transpiler Rewrites dynamic imports
 7. Apply CommonJS conversion (if requested)
-8. Post-process regex fixes for edge cases
+8. Post-process regex fixes for edge cases shouldn't be necessary. 
+report edge cases and update hook-transpiler crate. Add test coverage.
 
 ## Testing
 Tests in `src/lib.rs`:

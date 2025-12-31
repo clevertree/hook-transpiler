@@ -28,6 +28,12 @@ export interface HookHelpers {
     registerThemeStyles?: (themeName: string, definitions?: Record<string, unknown>) => void;
     registerThemesFromYaml?: (path: string) => Promise<void>;
     buildRepoHeaders?: (branch?: string, repo?: string) => Record<string, string>;
+    getRuntimeInfo?: () => {
+        runtime: string;
+        version: string;
+        isWeb?: boolean;
+        isNode?: boolean;
+    };
 }
 export type ComponentType<P = any> = (props: P) => any;
 export interface HookContext {
@@ -40,6 +46,8 @@ export interface HookContext {
     params?: Record<string, any>;
     helpers: HookHelpers;
     onElement?: (tag: string, props: any) => void;
+    __runtime?: 'web' | 'node';
+    __runtimeVersion?: string;
     [key: string]: any;
 }
 export interface LoaderDiagnostics {

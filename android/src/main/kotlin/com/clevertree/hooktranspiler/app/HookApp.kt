@@ -6,62 +6,55 @@ import com.clevertree.hooktranspiler.model.StyleSnapshot
 import com.clevertree.hooktranspiler.render.HookRenderer
 import com.clevertree.hooktranspiler.styling.StylingRegistry
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import java.util.concurrent.CopyOnWriteArrayList
 
 /**
- * HookApp: Container for hook lifecycle, state management, and styling integration
+ * HookApp: Container for hook lifecycle and state management
  *
- * Responsibilities:
- * 1. Manage hook loading and rendering lifecycle
+ * Simplified responsibilities:
+ * 1. Manage hook loading lifecycle (fetch + transpile only)
  * 2. Track loading/error/ready states
- * 3. Coordinate with HookRenderer for rendering
- * 4. Integrate with external styling systems
- * 5. Manage theme registration
- * 6. Expose current state snapshot for UI updates
+ * 3. Coordinate with HookRenderer for fetching and transpiling
+ * 4. Expose transpiled code for execution by consumer
+ * 
+ * Note: Does NOT execute JavaScript - consumers must provide their own JS runtime
  */
 class HookApp(
+    private val context: android.content.Context,
     private val host: String,
     private val hookPath: String? = null,
     private val onStatus: ((status: HookStatus) -> Unit)? = null,
     private val onError: ((error: HookError) -> Unit)? = null,
     private val onReady: (() -> Unit)? = null,
-    private val onLoading: (() -> Unit)? = null,
-    private val onElement: ((tag: String, props: Map<String, Any?>) -> Unit)? = null,
-    private val registerTheme: ((name: String, defs: Map<String, Any?>) -> Unit)? = null
+    private val onLoading: (() -> Unit)? = null
 ) {
     private val stylingRegistry = StylingRegistry()
     private var currentStatus = HookStatus(hookPath = hookPath ?: "")
     private val statusListeners = CopyOnWriteArrayList<(HookStatus) -> Unit>()
     private val scope = CoroutineScope(Dispatchers.Main)
 
-    private val renderer = HookRenderer(
-        host = host,
-        onElement = { tag, props ->
-            stylingRegistry.getElementRegistry().registerElement(tag, props)
-            onElement?.invoke(tag, props)
-        },
-        registerTheme = { name, defs ->
-            stylingRegistry.getThemeRegistry().registerTheme(name, defs)
-            registerTheme?.invoke(name, defs)
-        },
-        onError = { error ->
+    private val renderer = HookRenderer(context).apply {
+        setHost(host)
+        this.onError = { error ->
             currentStatus = currentStatus.copy(error = error.message, loading = false)
             notifyStatusChange()
-            onError?.invoke(error)
-        },
-        onReady = {
+            this@HookApp.onError?.invoke(error)
+        }
+        this.onReady = {
             currentStatus = currentStatus.copy(error = null, loading = false, ready = true)
             notifyStatusChange()
-            onReady?.invoke()
-        },
-        onLoading = {
+            this@HookApp.onReady?.invoke()
+        }
+        this.onLoading = {
             currentStatus = currentStatus.copy(loading = true, error = null, ready = false)
             notifyStatusChange()
-            onLoading?.invoke()
+            this@HookApp.onLoading?.invoke()
         }
-    )
+    }
 
     /**
      * Register a listener for status changes
@@ -78,56 +71,17 @@ class HookApp(
     }
 
     /**
-     * Load and render the hook
+     * Fetch and transpile the hook (does not execute)
+     * Returns transpiled code ready for execution
      */
     fun load(path: String? = null) {
-        scope.launch {
-            try {
-                val result = renderer.loadAndRender(path ?: hookPath)
-                if (result.isSuccess) {
-                    // Hook loaded and rendered successfully
-                    currentStatus = currentStatus.copy(
-                        loading = false,
-                        ready = true,
-                        error = null,
-                        hookPath = path ?: hookPath ?: ""
-                    )
-                } else {
-                    // Handle error
-                    val error = result.exceptionOrNull() as? HookError
-                    currentStatus = currentStatus.copy(
-                        loading = false,
-                        ready = false,
-                        error = error?.message ?: "Unknown error"
-                    )
-                }
-                notifyStatusChange()
-            } catch (e: Exception) {
-                currentStatus = currentStatus.copy(
-                    loading = false,
-                    ready = false,
-                    error = e.message ?: "Unknown error"
-                )
-                notifyStatusChange()
-            }
-        }
+        renderer.loadHook(path ?: hookPath ?: "")
     }
 
     /**
-     * Register an element for styling
+     * Get the renderer view
      */
-    fun registerElement(tag: String, props: Map<String, Any?>) {
-        stylingRegistry.getElementRegistry().registerElement(tag, props)
-        onElement?.invoke(tag, props)
-    }
-
-    /**
-     * Register a theme
-     */
-    fun registerThemeDefinition(name: String, definitions: Map<String, Any?>) {
-        stylingRegistry.getThemeRegistry().registerTheme(name, definitions)
-        registerTheme?.invoke(name, definitions)
-    }
+    fun getView(): HookRenderer = renderer
 
     /**
      * Get current status
@@ -161,32 +115,18 @@ class HookApp(
         load()
     }
 
-    /**
-     * Clear all state
-     */
-    fun clear() {
-        renderer.clear()
-        stylingRegistry.clear()
-        currentStatus = HookStatus(hookPath = "")
-        notifyStatusChange()
-    }
-
-    /**
-     * Cleanup resources
-     */
-    fun destroy() {
-        clear()
-        statusListeners.clear()
-        scope.launch {
-            // Cleanup tasks here
-        }
-    }
-
-    /**
-     * Notify all listeners of status change
-     */
     private fun notifyStatusChange() {
         onStatus?.invoke(currentStatus)
         statusListeners.forEach { it(currentStatus) }
+    }
+
+    /**
+     * Clear cache and reset state
+     */
+    fun clear() {
+        // renderer.clear() // Add clear to HookRenderer if needed
+        stylingRegistry.clear()
+        currentStatus = HookStatus(hookPath = "")
+        notifyStatusChange()
     }
 }

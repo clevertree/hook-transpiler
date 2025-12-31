@@ -47,15 +47,49 @@ async function discoverHookPathWithOptions(hostUrl) {
     }
     return ensureLeadingSlash(candidate);
 }
-export const HookRenderer = ({ host, hookPath, onElement, requestRender, renderCssIntoDom, startAutoSync, stopAutoSync, registerTheme, loadThemesFromYamlUrl, markdownOverrides, onError, onReady, onLoading, }) => {
+export const HookRenderer = ({ host, hookPath, onElement, requestRender, renderCssIntoDom, startAutoSync, stopAutoSync, registerTheme, loadThemesFromYamlUrl, markdownOverrides, onError, onReady, onLoading, runtimeMode = 'web', onRuntimeChange, showRuntimeFooter = true, showVersionInfo = true, availableRuntimes = ['web'], }) => {
     const [loading, setLoading] = useState(false);
     const [wasmReady, setWasmReady] = useState(!!globalThis.__hook_transpile_jsx);
     const [wasmError, setWasmError] = useState(null);
     const [error, setError] = useState(null);
     const [element, setElement] = useState(null);
     const [resolvedHookPath, setResolvedHookPath] = useState(hookPath || null);
+    const [activeRuntime, setActiveRuntime] = useState(runtimeMode);
+    const [runtimeVersion, setRuntimeVersion] = useState('1.0.0');
     const normalizedHost = useMemo(() => normalizeHostUrl(host), [host]);
     const loaderRef = useRef(null);
+    // Track runtime version
+    useEffect(() => {
+        const version = activeRuntime === 'web'
+            ? globalThis.__web_runtime_version || '1.0.0'
+            : globalThis.__node_runtime_version || '1.0.0';
+        setRuntimeVersion(version);
+    }, [activeRuntime]);
+    // Handle runtime switching
+    const handleRuntimeSwitch = useCallback((newRuntime) => {
+        if (newRuntime === activeRuntime || availableRuntimes.length <= 1)
+            return;
+        console.log(`[HookRenderer] Switching runtime from ${activeRuntime} to ${newRuntime}`);
+        // Reset state
+        setElement(null);
+        setError(null);
+        setLoading(true);
+        // Switch runtime
+        setActiveRuntime(newRuntime);
+        // Notify parent
+        if (onRuntimeChange) {
+            try {
+                onRuntimeChange(newRuntime, runtimeVersion);
+            }
+            catch (e) {
+                console.debug('[HookRenderer] onRuntimeChange callback failed:', e);
+            }
+        }
+        // Re-render hook with new runtime
+        setTimeout(() => {
+            void tryRender();
+        }, 100);
+    }, [activeRuntime, runtimeVersion, onRuntimeChange, availableRuntimes]);
     useEffect(() => {
         if (!onElement) {
             console.warn('[HookRenderer] Warning: onElement (registerUsage) callback is not set. Rendered UI will not be styled.');
@@ -226,6 +260,8 @@ export const HookRenderer = ({ host, hookPath, onElement, requestRender, renderC
             onElement: registerUsageFromElement,
             FileRenderer: FileRendererAdapter,
             Layout: undefined,
+            __runtime: activeRuntime,
+            __runtimeVersion: runtimeVersion,
             helpers: {
                 buildPeerUrl: buildPeer,
                 loadModule,
@@ -236,9 +272,15 @@ export const HookRenderer = ({ host, hookPath, onElement, requestRender, renderC
                         renderCssIntoDom();
                 },
                 registerThemesFromYaml,
+                getRuntimeInfo: () => ({
+                    runtime: activeRuntime,
+                    version: runtimeVersion,
+                    isWeb: activeRuntime === 'web',
+                    isNode: activeRuntime === 'node'
+                })
             }
         };
-    }, [normalizedHost, onElement, registerUsageFromElement, loadThemesFromYamlUrl, renderCssIntoDom, registerTheme]);
+    }, [normalizedHost, onElement, registerUsageFromElement, loadThemesFromYamlUrl, renderCssIntoDom, registerTheme, activeRuntime, runtimeVersion]);
     const resolveHookPath = useCallback(async () => {
         if (!normalizedHost)
             throw new Error('Host is required to resolve hook path');
@@ -309,7 +351,32 @@ export const HookRenderer = ({ host, hookPath, onElement, requestRender, renderC
             }
         }
     }, [onElement, renderCssIntoDom]);
-    return (_jsxs("div", { style: { height: '100%', display: 'flex', flexDirection: 'column' }, children: [!wasmReady && !wasmError && _jsx("div", { children: "Initializing WASM transpiler..." }), wasmReady && loading && _jsx("div", { children: "Loading hook..." }), (error || wasmError || element) && (_jsx(ErrorBoundary, { initialError: error || wasmError, onElement: registerUsageFromElement, children: _jsx("div", { style: { flex: 1 }, children: element }) }))] }));
+    // Runtime Footer Component
+    const RuntimeFooter = React.useMemo(() => {
+        if (!showRuntimeFooter)
+            return null;
+        return (_jsxs("div", { style: {
+                display: 'flex',
+                height: '50px',
+                borderTop: '1px solid #ddd',
+                backgroundColor: '#f5f5f5',
+                alignItems: 'center',
+                padding: '0 12px',
+                justifyContent: 'space-between',
+                fontSize: '12px'
+            }, children: [_jsxs("div", { style: { display: 'flex', alignItems: 'center', gap: '8px' }, children: [_jsxs("span", { style: { color: '#666' }, children: ["Runtime: ", activeRuntime === 'web' ? 'Web WASM' : 'Node.js'] }), showVersionInfo && (_jsxs("span", { style: { color: '#999', fontSize: '11px' }, children: ["v", runtimeVersion] }))] }), availableRuntimes.length > 1 && (_jsx("div", { style: { display: 'flex', gap: '8px' }, children: availableRuntimes.map((rt) => (_jsx("button", { onClick: () => handleRuntimeSwitch(rt), style: {
+                            padding: '4px 8px',
+                            borderRadius: '4px',
+                            border: 'none',
+                            backgroundColor: activeRuntime === rt ? '#007AFF' : '#e5e5e5',
+                            color: activeRuntime === rt ? '#fff' : '#333',
+                            fontSize: '11px',
+                            fontWeight: activeRuntime === rt ? 'bold' : 'normal',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s ease'
+                        }, children: rt === 'web' ? 'WASM' : 'Node' }, rt))) }))] }));
+    }, [showRuntimeFooter, activeRuntime, runtimeVersion, showVersionInfo, availableRuntimes, handleRuntimeSwitch]);
+    return (_jsxs("div", { style: { height: '100%', display: 'flex', flexDirection: 'column' }, children: [_jsxs("div", { style: { flex: 1, display: 'flex', flexDirection: 'column' }, children: [!wasmReady && !wasmError && _jsx("div", { children: "Initializing WASM transpiler..." }), wasmReady && loading && _jsx("div", { children: "Loading hook..." }), (error || wasmError || element) && (_jsx(ErrorBoundary, { initialError: error || wasmError, onElement: registerUsageFromElement, children: _jsx("div", { style: { flex: 1 }, children: element }) }))] }), RuntimeFooter] }));
 };
 export default HookRenderer;
 //# sourceMappingURL=HookRenderer.js.map

@@ -238,7 +238,7 @@ If you have a custom QuickJSManager:
 ### For New Android Apps
 Start with the test app pattern:
 ```kotlin
-// 1. Load hook-renderer.js (includes transpiler + ACT)
+// 1. Load HookRenderer.kt (includes transpiler + ACT/React)
 // 2. Kotlin init creates fetch + timers + transpiler binding
 // 3. TypeScript code uses HookApp/HookRenderer
 // 4. Same hook code works on Android + web

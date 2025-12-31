@@ -35,6 +35,12 @@ android {
         jvmTarget = '11'
     }
 
+    sourceSets {
+        main {
+            jniLibs.srcDirs = ['jniLibs']
+        }
+    }
+
     publishing {
         singleVariant("release") {
             withSourcesJar()
@@ -54,6 +60,9 @@ dependencies {
 
     // JSON parsing
     implementation 'com.google.code.gson:gson:2.10.1'
+
+    // JavaScriptCore
+    implementation 'org.webkit:android-jsc:+'
 
     // OkHttp for HTTP requests
     implementation 'com.squareup.okhttp3:okhttp:4.11.0'

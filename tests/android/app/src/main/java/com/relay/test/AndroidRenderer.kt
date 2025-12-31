@@ -27,10 +27,10 @@ object AndroidRenderer {
     private val nodes = mutableMapOf<Int, View>()
     private val viewTypes = mutableMapOf<Int, String>()
     private val eventListeners = mutableMapOf<Int, MutableSet<String>>()
-    private var quickJsEngine: app.cash.quickjs.QuickJs? = null
+    private var jsContext: com.facebook.jsc.wrapper.JSContext? = null
 
-    fun setQuickJsEngine(engine: app.cash.quickjs.QuickJs) {
-        quickJsEngine = engine
+    fun setJSContext(context: com.facebook.jsc.wrapper.JSContext) {
+        jsContext = context
     }
 
     fun initialize(ctx: Context, root: ViewGroup) {
@@ -40,6 +40,24 @@ object AndroidRenderer {
     }
 
     fun getNodeCount(): Int = nodes.size
+
+    // Wrapper methods for JSCManager that parse JSON
+    fun createView(propsJson: String): Int {
+        val props = gson.fromJson(propsJson, Map::class.java) as Map<String, Any>
+        val tag = (props["tag"] as? Double)?.toInt() ?: return -1
+        val type = props["type"] as? String ?: "view"
+        createView(tag, type, props)
+        return tag
+    }
+    
+    fun updateView(viewId: Int, propsJson: String) {
+        val props = gson.fromJson(propsJson, Map::class.java) as Map<String, Any>
+        updateProps(viewId, props)
+    }
+    
+    fun addChild(parentId: Int, childId: Int) {
+        addChild(parentId, childId, -1)
+    }
 
     fun clearAll() {
         val action = Runnable {
@@ -147,7 +165,15 @@ object AndroidRenderer {
             Log.e(TAG, "addChild: rootContainer is null!")
             return
         }
-        val parent = if (parentTag == -1) root else nodes[parentTag] as? ViewGroup
+        
+        // If parentTag is -1, we prefer nodes[-1] if it exists (as a root wrapper), 
+        // otherwise we fall back to the rootContainer itself.
+        val parent = if (parentTag == -1) {
+            (nodes[-1] as? ViewGroup) ?: root
+        } else {
+            nodes[parentTag] as? ViewGroup
+        }
+
         val child = nodes[childTag] ?: run {
             Log.e(TAG, "addChild: child view not found for tag=$childTag")
             return
@@ -187,10 +213,10 @@ object AndroidRenderer {
     private fun applyThemedStyles(view: View, type: String, className: String) {
         val classes = className.split(" ").filter { it.isNotEmpty() }
         val classesJson = gson.toJson(classes)
-        val themesJson = QuickJSManager.activeManager?.getThemesJson() ?: "{}"
+        val themesJson = JSCManager.activeManager?.getThemesJson() ?: "{}"
 
         try {
-            val stylesJson = ThemedStylerModule.nativeGetRnStyles(type, classesJson, themesJson)
+            val stylesJson = ThemedStylerModule.nativeGetAndroidStyles(type, classesJson, themesJson)
             if (stylesJson.isNotBlank() && stylesJson != "{}") {
                 val styleType = object : TypeToken<Map<String, Any>>() {}.type
                 val styles: Map<String, Any> = gson.fromJson(stylesJson, styleType)
@@ -434,19 +460,19 @@ object AndroidRenderer {
     }
 
     private fun triggerEvent(tag: Int, eventName: String, data: Map<String, Any>) {
-        val engine = quickJsEngine ?: run {
-            Log.w(TAG, "Cannot trigger event: QuickJS engine not set")
+        val context = jsContext ?: run {
+            Log.w(TAG, "Cannot trigger event: JSC context not set")
             return
         }
 
         mainHandler.post {
             try {
                 val dataJson = gson.toJson(data)
-                engine.evaluate(
-                    "globalThis.bridge._triggerEvent($tag, '$eventName', $dataJson);",
+                context.evaluateScript(
+                    "globalThis.nativeBridge._triggerEvent($tag, '$eventName', $dataJson);",
                     "event_trigger.js"
                 )
-                QuickJSManager.activeManager?.drainMessageQueue()
+                JSCManager.activeManager?.drainMessageQueue()
                 Log.d(TAG, "Event triggered: tag=$tag, event=$eventName")
             } catch (e: Exception) {
                 Log.e(TAG, "Error triggering event: ${e.message}", e)

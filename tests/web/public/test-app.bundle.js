@@ -37808,14 +37808,71 @@ function normalizeHostUrl(host) {
     return `http://${host}`;
   return `https://${host}`;
 }
-var HookRenderer = ({ host, hookPath, onElement, requestRender: requestRender2, renderCssIntoDom: renderCssIntoDom2, startAutoSync: startAutoSync2, stopAutoSync: stopAutoSync2, registerTheme: registerTheme2, loadThemesFromYamlUrl: loadThemesFromYamlUrl2, markdownOverrides, onError, onReady, onLoading }) => {
+function ensureLeadingSlash(path2) {
+  if (!path2)
+    return "";
+  return path2.startsWith("/") ? path2 : `/${path2}`;
+}
+async function discoverHookPathWithOptions(hostUrl) {
+  const optionsUrl = hostUrl.endsWith("/") ? hostUrl : `${hostUrl}/`;
+  const response = await fetch(optionsUrl, { method: "OPTIONS" });
+  if (!response.ok) {
+    throw new Error(`OPTIONS ${optionsUrl} \u2192 ${response.status} ${response.statusText}`);
+  }
+  let candidate = response.headers.get("x-hook-path") || response.headers.get("x-relay-hook-path");
+  if (!candidate) {
+    const contentType = response.headers.get("content-type") || "";
+    if (contentType.includes("application/json")) {
+      try {
+        const json = await response.json();
+        candidate = json?.hookPath || json?.hook_path || json?.path || null;
+      } catch (e) {
+        throw new Error(`OPTIONS ${optionsUrl} returned invalid JSON: ${e instanceof Error ? e.message : String(e)}`);
+      }
+    } else {
+      const text = (await response.text()).trim();
+      candidate = text || null;
+    }
+  }
+  if (!candidate) {
+    throw new Error(`OPTIONS ${optionsUrl} did not return a hook path`);
+  }
+  return ensureLeadingSlash(candidate);
+}
+var HookRenderer = ({ host, hookPath, onElement, requestRender: requestRender2, renderCssIntoDom: renderCssIntoDom2, startAutoSync: startAutoSync2, stopAutoSync: stopAutoSync2, registerTheme: registerTheme2, loadThemesFromYamlUrl: loadThemesFromYamlUrl2, markdownOverrides, onError, onReady, onLoading, runtimeMode = "web", onRuntimeChange, showRuntimeFooter = true, showVersionInfo = true, availableRuntimes = ["web"] }) => {
   const [loading, setLoading] = (0, import_react4.useState)(false);
   const [wasmReady, setWasmReady] = (0, import_react4.useState)(!!globalThis.__hook_transpile_jsx);
   const [wasmError, setWasmError] = (0, import_react4.useState)(null);
   const [error, setError] = (0, import_react4.useState)(null);
   const [element, setElement] = (0, import_react4.useState)(null);
+  const [resolvedHookPath, setResolvedHookPath] = (0, import_react4.useState)(hookPath || null);
+  const [activeRuntime, setActiveRuntime] = (0, import_react4.useState)(runtimeMode);
+  const [runtimeVersion, setRuntimeVersion] = (0, import_react4.useState)("1.0.0");
   const normalizedHost = (0, import_react4.useMemo)(() => normalizeHostUrl(host), [host]);
   const loaderRef = (0, import_react4.useRef)(null);
+  (0, import_react4.useEffect)(() => {
+    const version = activeRuntime === "web" ? globalThis.__web_runtime_version || "1.0.0" : globalThis.__node_runtime_version || "1.0.0";
+    setRuntimeVersion(version);
+  }, [activeRuntime]);
+  const handleRuntimeSwitch = (0, import_react4.useCallback)((newRuntime) => {
+    if (newRuntime === activeRuntime || availableRuntimes.length <= 1)
+      return;
+    console.log(`[HookRenderer] Switching runtime from ${activeRuntime} to ${newRuntime}`);
+    setElement(null);
+    setError(null);
+    setLoading(true);
+    setActiveRuntime(newRuntime);
+    if (onRuntimeChange) {
+      try {
+        onRuntimeChange(newRuntime, runtimeVersion);
+      } catch (e) {
+        console.debug("[HookRenderer] onRuntimeChange callback failed:", e);
+      }
+    }
+    setTimeout(() => {
+      void tryRender();
+    }, 100);
+  }, [activeRuntime, runtimeVersion, onRuntimeChange, availableRuntimes]);
   (0, import_react4.useEffect)(() => {
     if (!onElement) {
       console.warn("[HookRenderer] Warning: onElement (registerUsage) callback is not set. Rendered UI will not be styled.");
@@ -37884,6 +37941,10 @@ var HookRenderer = ({ host, hookPath, onElement, requestRender: requestRender2, 
       }
     };
   }, [normalizedHost, host, startAutoSync2, stopAutoSync2, requestRender2]);
+  (0, import_react4.useEffect)(() => {
+    setResolvedHookPath(hookPath || null);
+    setError(null);
+  }, [hookPath, normalizedHost]);
   const registerUsageFromElement = (0, import_react4.useCallback)((tag2, props) => {
     if (onElement) {
       try {
@@ -37976,6 +38037,8 @@ var HookRenderer = ({ host, hookPath, onElement, requestRender: requestRender2, 
       onElement: registerUsageFromElement,
       FileRenderer: FileRendererAdapter,
       Layout: void 0,
+      __runtime: activeRuntime,
+      __runtimeVersion: runtimeVersion,
       helpers: {
         buildPeerUrl: buildPeer,
         loadModule,
@@ -37985,10 +38048,27 @@ var HookRenderer = ({ host, hookPath, onElement, requestRender: requestRender2, 
           if (renderCssIntoDom2)
             renderCssIntoDom2();
         },
-        registerThemesFromYaml
+        registerThemesFromYaml,
+        getRuntimeInfo: () => ({
+          runtime: activeRuntime,
+          version: runtimeVersion,
+          isWeb: activeRuntime === "web",
+          isNode: activeRuntime === "node"
+        })
       }
     };
-  }, [normalizedHost, onElement, registerUsageFromElement, loadThemesFromYamlUrl2, renderCssIntoDom2, registerTheme2]);
+  }, [normalizedHost, onElement, registerUsageFromElement, loadThemesFromYamlUrl2, renderCssIntoDom2, registerTheme2, activeRuntime, runtimeVersion]);
+  const resolveHookPath = (0, import_react4.useCallback)(async () => {
+    if (!normalizedHost)
+      throw new Error("Host is required to resolve hook path");
+    if (hookPath)
+      return hookPath;
+    if (resolvedHookPath)
+      return resolvedHookPath;
+    const discovered = await discoverHookPathWithOptions(normalizedHost);
+    setResolvedHookPath(discovered);
+    return discovered;
+  }, [hookPath, normalizedHost, resolvedHookPath]);
   const tryRender = (0, import_react4.useCallback)(async () => {
     if (!wasmReady)
       return;
@@ -38002,7 +38082,9 @@ var HookRenderer = ({ host, hookPath, onElement, requestRender: requestRender2, 
       }
     }
     try {
-      const path2 = hookPath || "http://localhost:8002/hooks/client/get-client.jsx";
+      const path2 = await resolveHookPath();
+      if (!path2)
+        throw new Error("Hook path is missing");
       if (!loaderRef.current)
         throw new Error("hook loader not initialized");
       const ctx = createHookContext(path2);
@@ -38034,7 +38116,7 @@ ${stack}` : message;
     } finally {
       setLoading(false);
     }
-  }, [createHookContext, hookPath, wasmReady, renderCssIntoDom2]);
+  }, [createHookContext, wasmReady, renderCssIntoDom2, onLoading, onReady, onError, resolveHookPath]);
   (0, import_react4.useEffect)(() => {
     void tryRender();
   }, [tryRender]);
@@ -38049,38 +38131,80 @@ ${stack}` : message;
       }
     }
   }, [onElement, renderCssIntoDom2]);
-  return (0, import_jsx_runtime4.jsxs)("div", { style: { height: "100%", display: "flex", flexDirection: "column" }, children: [!wasmReady && !wasmError && (0, import_jsx_runtime4.jsx)("div", { children: "Initializing WASM transpiler..." }), wasmReady && loading && (0, import_jsx_runtime4.jsx)("div", { children: "Loading hook..." }), (error || wasmError || element) && (0, import_jsx_runtime4.jsx)(ErrorBoundary_default, { initialError: error || wasmError, onElement: registerUsageFromElement, children: (0, import_jsx_runtime4.jsx)("div", { style: { flex: 1 }, children: element }) })] });
+  const RuntimeFooter = import_react4.default.useMemo(() => {
+    if (!showRuntimeFooter)
+      return null;
+    return (0, import_jsx_runtime4.jsxs)("div", { style: {
+      display: "flex",
+      height: "50px",
+      borderTop: "1px solid #ddd",
+      backgroundColor: "#f5f5f5",
+      alignItems: "center",
+      padding: "0 12px",
+      justifyContent: "space-between",
+      fontSize: "12px"
+    }, children: [(0, import_jsx_runtime4.jsxs)("div", { style: { display: "flex", alignItems: "center", gap: "8px" }, children: [(0, import_jsx_runtime4.jsxs)("span", { style: { color: "#666" }, children: ["Runtime: ", activeRuntime === "web" ? "Web WASM" : "Node.js"] }), showVersionInfo && (0, import_jsx_runtime4.jsxs)("span", { style: { color: "#999", fontSize: "11px" }, children: ["v", runtimeVersion] })] }), availableRuntimes.length > 1 && (0, import_jsx_runtime4.jsx)("div", { style: { display: "flex", gap: "8px" }, children: availableRuntimes.map((rt) => (0, import_jsx_runtime4.jsx)("button", { onClick: () => handleRuntimeSwitch(rt), style: {
+      padding: "4px 8px",
+      borderRadius: "4px",
+      border: "none",
+      backgroundColor: activeRuntime === rt ? "#007AFF" : "#e5e5e5",
+      color: activeRuntime === rt ? "#fff" : "#333",
+      fontSize: "11px",
+      fontWeight: activeRuntime === rt ? "bold" : "normal",
+      cursor: "pointer",
+      transition: "all 0.2s ease"
+    }, children: rt === "web" ? "WASM" : "Node" }, rt)) })] });
+  }, [showRuntimeFooter, activeRuntime, runtimeVersion, showVersionInfo, availableRuntimes, handleRuntimeSwitch]);
+  return (0, import_jsx_runtime4.jsxs)("div", { style: { height: "100%", display: "flex", flexDirection: "column" }, children: [(0, import_jsx_runtime4.jsxs)("div", { style: { flex: 1, display: "flex", flexDirection: "column" }, children: [!wasmReady && !wasmError && (0, import_jsx_runtime4.jsx)("div", { children: "Initializing WASM transpiler..." }), wasmReady && loading && (0, import_jsx_runtime4.jsx)("div", { children: "Loading hook..." }), (error || wasmError || element) && (0, import_jsx_runtime4.jsx)(ErrorBoundary_default, { initialError: error || wasmError, onElement: registerUsageFromElement, children: (0, import_jsx_runtime4.jsx)("div", { style: { flex: 1 }, children: element }) })] }), RuntimeFooter] });
 };
-var HookRenderer_default = HookRenderer;
 
 // ../../dist/web/index.js
-async function initHookTranspiler(wasmUrl) {
-  let mod;
-  let url;
+async function initWasmTranspiler() {
+  if (globalThis.__hook_transpile_jsx) {
+    return;
+  }
+  const isWeb = typeof globalThis.window !== "undefined";
+  const isNode2 = typeof process !== "undefined" && process.versions && process.versions.node;
+  if (!isWeb && !isNode2) {
+    console.debug("[hook-transpiler] Skipping WASM init in non-web/non-node environment");
+    return;
+  }
   try {
-    mod = await Promise.resolve().then(() => (init_relay_hook_transpiler(), relay_hook_transpiler_exports));
-    url = wasmUrl || new URL("../wasm/relay_hook_transpiler_bg.wasm", import.meta.url).href;
+    const { default: init, transpile_jsx: transpile_jsx2, transpile_jsx_with_metadata: transpile_jsx_with_metadata2, get_version: get_version2, run_self_test: run_self_test2 } = await Promise.resolve().then(() => (init_relay_hook_transpiler(), relay_hook_transpiler_exports));
+    let wasmPath;
+    try {
+      wasmPath = new URL("/wasm/relay_hook_transpiler_bg.wasm", window.location.origin).toString();
+    } catch (e) {
+      console.warn("[hook-transpiler] Failed to construct wasm path via URL, using fallback string");
+      wasmPath = "/wasm/relay_hook_transpiler_bg.wasm";
+    }
+    const wasmUrl = wasmPath;
+    if (isNode2 && typeof wasmUrl === "string" && wasmUrl.startsWith("file:")) {
+      const fs2 = await import("node:fs/promises");
+      const buffer = await fs2.readFile(new URL(wasmUrl));
+      await init({ module_or_path: buffer });
+    } else {
+      await init({ module_or_path: wasmUrl });
+    }
+    const transpileFn = (code, filename, isTypescript) => {
+      return transpile_jsx2(code, filename || "module.tsx", isTypescript);
+    };
+    const transpileWithMetadataFn = (code, filename, isTypescript) => {
+      return transpile_jsx_with_metadata2(code, filename || "module.tsx", isTypescript);
+    };
+    const version = get_version2 ? get_version2() : "wasm";
+    globalThis.__hook_transpiler_version = version;
+    globalThis.__hook_transpile_jsx = transpileFn;
+    globalThis.__hook_transpile_jsx_with_metadata = transpileWithMetadataFn;
+    globalThis.__hook_wasm_self_test = run_self_test2;
+    console.log("[hook-transpiler] WASM transpiler ready:", version);
   } catch (e) {
-    const absJs = "/hook-transpiler/dist/wasm/relay_hook_transpiler.js";
-    mod = await import(absJs);
-    url = wasmUrl || "/hook-transpiler/dist/wasm/relay_hook_transpiler_bg.wasm";
+    console.warn("[hook-transpiler] Failed to initialize WASM transpiler (expected in Android)", e);
   }
-  const init = mod && mod.default;
-  if (typeof init !== "function")
-    throw new Error("Invalid WASM wrapper: expected default init function");
-  await init({ module_or_path: url });
-  const transpile = mod.transpile_jsx;
-  if (typeof transpile !== "function")
-    throw new Error("WASM not exporting transpile_jsx");
-  globalThis.__hook_transpile_jsx = transpile;
-  const transpileWithMetadata = mod.transpile_jsx_with_metadata;
-  if (typeof transpileWithMetadata === "function") {
-    globalThis.__hook_transpile_jsx_with_metadata = transpileWithMetadata;
-  }
-  const version = mod.get_version ? mod.get_version() : "unknown";
-  globalThis.__hook_transpiler_version = version;
 }
-var initTranspiler = initHookTranspiler;
+async function initTranspiler() {
+  return initWasmTranspiler();
+}
 
 // ../../../themed-styler/dist/web/index.js
 init_themedStylerBridge();
@@ -38146,6 +38270,7 @@ function buildHookRendererProps(host, hookPath) {
 function renderDefaultHookRenderer() {
   const container = document.getElementById("root");
   if (!container) {
+    console.warn("Test App: root container not found");
     return;
   }
   console.log("Test App: Rendering default HookRenderer...");
@@ -38158,8 +38283,47 @@ function renderDefaultHookRenderer() {
   const props = buildHookRendererProps(window.location.origin, "/hooks/test-hook.jsx");
   console.log("Test App: Default HookRenderer props:", props);
   root.render(
-    /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(import_react6.default.StrictMode, { children: /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(HookRenderer_default, { ...props }) })
+    /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(import_react6.default.StrictMode, { children: /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("div", { children: [
+      /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("h2", { children: "Local Hook Test" }),
+      /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(HookRenderer, { ...props })
+    ] }) })
   );
+}
+function HookRendererWithErrorBoundary({ rendererProps }) {
+  const [error, setError] = import_react6.default.useState(null);
+  const [renderAttempts, setRenderAttempts] = import_react6.default.useState(0);
+  import_react6.default.useEffect(() => {
+    setRenderAttempts((prev) => prev + 1);
+    console.log("[UrlHookTester] Rendering attempt #" + renderAttempts, { rendererProps });
+  }, [rendererProps.host, rendererProps.hookPath, renderAttempts]);
+  if (error) {
+    return /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("div", { style: { padding: "1rem", background: "#fee", border: "2px solid red", borderRadius: "4px", color: "#c00" }, children: [
+      /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("h3", { children: "\u274C Hook Rendering Failed" }),
+      /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("p", { children: [
+        /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("strong", { children: "Error:" }),
+        " ",
+        error.message
+      ] }),
+      /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("details", { style: { marginTop: "0.5rem", fontSize: "0.9rem" }, children: [
+        /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("summary", { children: "Stack trace" }),
+        /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("pre", { style: { background: "#f5f5f5", padding: "0.5rem", overflow: "auto", maxHeight: "200px" }, children: error.stack })
+      ] }),
+      /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("p", { style: { marginTop: "0.5rem", fontSize: "0.9rem" }, children: [
+        "Host: ",
+        /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("code", { children: rendererProps.host }),
+        /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("br", {}),
+        "Path: ",
+        /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("code", { children: rendererProps.hookPath || "(OPTIONS discovery)" })
+      ] })
+    ] });
+  }
+  return /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(import_react6.default.Suspense, { fallback: /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("div", { style: { padding: "1rem", color: "#666" }, children: "Loading hook..." }), children: /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(
+    HookRenderer,
+    {
+      ...rendererProps,
+      onError: setError
+    }
+  ) });
 }
 function UrlHookTester({ defaultHost, defaultPath }) {
   const [host, setHost] = import_react6.default.useState(defaultHost);
@@ -38168,14 +38332,19 @@ function UrlHookTester({ defaultHost, defaultPath }) {
   const [activePath, setActivePath] = import_react6.default.useState(defaultPath);
   const onSubmit = (event) => {
     event.preventDefault();
-    setActiveHost(host.trim() || defaultHost);
-    setActivePath(hookPath.trim() || defaultPath);
+    const nextHost = host.trim() || defaultHost;
+    const trimmedPath = hookPath.trim();
+    console.log("[UrlHookTester] Form submitted", { nextHost, trimmedPath });
+    setActiveHost(nextHost);
+    setActivePath(trimmedPath === "" ? void 0 : trimmedPath || defaultPath);
   };
-  const rendererProps = import_react6.default.useMemo(
-    () => buildHookRendererProps(activeHost || defaultHost, activePath || defaultPath),
-    [activeHost, activePath, defaultHost, defaultPath]
-  );
-  const effectiveUrl = `${rendererProps.host}${rendererProps.hookPath}`;
+  const rendererProps = import_react6.default.useMemo(() => {
+    const resolvedHost = (activeHost || defaultHost || "").trim() || defaultHost;
+    const resolvedPath = activePath === void 0 ? void 0 : activePath || defaultPath;
+    console.log("[UrlHookTester] Renderer props updated", { resolvedHost, resolvedPath });
+    return buildHookRendererProps(resolvedHost, resolvedPath);
+  }, [activeHost, activePath, defaultHost, defaultPath]);
+  const effectiveUrl = rendererProps.hookPath ? `${rendererProps.host}${rendererProps.hookPath}` : `${rendererProps.host} (OPTIONS discovery)`;
   return /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("div", { className: "url-tester", children: [
     /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("form", { className: "url-form", onSubmit, children: [
       /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("label", { children: [
@@ -38208,7 +38377,7 @@ function UrlHookTester({ defaultHost, defaultPath }) {
       /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("span", { children: "Active URL:" }),
       /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("span", { className: "url-value", children: effectiveUrl })
     ] }),
-    /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("div", { className: "renderer-container", children: /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(HookRenderer_default, { ...rendererProps }) })
+    /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("div", { className: "renderer-container", children: /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(HookRendererWithErrorBoundary, { rendererProps }) })
   ] });
 }
 function renderUrlTesterPage() {
@@ -38241,6 +38410,11 @@ async function main() {
     const version = globalThis.__hook_transpiler_version || "unknown";
     const stylerVersion = globalThis.__themedStylerVersion || "unknown";
     console.log("Test App: WASMs ready - Transpiler:", version, "Styler:", stylerVersion);
+    const stylerState = document.getElementById("styler-state");
+    if (stylerState) {
+      stylerState.textContent = "Ready";
+    }
+    styleManager_default.startAutoSync();
     const testCode = 'import { x as y } from "./test.js";\nconsole.log(y);';
     console.log('TEST: Transpiling code with "as" keyword:');
     console.log("INPUT:", testCode);
@@ -38253,11 +38427,8 @@ async function main() {
     if (wasmEl) {
       wasmEl.textContent = `Ready (Transpiler: v${version}, Styler: v${stylerVersion})`;
     }
-    const stylerState = document.getElementById("styler-state");
-    if (stylerState) {
-      stylerState.textContent = "Ready";
-    }
-    styleManager_default.startAutoSync();
+    const isUrlTesterPage = window.location.pathname.includes("url-tester");
+    console.log("Test App: Page type:", isUrlTesterPage ? "URL Tester" : "Default Local");
     renderDefaultHookRenderer();
     renderUrlTesterPage();
     setTimeout(() => {
@@ -38270,6 +38441,16 @@ async function main() {
     statusEl.textContent = "static-imports-ok";
     statusEl.style.display = "none";
     document.body.appendChild(statusEl);
+    const remoteRoot = document.getElementById("remote-root");
+    const root = document.getElementById("root");
+    console.log("[Test App] Container check:", {
+      "remote-root": remoteRoot ? remoteRoot.childNodes.length + " children" : "NOT FOUND",
+      "root": root ? root.childNodes.length + " children" : "NOT FOUND",
+      urlTesterPage: isUrlTesterPage
+    });
+    if (isUrlTesterPage && remoteRoot && remoteRoot.textContent === "Loading remote hook tester...") {
+      console.warn("[Test App] WARNING: remote-root still has loading text - renderUrlTesterPage may have failed");
+    }
     console.log("Test App: Render calls finished");
   } catch (err) {
     console.error("Test App Error:", err);
@@ -38277,8 +38458,8 @@ async function main() {
     if (fallbackContainer) {
       fallbackContainer.innerHTML = `<div style="color: red; padding: 2rem;">
         <h2>Bootstrap Error</h2>
-        <pre>${err.message}
-${err.stack}</pre>
+        <p>${err.message}</p>
+        <pre style="background: #f5f5f5; padding: 1rem; overflow: auto; font-size: 0.9rem;">${err.stack}</pre>
     </div>`;
     }
   }

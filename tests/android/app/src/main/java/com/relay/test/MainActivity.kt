@@ -9,19 +9,17 @@ import com.google.android.material.tabs.TabLayoutMediator
 import com.relay.client.*
 
 class MainActivity : AppCompatActivity() {
-    var quickJSManager: QuickJSManager? = null
+    companion object {
+        init {
+            // Load native libraries before they're used
+            System.loadLibrary("relay_hook_transpiler")
+            System.loadLibrary("themed_styler")
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-
-        // Initialize AndroidRenderer with a temporary container (fragments will use their own)
-        val tempContainer = FrameLayout(this)
-        AndroidRenderer.initialize(this, tempContainer)
-        
-        // Create and initialize the QuickJS manager
-        quickJSManager = QuickJSManager(this)
-        quickJSManager?.initialize()
 
         // Setup ViewPager2 with fragments
         val viewPager = findViewById<ViewPager2>(R.id.view_pager)

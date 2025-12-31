@@ -78,17 +78,20 @@ pub extern "system" fn Java_com_relay_pure_RustTranspilerModule_nativeTranspile(
         is_typescript: is_typescript != 0,
     };
 
-    let transpiled_res = transpile_jsx_with_options(&source, &opts);
+    // Step 1: Transform ES6 modules to CommonJS (import → require, export → module.exports)
+    let commonjs_code = crate::jsx_parser::transform_es6_modules(&source);
+    android_logger(format!("nativeTranspile: after module transform = {}", commonjs_code.len()));
+    
+    // Step 2: Transpile JSX syntax
+    let transpiled_res = transpile_jsx_with_options(&commonjs_code, &opts);
     match transpiled_res {
         Ok(output) => {
-            android_logger(format!("nativeTranspile: output len = {}", output.len()));
+            android_logger(format!("nativeTranspile: after JSX transform = {}", output.len()));
             new_jstring(&mut env, &output)
         },
         Err(err) => {
-            // Don't include the full source in the error message as it can be very long
-            // The source is already available in the calling code
             let msg = format!("{}", err);
-            android_logger(format!("nativeTranspile error: {}", msg));
+            android_logger(format!("nativeTranspile ERROR: {}", msg));
             let _ = env.throw_new("java/lang/RuntimeException", msg);
             std::ptr::null_mut()
         }
