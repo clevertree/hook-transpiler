@@ -136,9 +136,9 @@
     };
 
     // NOTE: DO NOT override console here!
-    // React Native's polyfill will handle console via nativeLoggingHook
+    // Android's polyfill will handle console via nativeLoggingHook
     // which is set up in HookRenderer before this bridge loads.
-    // Overriding console here breaks React Native's console implementation.
+    // Overriding console here breaks Android's console implementation.
 
     globalObj.onerror = function (message, source, lineno, colno, error) {
         var errorMsg = 'JS Error: ' + message + ' at ' + source + ':' + lineno + ':' + colno + (error ? '\n' + error.stack : '');
@@ -152,7 +152,6 @@
         console.log('[__require_module] START: id=' + id + ', parentPath=' + parentPath);
 
         // Check virtual packages registered by the host runtime first (e.g., themed-styler, hook-transpiler)
-        console.log('[__require_module] Checking __clevertree_packages: ' + (globalObj.__clevertree_packages ? 'exists' : 'missing') + ', keys=' + (globalObj.__clevertree_packages ? Object.keys(globalObj.__clevertree_packages).join(',') : 'N/A'));
         if (globalObj.__clevertree_packages && globalObj.__clevertree_packages[id]) {
             console.log('[__require_module] Found in __clevertree_packages: ' + id);
             var pkg = globalObj.__clevertree_packages[id];
@@ -163,16 +162,18 @@
                     result[key] = pkg[key];
                 }
             }
-            console.log('[__require_module] Returning module from __clevertree_packages with keys: ' + Object.keys(result).join(','));
             return result;
         }
 
-        if (id === 'react') return { default: globalObj.Act || globalObj.React || globalObj.__react || {} };
-        if (id === 'act') return { default: globalObj.Act || globalObj.React || {} };
+        if (id === 'react' || id === 'act' || id === '@clevertree/act') {
+            var act = globalObj.Act || globalObj.React || globalObj.__react || {};
+            var res = { default: act };
+            for (var k in act) { if (Object.prototype.hasOwnProperty.call(act, k)) res[k] = act[k]; }
+            return res;
+        }
         if (id === '__hook_jsx_runtime' || id === '__hook_jsx_runtime/jsx-runtime' || id === 'react/jsx-runtime') {
             return globalObj.__hook_jsx_runtime || {};
         }
-        if (id === '@clevertree/act') return { default: globalObj.Act || globalObj.React || {} };
         if (id === '@clevertree/meta') return { default: { url: parentPath || id }, url: parentPath || id };
         if (id === '@clevertree/markdown') return { MarkdownRenderer: function (props) { return (globalObj.Act || globalObj.React).createElement('MarkdownRenderer', props); } };
         if (id === '@clevertree/theme') return { registerThemesFromYaml: function () { return Promise.resolve(); } };
@@ -186,12 +187,14 @@
             var relativePath = id;
             while (relativePath.startsWith('../')) {
                 relativePath = relativePath.substring(3);
-                parentDir = parentDir.substring(0, Math.max(0, parentDir.lastIndexOf('/', parentDir.length - 2) + 1));
+                var lastSlash = parentDir.lastIndexOf('/', parentDir.length - 2);
+                parentDir = lastSlash === -1 ? "" : parentDir.substring(0, lastSlash + 1);
             }
             if (relativePath.startsWith('./')) {
                 relativePath = relativePath.substring(2);
             }
             cacheKey = parentDir + relativePath;
+            console.log('[__require_module] Relative path resolved: ' + id + ' -> ' + cacheKey + ' (parent=' + parentPath + ')');
         }
 
         if (globalObj.__require_cache[cacheKey]) {
@@ -248,6 +251,9 @@
         console.log('[__require_module] About to transpile: ' + filePath);
         var transpiled = __android_transpile(source, filePath);
         console.log('[__require_module] Transpiled: ' + filePath + ', result length: ' + transpiled.length);
+        if (transpiled.length < 2000) {
+            console.log('[__require_module] Transpiled code: ' + transpiled);
+        }
         var module = { exports: {} };
         var exports = module.exports;
 
@@ -277,9 +283,9 @@
 
     globalObj.require = function (id, parentPath) {
         var res = globalObj.__require_module(id, parentPath);
-        if (id === 'react' || id === 'act' || id === '@clevertree/act') return res.default;
-        if (id === '@clevertree/meta') return res.default;
-        return (res && res.default !== undefined) ? res.default : res;
+        if (id === 'react' || id === 'act' || id === '@clevertree/act') return res.default || res;
+        if (id === '@clevertree/meta') return res.default || res;
+        return res;
     };
 
     globalObj.__hook_import = function (path, parentPath) {
@@ -314,6 +320,13 @@
                         globalObj.__android_log('INFO', '[__hook_import] resolved (sync) for ' + path + ', keys=' + Object.keys(result || {}).join(','));
                     }
                     console.log('[__hook_import] resolved (sync) for ' + path + ', keys=' + Object.keys(result || {}).join(','));
+                    
+                    // For dynamic import(), we should return the full module object
+                    // but ensure it has a .default property if it's an ESM-style module
+                    if (result && result.__esModule && result.default === undefined) {
+                        result.default = result;
+                    }
+                    
                     resolve(result);
                 }
             } catch (e) {

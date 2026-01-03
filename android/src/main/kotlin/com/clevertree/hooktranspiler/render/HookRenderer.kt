@@ -50,7 +50,7 @@ class HookRenderer @JvmOverloads constructor(
     private var customThemesJson: String? = null
     
     private var jsContext: JSContext? = null
-    private var rendererMode = RendererMode.REACT_NATIVE
+    private var rendererMode = RendererMode.ANDROID
     private var host: String = ""
     private var currentStatus = HookStatus(hookPath = "")
     private var currentHookPath: String? = null
@@ -64,9 +64,11 @@ class HookRenderer @JvmOverloads constructor(
     var onTranspiled: ((String) -> Unit)? = null
 
     init {
+        setBackgroundColor(android.graphics.Color.RED)
         System.err.println("HOOK_RENDERER_CONSTRUCTOR_CALLED: HookRenderer init block running!")
         android.util.Log.wtf(TAG, "HookRenderer init block executing")
         val rootLayout = LinearLayout(context).apply {
+            setBackgroundColor(android.graphics.Color.YELLOW)
             orientation = LinearLayout.VERTICAL
             layoutParams = LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT)
         }
@@ -74,6 +76,7 @@ class HookRenderer @JvmOverloads constructor(
 
         // Create ScrollView that will hold the rendered content
         scrollView = ScrollView(context).apply {
+            setBackgroundColor(android.graphics.Color.BLUE)
             layoutParams = LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 0,
@@ -126,7 +129,7 @@ class HookRenderer @JvmOverloads constructor(
     }
 
     /**
-     * Set the renderer mode (ACT or REACT_NATIVE)
+     * Set the renderer mode (ACT or ANDROID)
      */
     fun setRendererMode(mode: RendererMode) {
         Log.i(TAG, "[MODE_SWITCH] Switching from ${this.rendererMode} to $mode")
@@ -137,7 +140,7 @@ class HookRenderer @JvmOverloads constructor(
             try {
                 Log.d(TAG, "[MODE_SWITCH] Destroying old JSContext")
                 // Try to cleanup the old context
-                oldCtx.evaluateScript("globalThis.Act = null; globalThis.ReactNative = null; globalThis.React = null;", "cleanup.js")
+                oldCtx.evaluateScript("globalThis.Act = null; globalThis.Android = null; globalThis.React = null;", "cleanup.js")
             } catch (e: Exception) {
                 Log.w(TAG, "[MODE_SWITCH] Error cleaning up old context", e)
             }
@@ -161,13 +164,13 @@ class HookRenderer @JvmOverloads constructor(
                             Log.i(TAG, "[MODE_SWITCH] Act runtime verified successfully")
                         }
                     }
-                    RendererMode.REACT_NATIVE -> {
-                        val hasRN = ctx.evaluateScript("typeof globalThis.ReactNative !== 'undefined' && typeof globalThis.ReactNative.render === 'function'", "verify_rn.js")
-                        Log.d(TAG, "[MODE_SWITCH] ReactNative verification: $hasRN")
-                        if (hasRN.toString() != "true") {
-                            Log.e(TAG, "[MODE_SWITCH ERROR] Runtime verification failed for $mode - ReactNative.render not found!")
+                    RendererMode.ANDROID -> {
+                        val hasAndroid = ctx.evaluateScript("typeof globalThis.Android !== 'undefined' && typeof globalThis.Android.render === 'function'", "verify_android.js")
+                        Log.d(TAG, "[MODE_SWITCH] Android verification: $hasAndroid")
+                        if (hasAndroid.toString() != "true") {
+                            Log.e(TAG, "[MODE_SWITCH ERROR] Runtime verification failed for $mode - Android.render not found!")
                         } else {
-                            Log.i(TAG, "[MODE_SWITCH] ReactNative runtime verified successfully")
+                            Log.i(TAG, "[MODE_SWITCH] Android runtime verified successfully")
                         }
                     }
                 }
@@ -247,7 +250,13 @@ class HookRenderer @JvmOverloads constructor(
                 currentStatus = currentStatus.copy(loading = false, ready = true)
                 val viewCount = nativeRenderer.getViewCount()
                 Log.i(TAG, "Render complete. Native views created: $viewCount")
-                debugConsole?.logInfo("✓ Rendered ($viewCount views)")
+                
+                if (viewCount == 0) {
+                    Log.w(TAG, "No views rendered for $filename")
+                    debugConsole?.logError("⚠️ No views rendered. Check if your component returns null or if there was a silent error.")
+                } else {
+                    debugConsole?.logInfo("✓ Rendered ($viewCount views)")
+                }
                 
                 // Pull logs from JS context
                 jsContext?.let { debugConsole?.pullFromJSContext(it) }
@@ -278,6 +287,11 @@ class HookRenderer @JvmOverloads constructor(
 
     private fun setupEngine() {
         Log.d(TAG, "setupEngine: starting")
+        
+        // Allow network on main thread for synchronous fetch in bridge
+        val policy = StrictMode.ThreadPolicy.Builder().permitAll().build()
+        StrictMode.setThreadPolicy(policy)
+
         try {
             jsContext = JSContext(JSContext.create()).also { ctx ->
                 Log.d(TAG, "setupEngine: JSContext created")
@@ -693,7 +707,7 @@ class HookRenderer @JvmOverloads constructor(
     private fun loadRuntime(ctx: JSContext) {
         Log.d(TAG, "loadRuntime: reading asset")
         try {
-            // Set up nativeLoggingHook for React Native's console (will override console later)
+            // Set up nativeLoggingHook for Android's console (will override console later)
             val consoleSetup = """
                 (function() {
                     if (typeof globalThis.__android_log === 'function') {
@@ -809,7 +823,7 @@ class HookRenderer @JvmOverloads constructor(
                         return target;
                     };
 
-                    // JSX runtime - will be filled by React/ReactNative after bundle loads
+                    // JSX runtime - will be filled by React/Android after bundle loads
                     globalObj._jsxruntime = globalObj._jsxruntime || {
                         jsx: function() { 
                             console.warn('[JSX] jsx() not yet initialized');
@@ -851,13 +865,13 @@ class HookRenderer @JvmOverloads constructor(
             ctx.evaluateScript(actSource, "act-android.bundle.js")
             Log.d(TAG, "Act runtime evaluation complete")
             
-            Log.d(TAG, "loadRuntime: Loading React Native bundle")
-            val rnSource = context.assets.open("react-native.bundle.js").bufferedReader().use { it.readText() }
-            Log.d(TAG, "loadRuntime: evaluating React Native runtime (${rnSource.length} bytes)")
-            ctx.evaluateScript(rnSource, "react-native.bundle.js")
-            Log.d(TAG, "React Native runtime evaluation complete")
+            Log.d(TAG, "loadRuntime: Loading Android bundle")
+            val androidSource = context.assets.open("react-native.bundle.js").bufferedReader().use { it.readText() }
+            Log.d(TAG, "loadRuntime: evaluating Android runtime (${androidSource.length} bytes)")
+            ctx.evaluateScript(androidSource, "react-native.bundle.js")
+            Log.d(TAG, "Android runtime evaluation complete")
             
-            // CRITICAL: Override console AFTER React Native loads to ensure our implementation always wins
+            // CRITICAL: Override console AFTER Android loads to ensure our implementation always wins
             // This fixes console logging from async/event contexts
             val consoleOverride = """
                 (function() {
@@ -866,7 +880,7 @@ class HookRenderer @JvmOverloads constructor(
                     }
                     
                     // Force override console with direct __android_log calls
-                    // This bypasses React Native's complex polyfill which has issues with async contexts
+                    // This bypasses Android's complex polyfill which has issues with async contexts
                     globalThis.console = {
                         log: function() {
                             var args = Array.prototype.slice.call(arguments);
@@ -924,9 +938,9 @@ class HookRenderer @JvmOverloads constructor(
                 })();
             """.trimIndent()
             ctx.evaluateScript(consoleOverride, "console_override.js")
-            Log.d(TAG, "Console override applied after React Native bundle")
+            Log.d(TAG, "Console override applied after Android bundle")
             
-            // Set up React and ReactNative namespaces that delegate to Act
+            // Set up React and Android namespaces that delegate to Act
             ctx.evaluateScript("""
                 (function() {
                     console.log('[Setup] Starting runtime initialization...');
@@ -998,25 +1012,25 @@ class HookRenderer @JvmOverloads constructor(
                             }
                             
                             if (typeof globalThis.Act.render !== 'function') {
-                                console.error('[React.render] Act.render is not a function');
+                                console.error('[Android.render] Act.render is not a function');
                                 return;
                             }
                             
                             try {
                                 globalThis.Act.render(Component, props);
                             } catch (e) {
-                                console.error('[React.render] Exception: ' + e.message);
+                                console.error('[Android.render] Exception: ' + e.message);
                             }
                         }
                     };
                     
-                    // Both React and ReactNative point to the same implementation
+                    // Both React and Android point to the same implementation
                     globalThis.React = React;
-                    globalThis.ReactNative = React;
+                    globalThis.Android = React;
                     
                     console.log('[Setup] Runtime initialization complete');
                     console.log('[Setup] React.render available: ' + (typeof globalThis.React.render === 'function'));
-                    console.log('[Setup] ReactNative.render available: ' + (typeof globalThis.ReactNative.render === 'function'));
+                    console.log('[Setup] Android.render available: ' + (typeof globalThis.Android.render === 'function'));
                 })();
             """.trimIndent(), "setup-runtimes.js")
             
@@ -1065,7 +1079,7 @@ class HookRenderer @JvmOverloads constructor(
             """.trimIndent(), "act_android_module.js")
             
             ctx.evaluateScript("globalThis.__runtime = { mode: '$rendererMode', engine: 'jsc' };", "runtime_init.js")
-            Log.i(TAG, "Both Act and React Native runtimes loaded successfully")
+            Log.i(TAG, "Both Act and Android runtimes loaded successfully")
 
 
             // Add comprehensive validation and diagnostic logging
@@ -1073,13 +1087,13 @@ class HookRenderer @JvmOverloads constructor(
                 (function() {
                     console.log('[DIAGNOSTICS] Runtime loading complete. Validation starting...');
                     
-                    // Check if renderer is available (Act or ReactNative)
+                    // Check if renderer is available (Act or Android)
                     var hasAct = typeof globalThis.Act !== 'undefined' && globalThis.Act !== null;
-                    var hasRN = typeof globalThis.ReactNative !== 'undefined' && globalThis.ReactNative !== null;
+                    var hasRN = typeof globalThis.Android !== 'undefined' && globalThis.Android !== null;
                     var hasReact = typeof globalThis.React !== 'undefined' && globalThis.React !== null;
                     
                     console.log('[DIAGNOSTICS] Act available: ' + hasAct);
-                    console.log('[DIAGNOSTICS] ReactNative available: ' + hasRN);
+                    console.log('[DIAGNOSTICS] Android available: ' + hasRN);
                     console.log('[DIAGNOSTICS] React alias available: ' + hasReact);
                     
                     if (hasAct) {
@@ -1087,8 +1101,8 @@ class HookRenderer @JvmOverloads constructor(
                         console.log('[DIAGNOSTICS] Act.createElement exists: ' + (typeof globalThis.Act.createElement === 'function'));
                     }
                     if (hasRN) {
-                        console.log('[DIAGNOSTICS] ReactNative.render exists: ' + (typeof globalThis.ReactNative.render === 'function'));
-                        console.log('[DIAGNOSTICS] ReactNative.useState exists: ' + (typeof globalThis.ReactNative.useState === 'function'));
+                        console.log('[DIAGNOSTICS] Android.render exists: ' + (typeof globalThis.Android.render === 'function'));
+                        console.log('[DIAGNOSTICS] Android.useState exists: ' + (typeof globalThis.Android.useState === 'function'));
                     }
                     
                     // Check if bridge is available
@@ -1304,7 +1318,7 @@ class HookRenderer @JvmOverloads constructor(
             return
         }
         
-        if (rendererMode == RendererMode.ACT || rendererMode == RendererMode.REACT_NATIVE) {
+        if (rendererMode == RendererMode.ACT || rendererMode == RendererMode.ANDROID) {
             val renderCode = """
                 (function() {
                     try {
@@ -1328,12 +1342,12 @@ class HookRenderer @JvmOverloads constructor(
                             } else {
                                 console.error('[RENDER ERROR] Mode is ACT but globalThis.Act is undefined!');
                             }
-                        } else if (currentMode === 'REACT_NATIVE') {
-                            if (typeof globalThis.ReactNative !== 'undefined') {
-                                renderer = globalThis.ReactNative;
-                                rendererName = 'ReactNative';
+                        } else if (currentMode === 'ANDROID') {
+                            if (typeof globalThis.Android !== 'undefined') {
+                                renderer = globalThis.Android;
+                                rendererName = 'Android';
                             } else {
-                                console.error('[RENDER ERROR] Mode is REACT_NATIVE but globalThis.ReactNative is undefined!');
+                                console.error('[RENDER ERROR] Mode is ANDROID but globalThis.Android is undefined!');
                             }
                         }
                         
@@ -1343,9 +1357,9 @@ class HookRenderer @JvmOverloads constructor(
                             if (typeof globalThis.Act !== 'undefined') {
                                 renderer = globalThis.Act;
                                 rendererName = 'Act (fallback)';
-                            } else if (typeof globalThis.ReactNative !== 'undefined') {
-                                renderer = globalThis.ReactNative;
-                                rendererName = 'ReactNative (fallback)';
+                            } else if (typeof globalThis.Android !== 'undefined') {
+                                renderer = globalThis.Android;
+                                rendererName = 'Android (fallback)';
                             } else if (typeof globalThis.React !== 'undefined') {
                                 renderer = globalThis.React;
                                 rendererName = 'React (fallback alias)';
@@ -1459,10 +1473,10 @@ class HookRenderer @JvmOverloads constructor(
                             Log.i(TAG, "[RENDER_VERIFIED] Correct renderer used: $rendererUsed for mode $rendererMode")
                         }
                     }
-                    RendererMode.REACT_NATIVE -> {
-                        if (!rendererUsed.contains("ReactNative", ignoreCase = true) && !rendererUsed.contains("React", ignoreCase = true)) {
-                            Log.e(TAG, "[RENDER_ERROR] Wrong renderer! Expected ReactNative but got $rendererUsed")
-                            debugConsole?.logError("⚠️ Wrong renderer: expected ReactNative, got $rendererUsed")
+                    RendererMode.ANDROID -> {
+                        if (!rendererUsed.contains("Android", ignoreCase = true) && !rendererUsed.contains("React", ignoreCase = true)) {
+                            Log.e(TAG, "[RENDER_ERROR] Wrong renderer! Expected Android but got $rendererUsed")
+                            debugConsole?.logError("⚠️ Wrong renderer: expected Android, got $rendererUsed")
                         } else {
                             Log.i(TAG, "[RENDER_VERIFIED] Correct renderer used: $rendererUsed for mode $rendererMode")
                         }

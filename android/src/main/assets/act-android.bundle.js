@@ -13,6 +13,7 @@
     var currentPath = "root";
     var suspenseStack = [];
     var SUSPENSE_TYPE = typeof Symbol !== "undefined" ? /* @__PURE__ */ Symbol.for("act.suspense") : "__act_suspense__";
+    var FRAGMENT_TYPE = typeof Symbol !== "undefined" ? /* @__PURE__ */ Symbol.for("act.fragment") : "__act_fragment__";
     function log(level, message) {
       try {
         var g2 = typeof globalThis !== "undefined" ? globalThis : typeof window !== "undefined" ? window : {};
@@ -104,6 +105,12 @@
     }
     function renderComponent(fn, props, path) {
       if (typeof fn !== "function") return fn;
+      if (componentState[path] && componentState[path].type !== fn) {
+        log("info", "Component type changed at " + path + ", resetting state");
+        componentState[path] = { hooks: [], type: fn };
+      } else if (!componentState[path]) {
+        componentState[path] = { hooks: [], type: fn };
+      }
       resetHookCursor(path);
       var prevPath = currentPath;
       currentPath = path;
@@ -113,7 +120,7 @@
         return vnode;
       } catch (e) {
         currentPath = prevPath;
-        emitError("renderComponent failed: " + (e.message || String(e)));
+        emitError("renderComponent failed at " + path + ": " + (e.message || String(e)));
         throw e;
       }
     }
@@ -162,7 +169,8 @@
           pushSuspense,
           popSuspense,
           currentSuspenseFallback,
-          suspenseType: SUSPENSE_TYPE
+          suspenseType: SUSPENSE_TYPE,
+          fragmentType: FRAGMENT_TYPE
         });
         flushEffects();
       } catch (e) {
@@ -179,10 +187,12 @@
       var hook = getHookSlot(path, idx);
       if (!("value" in hook)) {
         hook.value = typeof initialValue === "function" ? initialValue() : initialValue;
+        log("info", "useState init: path=" + path + " idx=" + idx + " value=" + (typeof hook.value === "object" ? "object" : hook.value));
       }
       var setter = function(next) {
         var nextValue = typeof next === "function" ? next(hook.value) : next;
         hook.value = nextValue;
+        log("info", "useState set: path=" + path + " idx=" + idx + " nextValue=" + (typeof nextValue === "object" ? "object" : nextValue));
         scheduleRender();
       };
       return [hook.value, setter];
@@ -335,7 +345,7 @@
       useReducer,
       createContext,
       useContext,
-      Fragment: "div",
+      Fragment: FRAGMENT_TYPE,
       Suspense,
       lazy,
       memo: function(comp) {
@@ -363,6 +373,12 @@
     }
     function mountNode(node, parentTag, index, parentType, path, helpers) {
       if (node === null || node === void 0 || node === false) return;
+      if (Array.isArray(node)) {
+        for (var i = 0; i < node.length; i++) {
+          mountNode(node[i], parentTag, index + i, parentType, helpers.makePath(path, i), helpers);
+        }
+        return;
+      }
       var nb = getBridge();
       if (!nb) {
         helpers.log("error", "bridge missing");
@@ -376,6 +392,23 @@
           var textTag = helpers.nextTag();
           nb.createView(textTag, "span", { text: textVal, width: "wrap_content", height: "wrap_content" });
           nb.addChild(parentTag, textTag, index);
+        }
+        return;
+      }
+      if (node.type === helpers.fragmentType) {
+        var kids = node.children || [];
+        var flatKids = [];
+        for (var i = 0; i < kids.length; i++) {
+          if (Array.isArray(kids[i])) {
+            for (var j = 0; j < kids[i].length; j++) {
+              flatKids.push(kids[i][j]);
+            }
+          } else {
+            flatKids.push(kids[i]);
+          }
+        }
+        for (var i = 0; i < flatKids.length; i++) {
+          mountNode(flatKids[i], parentTag, index + i, parentType, helpers.makePath(path, i), helpers);
         }
         return;
       }
@@ -459,7 +492,7 @@
   if (g) {
     g.Act = Act;
     g.React = Act;
-    g.ReactNative = {
+    g.Android = {
       View,
       Text,
       Image,

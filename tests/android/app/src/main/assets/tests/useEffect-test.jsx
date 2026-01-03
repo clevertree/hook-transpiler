@@ -27,19 +27,19 @@ export default function UseEffectTest() {
     }, [count]);
 
     return (
-        <div className="p-2">
+        <div className="p-4 bg-surface rounded-xl border-themed shadow-sm">
             <h2 className="text-lg font-bold mb-2 text-themed">useEffect Hook</h2>
             <p className="text-sm text-muted mb-4">Tests: Mount, dependencies, cleanup</p>
 
             <div className="space-y-4">
-                <div className="flex flex-row items-center justify-between bg-surface p-3 rounded border-themed">
+                <div className="flex flex-row items-center justify-between bg-bg p-3 rounded border-themed">
                     <span className="text-sm font-medium text-themed">Mount Status</span>
                     <span className="bg-primary text-white text-xs px-2 py-1 rounded-full font-bold">
                         {mounted ? 'ACTIVE' : 'INACTIVE'}
                     </span>
                 </div>
 
-                <div className="bg-surface p-4 rounded-lg border-themed">
+                <div className="bg-bg p-4 rounded-lg border-themed">
                     <div className="flex flex-row items-center justify-between mb-4">
                         <span className="text-sm text-muted">Trigger Dependency</span>
                         <button
@@ -50,14 +50,15 @@ export default function UseEffectTest() {
                         </button>
                     </div>
 
-                    <h3 className="text-xs font-bold text-muted uppercase mb-2">Effect Logs (Last 5)</h3>
-                    <div className="bg-bg border-themed rounded p-2 space-y-1">
-                        {logs.length === 0 && <p className="text-xs text-muted italic">No logs yet</p>}
-                        {logs.map((log, i) => (
-                            <div key={i} className="text-xs text-themed font-mono border-b border-themed last:border-0 pb-1">
-                                > {log}
-                            </div>
-                        ))}
+                    <div className="space-y-2">
+                        <span className="text-xs font-bold text-muted uppercase">Effect Logs:</span>
+                        <div className="bg-surface p-2 rounded border-themed min-h-[100px]">
+                            {logs.map((log, i) => (
+                                <div key={i} className="text-xs text-themed py-1 border-b border-themed last:border-0">
+                                    {log}
+                                </div>
+                            ))}
+                        </div>
                     </div>
                 </div>
             </div>

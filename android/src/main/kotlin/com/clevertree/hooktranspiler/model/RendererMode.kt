@@ -10,7 +10,7 @@ enum class RendererMode {
     ACT,
 
     /**
-     * Use React Native compatible bridge (for testing or RN integration)
+     * Use the native Android renderer (default)
      */
-    REACT_NATIVE
+    ANDROID
 }

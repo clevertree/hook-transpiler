@@ -1,6 +1,6 @@
 [package]
 name = "relay-hook-transpiler"
-version = "1.3.20"
+version = "1.3.22"
 edition = "2024"
 license = "MIT OR Apache-2.0"
 description = "Minimal JSX/TSX transpiler for Relay hooks with dynamic import() rewrite to context.helpers.loadModule and friendly errors"

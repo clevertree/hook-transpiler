@@ -37,7 +37,7 @@ class HookRendererTest {
     @Test
     fun testRendererInitializesSuccessfully() {
         assertNotNull(renderer)
-        assertEquals(RendererMode.REACT_NATIVE, renderer.getStatus().rendererMode)
+        assertEquals(RendererMode.ANDROID, renderer.getStatus().rendererMode)
     }
 
     @Test
@@ -64,15 +64,15 @@ class HookRendererTest {
 
     @Test
     fun testSetRendererModeToReactNative() {
-        renderer.setRendererMode(RendererMode.REACT_NATIVE)
+        renderer.setRendererMode(RendererMode.ANDROID)
         val status = renderer.getStatus()
-        assertEquals(RendererMode.REACT_NATIVE, status.rendererMode)
+        assertEquals(RendererMode.ANDROID, status.rendererMode)
     }
 
     @Test
     fun testSwitchingModesClearsRenderer() {
         val initialMode = renderer.getStatus().rendererMode
-        val newMode = if (initialMode == RendererMode.ACT) RendererMode.REACT_NATIVE else RendererMode.ACT
+        val newMode = if (initialMode == RendererMode.ACT) RendererMode.ANDROID else RendererMode.ACT
         
         renderer.setRendererMode(newMode)
         val status = renderer.getStatus()

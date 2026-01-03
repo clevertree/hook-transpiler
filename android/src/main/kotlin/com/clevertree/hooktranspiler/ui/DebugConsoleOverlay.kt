@@ -24,7 +24,7 @@ class DebugConsoleOverlay(context: Context) : LinearLayout(context) {
     private val consolePanel: LinearLayout
     private val modeContainer: LinearLayout
     private val btnAct: Button
-    private val btnReact: Button
+    private val btnAndroid: Button
     private val logs = mutableListOf<String>()
     private val dateFormat = SimpleDateFormat("HH:mm:ss.SSS", Locale.US)
     
@@ -68,19 +68,19 @@ class DebugConsoleOverlay(context: Context) : LinearLayout(context) {
             }
         }
 
-        btnReact = Button(context).apply {
-            text = "React"
+        btnAndroid = Button(context).apply {
+            text = "Android"
             textSize = 11f
             setBackgroundColor(Color.parseColor("#2196F3"))
             setTextColor(Color.WHITE)
             setPadding(12, 6, 12, 6)
             setOnClickListener {
-                setMode(RendererMode.REACT_NATIVE)
-                onModeSelected?.invoke(RendererMode.REACT_NATIVE)
+                setMode(RendererMode.ANDROID)
+                onModeSelected?.invoke(RendererMode.ANDROID)
             }
         }
         modeContainer.addView(btnAct)
-        modeContainer.addView(btnReact)
+        modeContainer.addView(btnAndroid)
         
         clearButton = Button(context).apply {
             text = "Clear"
@@ -152,9 +152,9 @@ class DebugConsoleOverlay(context: Context) : LinearLayout(context) {
 
     fun setMode(mode: RendererMode) {
         btnAct.isEnabled = mode != RendererMode.ACT
-        btnReact.isEnabled = mode != RendererMode.REACT_NATIVE
+        btnAndroid.isEnabled = mode != RendererMode.ANDROID
         btnAct.alpha = if (mode == RendererMode.ACT) 1.0f else 0.5f
-        btnReact.alpha = if (mode == RendererMode.REACT_NATIVE) 1.0f else 0.5f
+        btnAndroid.alpha = if (mode == RendererMode.ANDROID) 1.0f else 0.5f
     }
     
     fun clear() {

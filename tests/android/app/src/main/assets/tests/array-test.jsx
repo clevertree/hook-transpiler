@@ -19,7 +19,7 @@ export default function ArrayTest() {
     };
 
     return (
-        <div className="p-2">
+        <div className="p-4 bg-surface rounded-xl border-themed shadow-sm">
             <h2 className="text-lg font-bold mb-2 text-themed">Array Rendering</h2>
             <p className="text-sm text-muted mb-4">Tests: .map(), keys, list updates</p>
 
@@ -35,7 +35,7 @@ export default function ArrayTest() {
                     {items.map(item => (
                         <div
                             key={item.id}
-                            className="p-3 rounded-lg flex flex-row items-center justify-between bg-surface border-themed"
+                            className="p-3 rounded-lg flex flex-row items-center justify-between bg-bg border-themed"
                         >
                             <span className="font-bold text-sm text-themed">{item.name}</span>
                             <button

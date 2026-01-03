@@ -20,6 +20,8 @@ const TABS = [
 export default function TestSuite() {
   const [activeTab, setActiveTab] = useState('state');
   const [themeState, setThemeState] = useState(() => getThemes());
+  const [renderError, setRenderError] = useState(null);
+  const [resetKey, setResetKey] = useState(0);
   const currentTheme = themeState.currentTheme || 'light';
 
   const handleThemeChange = (theme) => {
@@ -27,35 +29,57 @@ export default function TestSuite() {
     setThemeState(getThemes());
   };
 
-  const ActiveComponent = TABS.find(t => t.id === activeTab)?.component || (() => null);
+  const resetState = () => {
+    console.log('[TestSuite] Resetting state...');
+    setResetKey(prev => prev + 1);
+    setRenderError(null);
+  };
+
+  const selectedTab = TABS.find(t => t.id === activeTab);
+  const ActiveComponent = selectedTab?.component;
+  
+  console.log('[TestSuite] Rendering activeTab:', activeTab, 'resetKey:', resetKey);
+  console.log('[TestSuite] ActiveComponent:', selectedTab?.label || 'NOT_FOUND');
+
   const themeOptions = Object.keys(themeState.themes || {}).filter(t => t !== 'default');
 
   return (
     <div className="flex flex-col h-full bg-surface">
-      {/* Header & Theme Switcher */}
-      <div className="p-4 bg-bg border-b border-themed flex flex-row justify-between items-center">
-        <h1 className="text-xl font-bold text-themed">Relay Hook Test</h1>
-        <div className="flex flex-row bg-surface rounded-lg p-1">
-          {themeOptions.map(theme => (
-            <button
-              key={theme}
-              onClick={() => handleThemeChange(theme)}
-              className={`px-3 py-1 rounded-md text-sm capitalize ${currentTheme === theme ? 'bg-bg shadow-sm font-bold text-themed' : 'text-muted'}`}
-            >
-              {theme}
-            </button>
-          ))}
+      {/* Header & Tabs & Theme Switcher */}
+      <div className="bg-bg border-b border-themed flex flex-col px-2 pb-2">
+        <div className="flex flex-row items-center justify-between py-2">
+          <div className="flex flex-row bg-surface rounded-lg p-0.5">
+            {themeOptions.length > 0 ? themeOptions.map(theme => (
+              <button
+                key={theme}
+                onClick={() => handleThemeChange(theme)}
+                className={`px-2 py-1 rounded-md text-[10px] uppercase tracking-wider ${currentTheme === theme ? 'bg-bg shadow-sm font-bold text-themed' : 'text-muted'}`}
+              >
+                {theme}
+              </button>
+            )) : (
+              <div className="px-2 py-1 text-[10px] text-muted">No Themes</div>
+            )}
+          </div>
+          
+          <button 
+            onClick={resetState}
+            className="px-3 py-1 bg-surface border border-themed rounded text-[10px] uppercase tracking-wider text-muted hover:text-themed"
+          >
+            Reset State
+          </button>
         </div>
-      </div>
 
-      {/* Horizontal Tab View */}
-      <div className="bg-bg border-b border-themed">
-        <div className="flex flex-row overflow-x-auto px-2 py-1">
+        <div className="flex flex-row overflow-x-auto py-1">
           {TABS.map(tab => (
             <button
               key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`px-4 py-2 mx-1 whitespace-nowrap rounded-full text-sm transition-colors ${activeTab === tab.id
+              onClick={() => {
+                console.log('[TestSuite] Tab clicked:', tab.id);
+                setRenderError(null);
+                setActiveTab(tab.id);
+              }}
+              className={`px-3 py-1.5 mx-1 whitespace-nowrap rounded-full text-xs transition-colors ${activeTab === tab.id
                 ? 'bg-primary text-white font-medium'
                 : 'text-muted hover:bg-surface'
                 }`}
@@ -66,11 +90,24 @@ export default function TestSuite() {
         </div>
       </div>
 
-      {/* Content Area */}
-      <div className="flex-1 p-4">
-        <div className="bg-bg rounded-xl shadow-sm border-themed p-4 min-h-[300px]">
-          <ActiveComponent />
+      {/* Error Display */}
+      {renderError && (
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 m-4 rounded">
+          <p className="font-bold">Render Error</p>
+          <p className="text-sm">{renderError}</p>
         </div>
+      )}
+
+      {/* Content Area */}
+      <div className="flex-1 p-4 overflow-y-auto">
+        {!ActiveComponent || typeof ActiveComponent !== 'function' ? (
+          <div className="p-4 bg-red-50 border border-red-200 rounded text-red-700">
+            <p className="font-bold">Error: Invalid component</p>
+            <p className="text-sm">activeTab={activeTab}, component type={typeof ActiveComponent}</p>
+          </div>
+        ) : (
+          <ActiveComponent key={`${activeTab}-${resetKey}`} />
+        )}
       </div>
 
       {/* Footer Info */}

@@ -109,7 +109,7 @@ class HookRendererIntegrationTest {
 
     @Test
     fun testRenderWithReactNative() {
-        renderer.setRendererMode(RendererMode.REACT_NATIVE)
+        renderer.setRendererMode(RendererMode.ANDROID)
 
         var renderComplete = false
         renderer.onReady = { _ ->
@@ -317,7 +317,7 @@ class HookRendererIntegrationTest {
             delay(500)
 
             // Switch mode mid-test
-            renderer.setRendererMode(RendererMode.REACT_NATIVE)
+            renderer.setRendererMode(RendererMode.ANDROID)
             renderer.render(component, "test2.jsx")
             delay(500)
         }
@@ -328,7 +328,7 @@ class HookRendererIntegrationTest {
 
     @Test
     fun testModeSwitch_ReactNativeToAct() {
-        renderer.setRendererMode(RendererMode.REACT_NATIVE)
+        renderer.setRendererMode(RendererMode.ANDROID)
 
         val component = "export default function Test() { return {}; }"
 

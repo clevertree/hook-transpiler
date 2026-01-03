@@ -2,32 +2,27 @@ import React from 'react';
 
 export default function StylingTest() {
     return (
-        <div className="p-2">
-            <h2 className="text-lg font-bold mb-2">Styling & Themes</h2>
-            <p className="text-sm text-gray-600 mb-4">Tests: className, themed-styler, dynamic styles</p>
+        <div className="p-4 bg-surface rounded-xl border-themed shadow-sm">
+            <h2 className="text-lg font-bold mb-2 text-themed">Styling & Themes</h2>
+            <p className="text-sm text-muted mb-4">Tests: className, themed-styler, dynamic styles</p>
 
             <div className="space-y-4">
-                <div className="p-4 rounded-lg bg-blue-50 border border-blue-200">
-                    <p className="text-blue-800 font-medium">Blue Themed Box</p>
-                    <p className="text-xs text-blue-600">Using Tailwind-like classes</p>
-                </div>
-
-                <div className="p-4 rounded-lg bg-green-50 border border-green-200">
-                    <p className="text-green-800 font-medium">Green Themed Box</p>
-                    <p className="text-xs text-green-600">Using Tailwind-like classes</p>
+                <div className="p-4 rounded-lg bg-bg border-themed">
+                    <p className="text-primary font-medium">Themed Box</p>
+                    <p className="text-xs text-muted">Using Tailwind-like classes</p>
                 </div>
 
                 <div className="flex flex-row space-x-2">
-                    <button className="bg-blue-600 text-white px-4 py-2 rounded-md shadow-sm">
+                    <button className="bg-primary text-white px-4 py-2 rounded-md shadow-sm font-medium">
                         Primary
                     </button>
-                    <button className="bg-gray-200 text-gray-800 px-4 py-2 rounded-md shadow-sm">
+                    <button className="bg-surface text-themed px-4 py-2 rounded-md shadow-sm border-themed">
                         Secondary
                     </button>
                 </div>
 
-                <div className="mt-4 p-3 bg-gray-100 rounded border border-dashed border-gray-400">
-                    <p className="text-center text-gray-500 italic text-sm">
+                <div className="mt-4 p-3 bg-bg rounded border border-dashed border-themed">
+                    <p className="text-center text-muted italic text-sm">
                         Switch theme at the top to see changes
                     </p>
                 </div>
