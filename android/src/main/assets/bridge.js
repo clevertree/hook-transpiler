@@ -320,13 +320,13 @@
                         globalObj.__android_log('INFO', '[__hook_import] resolved (sync) for ' + path + ', keys=' + Object.keys(result || {}).join(','));
                     }
                     console.log('[__hook_import] resolved (sync) for ' + path + ', keys=' + Object.keys(result || {}).join(','));
-                    
+
                     // For dynamic import(), we should return the full module object
                     // but ensure it has a .default property if it's an ESM-style module
                     if (result && result.__esModule && result.default === undefined) {
                         result.default = result;
                     }
-                    
+
                     resolve(result);
                 }
             } catch (e) {

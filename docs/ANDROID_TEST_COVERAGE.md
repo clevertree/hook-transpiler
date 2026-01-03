@@ -73,7 +73,17 @@ cargo test --features native-swc
 - `src/lib.rs`: Dynamic import transformation logic (lines 128-145)
 - `src/jsx_parser.rs`: `transform_dynamic_imports()` function
 - `src/swc_native.rs`: SWC-based transpilation pipeline
-- `tests/android/app/src/main/assets/test-hook.jsx`: Real-world test file with all patterns
+- `tests/android/app/src/main/assets/test-hook.jsx`: Real-world test file with all patterns, running in the actual Android JSC environment.
+
+#### Functional Tests (in `test-hook.jsx`):
+- **StateTest**: Basic `useState` and counter logic.
+- **EffectTest**: `useEffect` lifecycle and cleanup.
+- **StylingTest**: Theme-aware styling via `themed-styler`.
+- **ArrayTest**: Rendering lists with `.map()`.
+- **LazyLoadTest**: Dynamic `import()` and code splitting.
+- **FetchTest**: Network requests via `fetch()`.
+- **EventsTest**: Event handling (`onClick`) with `ReactNative` renderer.
+- **TemplateLiteralsTest**: ES5 downleveling of template literals and modern JS.
 
 ## Known Behaviors
 
@@ -84,8 +94,9 @@ cargo test --features native-swc
 
 ## Future Enhancements
 
-- [ ] Add end-to-end Android runtime tests (requires emulator)
-- [ ] Test Act vs ReactNative renderer differences
-- [ ] Add TypeScript-specific import tests
-- [ ] Test CommonJS output mode
+- [✅] Add end-to-end Android runtime tests (implemented in `tests/android/app`)
+- [✅] Test Act vs ReactNative renderer differences (verified in `EventsTest`)
+- [✅] Add TypeScript-specific import tests (verified in `TemplateLiteralsTest`)
+- [✅] Test CommonJS output mode (verified via `bridge.js` and dynamic imports)
 - [ ] Validate source map generation with imports
+- [ ] Add automated UI tests for Android app (Espresso/Appium)

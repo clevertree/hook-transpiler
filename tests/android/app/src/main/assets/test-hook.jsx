@@ -7,6 +7,8 @@ import StylingTest from './tests/styling-test.jsx';
 import ArrayTest from './tests/array-test.jsx';
 import DynamicImportTest from './tests/dynamic-import-test.jsx';
 import RemoteFetchTest from './tests/remote-fetch-test.jsx';
+import EventsTest from './tests/events-test.jsx';
+import TemplateLiteralsTest from './tests/template-literals-test.jsx';
 
 const TABS = [
   { id: 'state', label: 'useState', component: UseStateTest },
@@ -15,6 +17,8 @@ const TABS = [
   { id: 'array', label: '.map()', component: ArrayTest },
   { id: 'lazy', label: 'Lazy Load', component: DynamicImportTest },
   { id: 'fetch', label: 'Fetch', component: RemoteFetchTest },
+  { id: 'events', label: 'Events', component: EventsTest },
+  { id: 'template', label: 'Templates', component: TemplateLiteralsTest },
 ];
 
 export default function TestSuite() {
@@ -37,7 +41,7 @@ export default function TestSuite() {
 
   const selectedTab = TABS.find(t => t.id === activeTab);
   const ActiveComponent = selectedTab?.component;
-  
+
   console.log('[TestSuite] Rendering activeTab:', activeTab, 'resetKey:', resetKey);
   console.log('[TestSuite] ActiveComponent:', selectedTab?.label || 'NOT_FOUND');
 
@@ -61,8 +65,8 @@ export default function TestSuite() {
               <div className="px-2 py-1 text-[10px] text-muted">No Themes</div>
             )}
           </div>
-          
-          <button 
+
+          <button
             onClick={resetState}
             className="px-3 py-1 bg-surface border border-themed rounded text-[10px] uppercase tracking-wider text-muted hover:text-themed"
           >

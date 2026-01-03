@@ -64,11 +64,7 @@ class HookRenderer @JvmOverloads constructor(
     var onTranspiled: ((String) -> Unit)? = null
 
     init {
-        setBackgroundColor(android.graphics.Color.RED)
-        System.err.println("HOOK_RENDERER_CONSTRUCTOR_CALLED: HookRenderer init block running!")
-        android.util.Log.wtf(TAG, "HookRenderer init block executing")
         val rootLayout = LinearLayout(context).apply {
-            setBackgroundColor(android.graphics.Color.YELLOW)
             orientation = LinearLayout.VERTICAL
             layoutParams = LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT)
         }
@@ -76,7 +72,7 @@ class HookRenderer @JvmOverloads constructor(
 
         // Create ScrollView that will hold the rendered content
         scrollView = ScrollView(context).apply {
-            setBackgroundColor(android.graphics.Color.BLUE)
+            setBackgroundColor(android.graphics.Color.parseColor("#F8F9FA"))
             layoutParams = LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 0,
@@ -1645,7 +1641,7 @@ class HookRenderer @JvmOverloads constructor(
             scrollView.removeAllViews()
             val errorView = TextView(context).apply {
                 val errorText = StringBuilder()
-                errorText.append("Hook Error:\n")
+                errorText.append("⚠️ Hook Error\n\n")
                 errorText.append(error.message)
                 
                 if (error is HookError.ExecutionError && error.stackTrace.isNotEmpty()) {
@@ -1661,9 +1657,10 @@ class HookRenderer @JvmOverloads constructor(
                 }
                 
                 text = errorText.toString()
-                setTextColor(Color.RED)
-                setPadding(32, 32, 32, 32)
-                textSize = 12f
+                setTextColor(Color.parseColor("#D32F2F"))
+                setPadding(48, 48, 48, 48)
+                textSize = 14f
+                lineSpacingExtra = 8f
                 typeface = android.graphics.Typeface.MONOSPACE
                 layoutParams = LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT)
             }
