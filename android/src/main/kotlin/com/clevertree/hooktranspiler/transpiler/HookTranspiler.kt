@@ -33,10 +33,17 @@ class HookTranspiler {
                 Boolean::class.javaPrimitiveType
             )
             val result = method.invoke(null, source, filename, isTypescript) as String
+            if (result.isEmpty()) {
+                return Result.failure(HookError.ExecutionError(
+                    message = "Native transpiler returned empty output",
+                    sourceCode = source,
+                    errorCause = IllegalStateException("Empty output")
+                ))
+            }
             Result.success(result)
         } catch (e: ClassNotFoundException) {
             Result.failure(HookError.ExecutionError(
-                message = "RustTranspilerModule not found. Make sure relay_hook_transpiler native library is included.",
+                message = "RustTranspilerModule not found. Ensure native library is bundled.",
                 sourceCode = source,
                 errorCause = e
             ))

@@ -996,7 +996,7 @@ fn parse_props(ctx: &mut ParseContext) -> Result<String> {
                 let expr = parse_js_expression(ctx, '}')?;
                 ctx.consume('}')?;
                 // Recursively transpile any JSX that appears inside expressions
-                transpile_jsx(&expr, &TranspileOptions { is_typescript: ctx.is_typescript })?
+                transpile_jsx(&expr, &TranspileOptions { is_typescript: ctx.is_typescript, target: crate::TranspileTarget::Web, ..Default::default() })?
             } else {
                 return Err(anyhow!("Expected prop value at position {}", ctx.pos));
             };
@@ -1074,7 +1074,7 @@ fn parse_children(ctx: &mut ParseContext, parent_tag: &str) -> Result<Vec<String
             ctx.consume('}')?;
 
             // Recursively transpile any JSX that appears inside expressions
-            let transpiled_expr = transpile_jsx(&expr, &TranspileOptions { is_typescript: ctx.is_typescript })?;
+            let transpiled_expr = transpile_jsx(&expr, &TranspileOptions { is_typescript: ctx.is_typescript, target: crate::TranspileTarget::Web, ..Default::default() })?;
             children.push(transpiled_expr);
             continue;
         }
@@ -1185,60 +1185,6 @@ fn escape_string(s: &str) -> String {
         .replace('\n', "\\n")
         .replace('\r', "\\r")
         .replace('\t', "\\t")
-}
-
-/// Extract import metadata and feature flags from source
-pub fn extract_imports_and_features(source: &str) -> (Vec<crate::ImportMetadata>, bool, bool) {
-    let mut imports = Vec::new();
-    let has_jsx = source.contains('<') && (source.contains("/>") || source.contains("</"));
-    let has_dynamic_import = source.contains("import(");
-
-    for raw_line in source.lines() {
-        let line = raw_line.trim_start();
-        if !line.starts_with("import ") { continue; }
-
-        // Strip trailing semicolon
-        let line = line.trim_end_matches(';').trim_end();
-
-        // Quick skip for side-effect imports: import 'x'
-        if let Some(spec) = parse_side_effect_specifier(line) {
-            imports.push(crate::ImportMetadata { source: spec.to_string(), kind: determine_import_kind(spec), bindings: Vec::new() });
-            continue;
-        }
-
-        // Forms we handle (simple):
-        // import { a, b as c } from 'mod'
-        // import * as NS from "mod"
-        // import Default from 'mod'
-        // Note: combined default + named not currently needed by tests
-
-        if let Some((named_clause, spec)) = parse_named_import(line) {
-            let mut bindings = Vec::new();
-            for part in named_clause.split(',') {
-                let p = part.trim();
-                if p.is_empty() { continue; }
-                let segs: Vec<&str> = p.split(" as ").collect();
-                let name = segs[0].trim();
-                if !name.is_empty() {
-                    bindings.push(crate::ImportBinding { binding_type: crate::ImportBindingType::Named, name: name.to_string(), alias: segs.get(1).map(|s| s.trim().to_string()) });
-                }
-            }
-            imports.push(crate::ImportMetadata { source: spec.to_string(), kind: determine_import_kind(spec), bindings });
-            continue;
-        }
-
-        if let Some((ns_name, spec)) = parse_namespace_import(line) {
-            imports.push(crate::ImportMetadata { source: spec.to_string(), kind: determine_import_kind(spec), bindings: vec![crate::ImportBinding { binding_type: crate::ImportBindingType::Namespace, name: ns_name.to_string(), alias: None }] });
-            continue;
-        }
-
-        if let Some((default_name, spec)) = parse_default_import(line) {
-            imports.push(crate::ImportMetadata { source: spec.to_string(), kind: determine_import_kind(spec), bindings: vec![crate::ImportBinding { binding_type: crate::ImportBindingType::Default, name: default_name.to_string(), alias: None }] });
-            continue;
-        }
-    }
-
-    (imports, has_jsx, has_dynamic_import)
 }
 
 /// Transform ES6 modules (import/export) to CommonJS (require/module.exports)
@@ -1376,44 +1322,74 @@ fn parse_import_spec(spec: &str) -> (Vec<String>, bool, bool) {
     (vec![], false, false)
 }
 
+/// Transform ES6 modules to CommonJS
+/// Converts: import X from 'mod' → const X = require('mod')
+/// Converts: export default X → module.exports.default = X
 pub fn transform_es6_modules(source: &str) -> String {
     // First, handle dynamic imports
     let mut source = source.to_string();
     source = transform_dynamic_imports(&source);
-    
-    let mut output = String::new();
-    
+
+    // Collapse statements (imports/exports can span multiple lines)
+    let mut statements: Vec<String> = Vec::new();
+    let mut buffer = String::new();
     for line in source.lines() {
-        let trimmed = line.trim_start();
-        
+        let trimmed = line.trim_end();
+        if trimmed.is_empty() {
+            if !buffer.is_empty() {
+                statements.push(buffer.trim().to_string());
+                buffer.clear();
+            }
+            continue;
+        }
+
+        buffer.push_str(trimmed);
+        buffer.push(' ');
+
+        if trimmed.ends_with(';') {
+            statements.push(buffer.trim().to_string());
+            buffer.clear();
+        }
+    }
+    if !buffer.is_empty() {
+        statements.push(buffer.trim().to_string());
+    }
+
+    let mut output = String::new();
+
+    for stmt in statements {
+        let trimmed = stmt.trim_start();
+
         // Transform export default
         if trimmed.starts_with("export default ") {
             let rest = &trimmed[15..]; // len("export default ") = 15
             output.push_str("module.exports.default = ");
-            output.push_str(rest);
+            output.push_str(rest.trim());
             output.push('\n');
             continue;
         }
-        
+
         // Transform named exports: export { a, b, c } or export const/function/class
         if trimmed.starts_with("export ") {
             let rest = &trimmed[7..]; // len("export ") = 7
-            
+
             // export { a, b as c }
             if rest.starts_with('{') {
                 if let Some(closing) = rest.find('}') {
                     let exports = &rest[1..closing].trim();
                     for item in exports.split(',') {
                         let item = item.trim();
-                        if item.is_empty() { continue; }
-                        
+                        if item.is_empty() {
+                            continue;
+                        }
+
                         let (name, alias) = if item.contains(" as ") {
                             let parts: Vec<&str> = item.split(" as ").collect();
                             (parts[0].trim(), parts[1].trim())
                         } else {
                             (item, item)
                         };
-                        
+
                         output.push_str("module.exports.");
                         output.push_str(alias);
                         output.push_str(" = ");
@@ -1422,18 +1398,18 @@ pub fn transform_es6_modules(source: &str) -> String {
                     }
                     // Add any code after the closing brace
                     if closing + 1 < rest.len() {
-                        output.push_str(&rest[closing+1..]);
+                        output.push_str(&rest[closing + 1..]);
                         output.push('\n');
                     }
                 }
                 continue;
             }
-            
+
             // export const/function/class X = ...
             if rest.starts_with("const ") || rest.starts_with("function ") || rest.starts_with("class ") {
                 output.push_str(rest);
                 output.push('\n');
-                
+
                 // Extract the name for module.exports
                 if rest.starts_with("const ") {
                     if let Some(eq_pos) = rest.find('=') {
@@ -1455,7 +1431,7 @@ pub fn transform_es6_modules(source: &str) -> String {
                     }
                 } else if rest.starts_with("class ") {
                     if let Some(space_pos) = rest[6..].find(' ') {
-                        let name = &rest[6..6+space_pos].trim();
+                        let name = &rest[6..6 + space_pos].trim();
                         output.push_str("module.exports.");
                         output.push_str(name);
                         output.push_str(" = ");
@@ -1466,16 +1442,16 @@ pub fn transform_es6_modules(source: &str) -> String {
                 continue;
             }
         }
-        
+
         // Transform import statements to require
         if trimmed.starts_with("import ") {
             let rest = &trimmed[7..]; // len("import ") = 7
-            
+
             // import 'module' (side effect)
             if rest.starts_with('"') || rest.starts_with('\'') {
                 let quote = if rest.starts_with('"') { '"' } else { '\'' };
                 if let Some(closing) = rest[1..].find(quote) {
-                    let module = &rest[1..closing+1];
+                    let module = &rest[1..closing + 1];
                     output.push_str("require(");
                     output.push(quote);
                     output.push_str(module);
@@ -1484,12 +1460,12 @@ pub fn transform_es6_modules(source: &str) -> String {
                 }
                 continue;
             }
-            
+
             // import X from 'module'
             if let Some(from_pos) = rest.find(" from ") {
                 let bindings = rest[..from_pos].trim();
                 let module_part = rest[from_pos + 6..].trim();
-                
+
                 let module = if let Some(semi_pos) = module_part.rfind(';') {
                     &module_part[..semi_pos]
                 } else {
@@ -1500,19 +1476,19 @@ pub fn transform_es6_modules(source: &str) -> String {
                     // Handle mixed imports: import React, { useState } from 'react'
                     if let Some(comma_pos) = bindings.find(',') {
                         let default_binding = bindings[..comma_pos].trim();
-                        let named_bindings = bindings[comma_pos+1..].trim();
-                        
+                        let named_bindings = bindings[comma_pos + 1..].trim();
+
                         output.push_str("const ");
                         output.push_str(default_binding);
                         output.push_str(" = require(");
                         output.push_str(module);
                         output.push_str(");\n");
-                        
+
                         let mut named = named_bindings.to_string();
                         if named.starts_with('{') && named.ends_with('}') {
                             named = named.replace(" as ", ": ");
                         }
-                        
+
                         output.push_str("const ");
                         output.push_str(&named);
                         output.push_str(" = ");
@@ -1526,7 +1502,7 @@ pub fn transform_es6_modules(source: &str) -> String {
                     } else if bindings_str.starts_with("* as ") {
                         bindings_str = bindings_str[5..].to_string();
                     }
-                    
+
                     output.push_str("const ");
                     output.push_str(&bindings_str);
                     output.push_str(" = require(");
@@ -1536,25 +1512,29 @@ pub fn transform_es6_modules(source: &str) -> String {
                 continue;
             }
         }
-        
+
         // Pass through non-module lines
-        output.push_str(line);
+        output.push_str(trimmed);
         output.push('\n');
     }
-    
+
     output
 }
 
-/// Transform dynamic import() calls to Promise-wrapped require() calls
-/// This allows code like: import('./module').then(m => ...) to work in CommonJS
-fn transform_dynamic_imports(source: &str) -> String {
+/// Transform dynamic import() calls to __hook_import() calls
+/// This allows code like: import('./module').then(m => ...) to work
+pub fn transform_dynamic_imports(source: &str) -> String {
     let mut output = String::new();
     let chars: Vec<char> = source.chars().collect();
     let mut i = 0;
+    let is_ident_char = |c: char| c.is_alphanumeric() || c == '_' || c == '$';
     
     while i < chars.len() {
-        // Look for 'import' keyword
-        if i + 6 <= chars.len() && &chars[i..i+6].iter().collect::<String>() == "import" {
+        // Look for 'import' keyword that is not part of a longer identifier (e.g., __hook_import)
+        if i + 6 <= chars.len()
+            && &chars[i..i+6].iter().collect::<String>() == "import"
+            && (i == 0 || !is_ident_char(chars[i - 1]))
+        {
             // Check if it's followed by '('
             let mut j = i + 6;
             while j < chars.len() && chars[j].is_whitespace() {
@@ -1598,135 +1578,6 @@ fn transform_dynamic_imports(source: &str) -> String {
     output
 }
 
-fn parse_quoted_spec(s: &str) -> Option<&str> {
-    let bytes = s.as_bytes();
-    let first = *bytes.get(0)?;
-    if first != b'"' && first != b'\'' { return None; }
-    let quote = first as char;
-    let mut i = 1;
-    while i < bytes.len() {
-        let c = bytes[i] as char;
-        if c == '\\' { i += 2; continue; }
-        if c == quote { return Some(&s[1..i]); }
-        i += 1;
-    }
-    None
-}
-
-fn parse_side_effect_specifier(line: &str) -> Option<&str> {
-    // import 'module'
-    if let Some(idx) = line.find("import ") {
-        let rest = line[idx + 7..].trim_start();
-        if rest.starts_with('\'') || rest.starts_with('"') {
-            return parse_quoted_spec(rest);
-        }
-    }
-    None
-}
-
-fn parse_named_import(line: &str) -> Option<(&str, &str)> {
-    // import { a, b as c } from 'mod'
-    if !line.starts_with("import ") { return None; }
-    let after = &line[7..];
-    let after = after.trim_start();
-    if !after.starts_with('{') { return None; }
-    let close = after.find('}')?;
-    let named = &after[1..close];
-    let rest = after[close+1..].trim_start();
-    if !rest.starts_with("from ") { return None; }
-    let spec = rest[5..].trim_start();
-    let spec = parse_quoted_spec(spec)?;
-    Some((named, spec))
-}
-
-fn parse_namespace_import(line: &str) -> Option<(&str, &str)> {
-    // import * as NS from 'mod'
-    if !line.starts_with("import ") { return None; }
-    let mut rest = &line[7..];
-    rest = rest.trim_start();
-    if !rest.starts_with("* as ") { return None; }
-    rest = &rest[5..];
-    // read identifier
-    let mut end = 0;
-    for ch in rest.chars() {
-        if ch.is_alphanumeric() || ch == '_' || ch == '$' { end += ch.len_utf8(); } else { break; }
-    }
-    if end == 0 { return None; }
-    let name = &rest[..end];
-    rest = rest[end..].trim_start();
-    if !rest.starts_with("from ") { return None; }
-    let spec = &rest[5..];
-    let spec = parse_quoted_spec(spec)?;
-    Some((name, spec))
-}
-
-fn parse_default_import(line: &str) -> Option<(&str, &str)> {
-    // import Default from 'mod'
-    if !line.starts_with("import ") { return None; }
-    let mut rest = &line[7..];
-    rest = rest.trim_start();
-    // read identifier
-    let mut end = 0;
-    for ch in rest.chars() {
-        if ch.is_alphanumeric() || ch == '_' || ch == '$' { end += ch.len_utf8(); } else { break; }
-    }
-    if end == 0 { return None; }
-    let name = &rest[..end];
-    rest = rest[end..].trim_start();
-    if !rest.starts_with("from ") { return None; }
-    let spec = &rest[5..];
-    let spec = parse_quoted_spec(spec)?;
-    Some((name, spec))
-}
-
-fn determine_import_kind(source: &str) -> crate::ImportKind {
-    // List of Node.js builtin modules
-    let builtins = [
-        "assert", "buffer", "child_process", "cluster", "crypto", "dgram",
-        "dns", "domain", "events", "fs", "http", "https", "net", "os",
-        "path", "punycode", "querystring", "readline", "stream", "string_decoder",
-        "timers", "tls", "tty", "url", "util", "v8", "vm", "zlib",
-    ];
-    
-    // Check if it's a builtin
-    let module_name = source.split('/').next().unwrap_or(source);
-    if builtins.contains(&module_name) || source.starts_with("node:") {
-        return crate::ImportKind::Builtin;
-    }
-    
-    // Special packages that need rewriting
-    let special_packages = [
-        "react",
-        "react-dom",
-        "@clevertree/meta",
-        "@clevertree/file-renderer",
-        "@clevertree/helpers",
-        "@clevertree/markdown",
-    ];
-    
-    if special_packages.contains(&source) {
-        return crate::ImportKind::SpecialPackage;
-    }
-    
-    // Everything else is a module
-    crate::ImportKind::Module
-}
-
-/// Transpile JSX and return metadata about the module
-pub fn transpile_jsx_with_metadata(source: &str, opts: &TranspileOptions) -> Result<(String, crate::TranspileMetadata)> {
-    let code = transpile_jsx(source, opts)?;
-    let (imports, has_jsx, has_dynamic_import) = extract_imports_and_features(source);
-    
-    let metadata = crate::TranspileMetadata {
-        imports,
-        has_jsx,
-        has_dynamic_import,
-        version: crate::version().to_string(),
-    };
-    
-    Ok((code, metadata))
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -1764,7 +1615,7 @@ export default function () {
   return <div style={{ color: primary }} />;
 }
 "#;
-        let out = transpile_jsx(src, &TranspileOptions { is_typescript: true }).expect("Should transpile correctly");
+        let out = transpile_jsx(src, &TranspileOptions { is_typescript: true, target: crate::TranspileTarget::Web, ..Default::default() }).expect("Should transpile correctly");
         assert!(out.contains("const { colors: { primary } } = theme;"), "Destructuring should be preserved");
     }
 
@@ -1774,7 +1625,7 @@ export default function () {
         let err = transpile_jsx(src, &TranspileOptions::default());
         assert!(err.is_err(), "JS mode should reject TS generics");
 
-        let out = transpile_jsx(src, &TranspileOptions { is_typescript: true }).expect("Should transpile correctly in TS mode");
+        let out = transpile_jsx(src, &TranspileOptions { is_typescript: true, target: crate::TranspileTarget::Web, ..Default::default() }).expect("Should transpile correctly in TS mode");
         assert!(!out.contains("__hook_jsx_runtime.jsx"), "Should NOT transpile generic as JSX");
     }
 
@@ -1785,7 +1636,7 @@ interface User { name: string; }
 const user: User = { name: "Ari" };
 const f = <T>(x: T): T => x;
 const element = <div user={user as any} />;"#;
-        let out = transpile_jsx(src, &TranspileOptions { is_typescript: true }).expect("Should transpile correctly");
+        let out = transpile_jsx(src, &TranspileOptions { is_typescript: true, target: crate::TranspileTarget::Web, ..Default::default() }).expect("Should transpile correctly");
         assert!(!out.contains("interface User"), "Should strip interface");
         assert!(!out.contains(": User"), "Should strip type annotation");
         assert!(!out.contains("<T>"), "Should strip generic");
@@ -1796,19 +1647,19 @@ const element = <div user={user as any} />;"#;
     #[test]
     fn test_js_mode_rejections() {
         let src_interface = "interface User { name: string; }";
-        let err = transpile_jsx(src_interface, &TranspileOptions { is_typescript: false });
+        let err = transpile_jsx(src_interface, &TranspileOptions { is_typescript: false, target: crate::TranspileTarget::Web, ..Default::default() });
         assert!(err.is_err(), "Should reject interface in JS mode");
 
         let src_type = "type MyNum = number;";
-        let err = transpile_jsx(src_type, &TranspileOptions { is_typescript: false });
+        let err = transpile_jsx(src_type, &TranspileOptions { is_typescript: false, target: crate::TranspileTarget::Web, ..Default::default() });
         assert!(err.is_err(), "Should reject type in JS mode");
 
         let src_annotation = "const x: number = 5;";
-        let err = transpile_jsx(src_annotation, &TranspileOptions { is_typescript: false });
+        let err = transpile_jsx(src_annotation, &TranspileOptions { is_typescript: false, target: crate::TranspileTarget::Web, ..Default::default() });
         assert!(err.is_err(), "Should reject type annotation in JS mode");
 
         let src_destructuring = "const { colors: { primary } } = theme;";
-        let out = transpile_jsx(src_destructuring, &TranspileOptions { is_typescript: false }).expect("Should allow destructuring");
+        let out = transpile_jsx(src_destructuring, &TranspileOptions { is_typescript: false, target: crate::TranspileTarget::Web, ..Default::default() }).expect("Should allow destructuring");
         assert!(out.contains("const { colors: { primary } } = theme;"), "Should preserve destructuring in JS mode");
     }
 
@@ -2074,6 +1925,71 @@ export { Helper };
         
         assert_eq!(imports.len(), 1);
         assert_eq!(imports[0].module, "@scope/package");
+    }
+
+    #[test]
+    fn test_transform_dynamic_imports_simple() {
+        let source = r#"const mod = import('./module');"#;
+        let output = transform_dynamic_imports(source);
+        
+        assert_eq!(output, r#"const mod = __hook_import('./module');"#);
+    }
+
+    #[test]
+    fn test_transform_dynamic_imports_multiple() {
+        let source = r#"
+        Promise.all([
+            import("./lazy-data.js"),
+            import("/hooks/lazy-data.js?x=1#frag")
+        ])
+        "#;
+        let output = transform_dynamic_imports(source);
+        
+        eprintln!("=== OUTPUT ===");
+        eprintln!("{}", output);
+        eprintln!("=== END OUTPUT ===");
+        eprintln!("Contains 'import(': {}", output.contains("import("));
+        eprintln!("Contains '__hook_import(': {}", output.contains("__hook_import("));
+        
+        // Count occurrences
+        let import_count = output.matches("import(").count();
+        let hook_import_count = output.matches("__hook_import(").count();
+        eprintln!("import( count: {}, __hook_import( count: {}", import_count, hook_import_count);
+        
+        assert!(output.contains(r#"__hook_import("./lazy-data.js")"#));
+        assert!(output.contains(r#"__hook_import("/hooks/lazy-data.js?x=1#frag")"#));
+        // The string "__hook_import(" contains "import(" as a substring, so we can't do a simple check
+        // Instead, verify that there are no standalone import( calls
+        assert_eq!(import_count, hook_import_count, "All import() calls should be transformed to __hook_import()");
+    }
+
+    #[test]
+    fn test_transform_dynamic_imports_does_not_rewrite_existing_hook_import() {
+        let source = r#"
+        const a = __hook_import('./lazy.js');
+        const b = import('./other.js');
+        "#;
+
+        let output = transform_dynamic_imports(source);
+
+        // Existing __hook_import calls should be left as-is
+        assert!(output.contains("const a = __hook_import('./lazy.js');"));
+
+        // Dynamic import should still be rewritten
+        assert!(output.contains("const b = __hook_import('./other.js');"));
+
+        // Total __hook_import occurrences should match the two expected calls
+        let hook_import_count = output.matches("__hook_import").count();
+        assert_eq!(hook_import_count, 2, "Expected exactly two __hook_import calls");
+    }
+
+    #[test]
+    fn test_transform_dynamic_imports_handles_whitespace_variations() {
+        let source = "const m = import   (  './spaced.js'   );";
+        let output = transform_dynamic_imports(source);
+
+        // Whitespace between keyword and paren should still be transformed
+        assert_eq!(output.trim(), "const m = __hook_import('./spaced.js');");
     }
 
 }

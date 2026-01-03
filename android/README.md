@@ -315,6 +315,40 @@ Published to Maven Central Repository:
 ./gradlew publishToSonatype
 ```
 
+## Test Application
+
+A comprehensive test application is available in `../../themed-styler/tests/android/` that demonstrates:
+
+### Features Demonstrated
+- **Dynamic theme switching** - Light and dark themes with real-time UI updates
+- **Responsive breakpoints** - Mobile, tablet, and desktop responsive layouts
+- **Multi-hook tabs** - ViewPager2 with multiple hook demonstrations
+- **State management** - React hooks (useState) for theme and state management
+- **Styling system** - Integration with @clevertree/themed-styler
+
+### Building & Running the Test App
+
+```bash
+# Build the test app
+cd ../../themed-styler/tests/android
+./gradlew assembleDebug
+
+# Install on device
+adb install -r app/build/outputs/apk/debug/app-debug.apk
+
+# Launch the app
+adb shell am start -n com.relay.test/.MainActivity
+```
+
+### Test App Structure
+- **test-hook.jsx** - Main demo with theme switching (light/dark)
+- **breakpoint-demo.jsx** - Responsive design demonstration
+- **app-theme.yaml** - Theme definitions for styling
+- **MainActivity.kt** - App entry point with ViewPager2
+- **HookRenderer** - Hook transpilation and execution
+
+See [themed-styler test app README](../../themed-styler/tests/android/README.md) for detailed information.
+
 ## License
 
 MIT OR Apache-2.0

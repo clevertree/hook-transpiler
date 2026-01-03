@@ -17,6 +17,10 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
+        mavenLocal()
+        flatDir {
+            dirs("${rootDir}/android/libs")
+        }
     }
 }
 

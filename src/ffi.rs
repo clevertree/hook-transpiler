@@ -23,7 +23,16 @@ pub unsafe extern "C" fn hook_transpile_jsx(
         Err(_) => return ptr::null_mut(),
     };
 
-    let opts = TranspileOptions { is_typescript };
+    let opts = TranspileOptions {
+        is_typescript,
+        target: TranspileTarget::Android,
+        filename: None,
+        to_commonjs: true,
+        source_maps: false,
+        inline_source_map: false,
+        compat_for_jsc: true,
+        debug_level: DebugLevel::default(),
+    };
 
     match transpile_jsx_with_options(code_str, &opts) {
         Ok(transpiled) => {

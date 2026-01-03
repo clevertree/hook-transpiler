@@ -1,23 +1,26 @@
 buildscript {
     repositories {
-        mavenLocal()
         google()
         mavenCentral()
     }
     dependencies {
-        classpath "com.android.tools.build:gradle:8.2.0"
-        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:1.9.20"
+        classpath 'com.android.tools.build:gradle:8.0.0'
+        classpath 'org.jetbrains.kotlin:kotlin-gradle-plugin:1.9.0'
     }
 }
 
 allprojects {
     repositories {
-        mavenLocal()
         google()
         mavenCentral()
-        maven {
-            // React Native JSC from GitHub
-            url 'https://jitpack.io'
+        mavenLocal()
+        flatDir {
+            dirs "${rootDir.parentFile}/android/libs"
+            dirs "${rootDir}/app/libs"
         }
     }
+}
+
+task clean(type: Delete) {
+    delete rootProject.buildDir
 }

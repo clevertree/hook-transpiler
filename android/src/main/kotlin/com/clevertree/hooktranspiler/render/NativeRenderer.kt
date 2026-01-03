@@ -12,6 +12,9 @@ import android.widget.*
 import com.google.gson.Gson
 import com.relay.client.ThemedStylerModule
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicInteger
 
 /**
  * Native renderer for Hook components
@@ -19,11 +22,16 @@ import java.util.concurrent.ConcurrentHashMap
  */
 class NativeRenderer(private val context: Context, private val rootContainer: ViewGroup) {
     private val TAG = "NativeRenderer"
+    companion object {
+        // Key for storing rounded radius fallback without requiring app resources
+        private val TAG_RADIUS_KEY = View.generateViewId()
+    }
     private val gson = Gson()
     private val mainHandler = Handler(Looper.getMainLooper())
     private val nodes = ConcurrentHashMap<Int, View>()
     private val viewTypes = ConcurrentHashMap<Int, String>()
     private val lastAppliedStyles = ConcurrentHashMap<Int, Map<String, Any>>()
+    private val renderEpoch = AtomicInteger(0)
     private var viewsCreatedInCurrentRender = 0
     private var currentThemeJson: String = "{}"
     
@@ -35,18 +43,44 @@ class NativeRenderer(private val context: Context, private val rootContainer: Vi
     }
 
     fun setTheme(themeJson: String) {
-        this.currentThemeJson = themeJson
+        // Inject display metrics into theme for Rust crate
+        // The themed-styler crate uses these for accurate unit conversions
+        try {
+            Log.wtf(TAG, "========== SET THEME CALLED ==========")
+            Log.i(TAG, "[Theme] Native version: ${com.relay.client.ThemedStylerModule.nativeGetVersion()}")
+            val theme = gson.fromJson(themeJson, MutableMap::class.java) as MutableMap<String, Any>
+            Log.i(TAG, "[Theme] Parsed theme keys: ${theme.keys}")
+            val currentTheme = theme["current_theme"] as? String
+            val themes = theme["themes"] as? Map<String, Any>
+            val lightColors = (themes?.get("light") as? Map<String, Any>)?.get("variables") as? Map<String, Any>
+            val darkColors = (themes?.get("dark") as? Map<String, Any>)?.get("variables") as? Map<String, Any>
+            val defaultSelectors = (themes?.get("default") as? Map<String, Any>)?.get("selectors") as? Map<String, Any>
+            
+            Log.i(TAG, "[Theme] current_theme: $currentTheme")
+            Log.d(TAG, "[Theme] themes available: ${themes?.keys}")
+            Log.d(TAG, "[Theme] light.variables: ${lightColors?.keys}")
+            Log.d(TAG, "[Theme] dark.variables: ${darkColors?.keys}")
+            Log.d(TAG, "[Theme] default.selectors sample: ${defaultSelectors?.keys?.take(5)}")
+            
+            theme["displayDensity"] = context.resources.displayMetrics.density
+            theme["scaledDensity"] = context.resources.displayMetrics.scaledDensity
+            this.currentThemeJson = gson.toJson(theme)
+            
+            Log.i(TAG, "[Theme] Final theme JSON: ${this.currentThemeJson}")
+            
+            // Update the unified style cache with new theme
+            ThemedStylerModule.setTheme(this.currentThemeJson)
+            
+            Log.d(TAG, "[Theme] Set theme with density=${context.resources.displayMetrics.density} scaledDensity=${context.resources.displayMetrics.scaledDensity}")
+            Log.d(TAG, "[Theme] currentThemeJson length: ${this.currentThemeJson.length}")
+        } catch (e: Exception) {
+            Log.e(TAG, "[Theme] Failed to inject density into theme: ${e.message}", e)
+            this.currentThemeJson = themeJson
+            ThemedStylerModule.setTheme(this.currentThemeJson)
+        }
     }
 
     fun getViewCount(): Int = viewsCreatedInCurrentRender
-
-    private fun dpToPx(dp: Float): Int {
-        return (dp * context.resources.displayMetrics.density).toInt()
-    }
-
-    private fun spToPx(sp: Float): Float {
-        return sp * context.resources.displayMetrics.scaledDensity
-    }
 
     private fun runOnMainThread(action: () -> Unit) {
         if (Looper.myLooper() == Looper.getMainLooper()) {
@@ -56,55 +90,98 @@ class NativeRenderer(private val context: Context, private val rootContainer: Vi
         }
     }
 
-    fun createView(tag: Int, type: String, props: Map<String, Any>) {
-        Log.d(TAG, "createView: tag=$tag, type=$type")
-        runOnMainThread {
+    private fun runOnMainThreadBlocking(timeoutMs: Long = 2000, action: () -> Unit) {
+        if (Looper.myLooper() == Looper.getMainLooper()) {
+            action()
+            return
+        }
+
+        val latch = CountDownLatch(1)
+        mainHandler.post {
             try {
-                val view = when (type.lowercase()) {
-                    "div", "view", "section", "header", "footer", "main", "nav", "h1", "h2", "h3", "h4", "h5", "h6", "p", "article", "aside" -> 
-                        LinearLayout(context).apply { orientation = LinearLayout.VERTICAL }
-                    "text", "span", "label" -> TextView(context)
-                    "frame" -> FrameLayout(context)
-                    "button" -> Button(context)
-                    "img", "image" -> ImageView(context)
-                    "scroll", "scrollview" -> ScrollView(context)
-                    else -> LinearLayout(context).apply { orientation = LinearLayout.VERTICAL }
-                }
+                action()
+            } finally {
+                latch.countDown()
+            }
+        }
 
-                view.id = if (tag > 0) tag else View.generateViewId()
-                nodes[tag] = view
-                viewTypes[tag] = type
-                viewsCreatedInCurrentRender++
+        val completed = latch.await(timeoutMs, TimeUnit.MILLISECONDS)
+        if (!completed) {
+            Log.w(TAG, "Timeout waiting for main-thread execution (timeoutMs=$timeoutMs)")
+        }
+    }
 
-                // Root view (tag=-1) should use FrameLayout.LayoutParams to fill parent width, but wrap height for scrolling
-                if (tag == -1) {
-                    view.layoutParams = FrameLayout.LayoutParams(
-                        ViewGroup.LayoutParams.MATCH_PARENT,
-                        ViewGroup.LayoutParams.WRAP_CONTENT
-                    )
-                    rootContainer.removeAllViews()
-                    rootContainer.addView(view)
-                } else {
-                    view.layoutParams = ViewGroup.MarginLayoutParams(
-                        ViewGroup.LayoutParams.WRAP_CONTENT,
-                        ViewGroup.LayoutParams.WRAP_CONTENT
-                    )
-                }
+    private fun isStale(epoch: Int): Boolean = epoch != renderEpoch.get()
 
-                updateProps(tag, props)
-                Log.d(TAG, "Created view: tag=$tag, type=$type")
+    fun createView(tag: Int, type: String, props: Map<String, Any>) {
+        Log.d(TAG, "[CREATE_VIEW] tag=$tag, type=$type, isMainThread=${Looper.myLooper() == Looper.getMainLooper()}")
+        
+        // Ensure view creation happens on main thread, and register immediately after
+        runOnMainThreadBlocking {
+            val epoch = renderEpoch.get()  // Capture epoch INSIDE main thread to avoid race
+            Log.d(TAG, "[CREATE_VIEW_MAIN] tag=$tag, epoch=$epoch")
+
+            try {
+                createViewInternal(tag, type, props)
+                Log.i(TAG, "[CREATE_VIEW_SUCCESS] tag=$tag, type=$type created (epoch=$epoch, totalViews=$viewsCreatedInCurrentRender)")
             } catch (e: Exception) {
-                Log.e(TAG, "Failed to create view: tag=$tag, type=$type", e)
+                Log.e(TAG, "[CREATE_VIEW_ERROR] tag=$tag, type=$type", e)
             }
         }
     }
 
+    private fun createViewInternal(tag: Int, type: String, props: Map<String, Any>): View {
+        val view = when (type.lowercase()) {
+            "div", "view", "section", "header", "footer", "main", "nav", "h1", "h2", "h3", "h4", "h5", "h6", "p", "article", "aside" -> 
+                LinearLayout(context).apply { orientation = LinearLayout.VERTICAL }
+            "text", "span", "label" -> TextView(context)
+            "frame" -> FrameLayout(context)
+            "button" -> Button(context)
+            "img", "image" -> ImageView(context)
+            "scroll", "scrollview" -> ScrollView(context)
+            else -> LinearLayout(context).apply { orientation = LinearLayout.VERTICAL }
+        }
+
+        view.id = if (tag > 0) tag else View.generateViewId()
+        viewTypes[tag] = type
+        nodes[tag] = view  // Register before applying props so updates can run
+        viewsCreatedInCurrentRender++
+
+        // Root view (tag=-1) should use FrameLayout.LayoutParams to fill parent width, but wrap height for scrolling
+        if (tag == -1) {
+            view.layoutParams = FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+            )
+            Log.d(TAG, "[ROOT_VIEW] Creating root view, current rootContainer.childCount=${rootContainer.childCount}")
+            rootContainer.removeAllViews()
+            rootContainer.addView(view)
+            Log.d(TAG, "[ROOT_VIEW] Root view added, new rootContainer.childCount=${rootContainer.childCount}, rootContainer.visibility=${rootContainer.visibility}")
+        } else {
+            view.layoutParams = ViewGroup.MarginLayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+            )
+        }
+
+        updateProps(tag, props)
+        return view
+    }
+
     fun addEventListener(tag: Int, event: String) {
+        Log.d(TAG, "[addEventListener] CALLED: tag=$tag, event=$event, thread=${Thread.currentThread().name}")
         runOnMainThread {
-            val view = nodes[tag] ?: return@runOnMainThread
+            val view = nodes[tag]
+            Log.d(TAG, "[addEventListener] Inside runOnMainThread: tag=$tag, viewExists=${view != null}")
+            if (view == null) {
+                Log.w(TAG, "[addEventListener] View not found for tag=$tag")
+                return@runOnMainThread
+            }
             when (event.lowercase()) {
                 "click", "onclick" -> {
+                    Log.d(TAG, "[addEventListener] Setting onClickListener for tag=$tag")
                     view.setOnClickListener {
+                        Log.d(TAG, "[onClick] Native click detected for tag=$tag")
                         triggerEvent(tag, event, emptyMap<String, Any>())
                     }
                 }
@@ -113,7 +190,7 @@ class NativeRenderer(private val context: Context, private val rootContainer: Vi
     }
 
     private fun triggerEvent(tag: Int, event: String, data: Map<String, Any>) {
-        val ctx = jsContext as? com.facebook.jsc.wrapper.JSContext ?: return
+        val ctx = jsContext as? com.clevertree.jscbridge.JSContext ?: return
         val payload = gson.toJson(mapOf(
             "tag" to tag,
             "event" to event,
@@ -125,10 +202,12 @@ class NativeRenderer(private val context: Context, private val rootContainer: Vi
 
     fun updateProps(tag: Int, props: Map<String, Any>) {
         runOnMainThread {
+            Log.d(TAG, "[UpdateProps] tag=$tag propsKeys=${props.keys}")
             val view = nodes[tag] ?: return@runOnMainThread
             
             if (props.containsKey("text")) {
                 val text = props["text"]?.toString() ?: ""
+                Log.d(TAG, "[UpdateProps] tag=$tag setting text='$text'")
                 if (view is TextView) {
                     view.text = text
                 } else if (view is ViewGroup) {
@@ -147,15 +226,29 @@ class NativeRenderer(private val context: Context, private val rootContainer: Vi
             }
             
             // Apply className if present (integration with styler)
-            (props["className"] as? String)?.let { className ->
-                // Fallback to basic class parsing if no styler is present
-                applyClassStyles(view, className)
+            val rawClassName = props["className"]
+            Log.d(TAG, "[Class-Raw] tag=$tag raw=$rawClassName type=${rawClassName?.javaClass}")
+            val className = (rawClassName as? String) ?: ""
+            
+            Log.d(TAG, "[Class] tag=$tag className=$className")
+            Log.d(TAG, "[Props-Update] tag=$tag className=$className")
+            
+            // Apply themed styles (unified styler)
+            applyThemedStyles(view, className)
+            
+            // Fallback to basic class parsing if no styler is present
+            if (className.isNotEmpty()) {
+                applyBasicClassStyles(view, className)
+            }
+            if (props.containsKey("className") && props["className"] !is String) {
+                Log.w(TAG, "[Class] tag=$tag className type=${props["className"]?.javaClass} value=${props["className"]}")
             }
         }
     }
 
     private fun applyStyles(view: View, style: Map<String, Any>) {
         val tag = view.id
+        Log.d(TAG, "[Style] Applying styles to tag $tag: $style")
         lastAppliedStyles[tag] = style
         
         val lp = view.layoutParams as? ViewGroup.MarginLayoutParams
@@ -170,6 +263,14 @@ class NativeRenderer(private val context: Context, private val rootContainer: Vi
         var pRight = view.paddingRight
         var pBottom = view.paddingBottom
 
+        fun parseNumber(v: Any?): Float? {
+            return when (v) {
+                is Number -> v.toFloat()
+                is String -> v.toFloatOrNull()
+                else -> null
+            }
+        }
+
         for ((key, value) in style) {
             when (key) {
                 "width" -> {
@@ -177,8 +278,7 @@ class NativeRenderer(private val context: Context, private val rootContainer: Vi
                         "match_parent" -> ViewGroup.LayoutParams.MATCH_PARENT
                         "wrap_content" -> ViewGroup.LayoutParams.WRAP_CONTENT
                         else -> {
-                            val num = (value as? Number)?.toFloat() ?: value.toString().toFloatOrNull()
-                            if (num != null) dpToPx(num) else lp?.width ?: ViewGroup.LayoutParams.WRAP_CONTENT
+                            parseNumber(value)?.toInt() ?: lp?.width ?: ViewGroup.LayoutParams.WRAP_CONTENT
                         }
                     }
                     lp?.width = w
@@ -188,21 +288,27 @@ class NativeRenderer(private val context: Context, private val rootContainer: Vi
                         "match_parent" -> ViewGroup.LayoutParams.MATCH_PARENT
                         "wrap_content" -> ViewGroup.LayoutParams.WRAP_CONTENT
                         else -> {
-                            val num = (value as? Number)?.toFloat() ?: value.toString().toFloatOrNull()
-                            if (num != null) dpToPx(num) else lp?.height ?: ViewGroup.LayoutParams.WRAP_CONTENT
+                            parseNumber(value)?.toInt() ?: lp?.height ?: ViewGroup.LayoutParams.WRAP_CONTENT
                         }
                     }
                     lp?.height = h
                 }
                 "backgroundColor" -> try { 
-                    backgroundColor = Color.parseColor(value.toString())
-                } catch (e: Exception) {}
+                    val colorStr = value.toString()
+                    if (colorStr.startsWith("#")) {
+                        backgroundColor = Color.parseColor(colorStr)
+                        Log.d(TAG, "[Style] tag=$tag backgroundColor=$colorStr parsed=$backgroundColor")
+                    }
+                } catch (e: Exception) {
+                    Log.w(TAG, "[Style] tag=$tag failed to parse backgroundColor: $value")
+                }
                 
                 "color" -> {
                     val colorStr = value.toString()
-                    if (view is TextView) {
+                    Log.d(TAG, "[Style] tag=$tag color=$colorStr")
+                    if (view is TextView && colorStr.startsWith("#")) {
                         try { view.setTextColor(Color.parseColor(colorStr)) } catch (e: Exception) {}
-                    } else if (view is ViewGroup) {
+                    } else if (view is ViewGroup && colorStr.startsWith("#")) {
                         for (i in 0 until view.childCount) {
                             (view.getChildAt(i) as? TextView)?.let {
                                 try { it.setTextColor(Color.parseColor(colorStr)) } catch (e: Exception) {}
@@ -211,20 +317,25 @@ class NativeRenderer(private val context: Context, private val rootContainer: Vi
                     }
                 }
                 "fontSize" -> {
-                    val size = (value as? Number)?.toFloat() ?: 14f
+                    val size = parseNumber(value) ?: 14f
                     if (view is TextView) {
-                        view.textSize = size
+                        view.setTextSize(android.util.TypedValue.COMPLEX_UNIT_PX, size)
                     } else if (view is ViewGroup) {
                         for (i in 0 until view.childCount) {
                             (view.getChildAt(i) as? TextView)?.let {
-                                it.textSize = size
+                                it.setTextSize(android.util.TypedValue.COMPLEX_UNIT_PX, size)
                             }
                         }
                     }
                 }
                 "fontWeight" -> {
                     val weight = value.toString()
-                    val isBold = weight.contains("bold") || weight == "600" || weight == "700" || weight == "500"
+                    val isBold = weight.contains("bold") || 
+                                 weight.startsWith("600") || 
+                                 weight.startsWith("700") || 
+                                 weight.startsWith("500") ||
+                                 weight == "600" || weight == "700" || weight == "500"
+                    Log.d(TAG, "[Style] tag=$tag fontWeight=$weight isBold=$isBold")
                     if (view is TextView) {
                         view.setTypeface(null, if (isBold) android.graphics.Typeface.BOLD else android.graphics.Typeface.NORMAL)
                     } else if (view is ViewGroup) {
@@ -246,44 +357,68 @@ class NativeRenderer(private val context: Context, private val rootContainer: Vi
                 }
                 
                 "padding" -> {
-                    val p = dpToPx((value as? Number)?.toFloat() ?: 0f)
+                    val p = parseNumber(value)?.toInt() ?: 0
                     pLeft = p; pTop = p; pRight = p; pBottom = p
                 }
-                "paddingTop" -> pTop = dpToPx((value as? Number)?.toFloat() ?: (pTop / context.resources.displayMetrics.density))
-                "paddingBottom" -> pBottom = dpToPx((value as? Number)?.toFloat() ?: (pBottom / context.resources.displayMetrics.density))
-                "paddingLeft" -> pLeft = dpToPx((value as? Number)?.toFloat() ?: (pLeft / context.resources.displayMetrics.density))
-                "paddingRight" -> pRight = dpToPx((value as? Number)?.toFloat() ?: (pRight / context.resources.displayMetrics.density))
+                "paddingTop" -> pTop = parseNumber(value)?.toInt() ?: pTop
+                "paddingBottom" -> pBottom = parseNumber(value)?.toInt() ?: pBottom
+                "paddingLeft" -> pLeft = parseNumber(value)?.toInt() ?: pLeft
+                "paddingRight" -> pRight = parseNumber(value)?.toInt() ?: pRight
 
                 "margin" -> {
-                    val m = dpToPx((value as? Number)?.toFloat() ?: 0f)
+                    val m = parseNumber(value)?.toInt() ?: 0
                     lp?.setMargins(m, m, m, m)
                 }
                 "marginTop" -> {
-                    val m = dpToPx((value as? Number)?.toFloat() ?: (lp?.topMargin?.toFloat() ?: 0f) / context.resources.displayMetrics.density)
+                    val m = parseNumber(value)?.toInt() ?: lp?.topMargin ?: 0
                     lp?.topMargin = m
-                    Log.d(TAG, "Set marginTop for tag $tag to $m px")
                 }
                 "marginBottom" -> {
-                    val m = dpToPx((value as? Number)?.toFloat() ?: (lp?.bottomMargin?.toFloat() ?: 0f) / context.resources.displayMetrics.density)
+                    val m = parseNumber(value)?.toInt() ?: lp?.bottomMargin ?: 0
                     lp?.bottomMargin = m
-                    Log.d(TAG, "Set marginBottom for tag $tag to $m px")
                 }
                 "marginLeft" -> {
-                    val m = dpToPx((value as? Number)?.toFloat() ?: (lp?.leftMargin?.toFloat() ?: 0f) / context.resources.displayMetrics.density)
+                    val m = parseNumber(value)?.toInt() ?: lp?.leftMargin ?: 0
                     lp?.leftMargin = m
-                    Log.d(TAG, "Set marginLeft for tag $tag to $m px")
                 }
                 "marginRight" -> {
-                    val m = dpToPx((value as? Number)?.toFloat() ?: (lp?.rightMargin?.toFloat() ?: 0f) / context.resources.displayMetrics.density)
+                    val m = parseNumber(value)?.toInt() ?: lp?.rightMargin ?: 0
                     lp?.rightMargin = m
-                    Log.d(TAG, "Set marginRight for tag $tag to $m px")
                 }
                 
-                "borderRadius" -> borderRadius = dpToPx((value as? Number)?.toFloat() ?: 0f).toFloat()
-                "borderWidth" -> borderWidth = dpToPx((value as? Number)?.toFloat() ?: 0f)
-                "borderColor" -> try { borderColor = Color.parseColor(value.toString()) } catch (e: Exception) {}
+                "borderRadius" -> {
+                    borderRadius = parseNumber(value) ?: 0f
+                    Log.d(TAG, "[Style] tag=$tag borderRadius=$borderRadius")
+                }
+                "borderWidth" -> {
+                    borderWidth = parseNumber(value)?.toInt() ?: 0
+                    Log.d(TAG, "[Style] tag=$tag borderWidth=$borderWidth")
+                }
+                "borderColor" -> try { 
+                    val colorStr = value.toString()
+                    if (colorStr.startsWith("#")) {
+                        borderColor = Color.parseColor(colorStr)
+                        Log.d(TAG, "[Style] tag=$tag borderColor=$colorStr parsed=$borderColor")
+                    }
+                } catch (e: Exception) {
+                    Log.w(TAG, "[Style] tag=$tag failed to parse borderColor: $value")
+                }
                 
-                "elevation" -> view.elevation = dpToPx((value as? Number)?.toFloat() ?: 0f).toFloat()
+                "border" -> {
+                    val borderStr = value.toString()
+                    // Simple parser for "1px solid #color"
+                    val parts = borderStr.split(" ")
+                    for (part in parts) {
+                        if (part.endsWith("px")) {
+                            borderWidth = part.removeSuffix("px").toFloatOrNull()?.toInt() ?: borderWidth
+                        } else if (part.startsWith("#")) {
+                            try { borderColor = Color.parseColor(part) } catch (e: Exception) {}
+                        }
+                    }
+                    Log.d(TAG, "[Style] tag=$tag border=$borderStr parsed: width=$borderWidth color=$borderColor")
+                }
+                
+                "elevation" -> view.elevation = parseNumber(value) ?: 0f
                 "boxShadow" -> {
                     // Simple mapping: if there's a boxShadow, give it some elevation
                     if (value.toString().isNotEmpty()) {
@@ -294,22 +429,45 @@ class NativeRenderer(private val context: Context, private val rootContainer: Vi
                             value.toString().contains("5px") -> 4f
                             else -> 4f
                         }
-                        view.elevation = dpToPx(elevation).toFloat()
+                        view.elevation = elevation
                     }
                 }
 
                 "display" -> {
-                    if (value.toString() == "flex" && view is LinearLayout) {
-                        // In web flex defaults to row, but our default is vertical.
-                    }
+                    // Display semantics handled by themed-styler
                 }
                 "flexDirection" -> {
                     if (view is LinearLayout) {
                         view.orientation = if (value.toString() == "row") LinearLayout.HORIZONTAL else LinearLayout.VERTICAL
                     }
                 }
+                "androidFlexWrap" -> {
+                    // FlexWrap indicator from themed-styler
+                    // Android LinearLayout doesn't support wrap natively
+                    // Could be implemented with FlexboxLayout if needed
+                }
+                "androidGravity" -> {
+                    if (view is LinearLayout) {
+                        view.gravity = when (value.toString()) {
+                            "center_vertical" -> android.view.Gravity.CENTER_VERTICAL
+                            "top" -> android.view.Gravity.TOP
+                            "bottom" -> android.view.Gravity.BOTTOM
+                            "center_horizontal" -> android.view.Gravity.CENTER_HORIZONTAL
+                            "center" -> android.view.Gravity.CENTER
+                            else -> android.view.Gravity.NO_GRAVITY
+                        }
+                    }
+                }
+                "androidLayoutGravity" -> {
+                    // Layout gravity for positioning within parent
+                    // Applied via LayoutParams if needed
+                }
+                "androidScrollHorizontal", "androidScrollVertical" -> {
+                    // Scroll hints from themed-styler
+                    // Would need ScrollView wrapper to implement
+                }
                 "gap", "SpaceY", "SpaceX" -> {
-                    val space = dpToPx((value as? Number)?.toFloat() ?: 0f)
+                    val space = parseNumber(value)?.toInt() ?: 0
                     if (view is LinearLayout && space > 0) {
                         val spacer = GradientDrawable().apply {
                             if (key == "SpaceX" || (key == "gap" && view.orientation == LinearLayout.HORIZONTAL)) {
@@ -324,7 +482,7 @@ class NativeRenderer(private val context: Context, private val rootContainer: Vi
                 }
                 "flex" -> {
                     if (lp is LinearLayout.LayoutParams) {
-                        lp.weight = (value as? Number)?.toFloat() ?: 0f
+                        lp.weight = parseNumber(value) ?: 0f
                     }
                 }
             }
@@ -333,6 +491,7 @@ class NativeRenderer(private val context: Context, private val rootContainer: Vi
         view.setPadding(pLeft, pTop, pRight, pBottom)
         
         if (borderRadius > 0 || borderWidth > 0 || borderColor != null) {
+            Log.d(TAG, "[Style] tag=$tag Creating GradientDrawable: radius=$borderRadius, border=$borderWidth, color=$backgroundColor")
             val shape = GradientDrawable()
             if (borderRadius > 0) shape.cornerRadius = borderRadius
             if (backgroundColor != null) {
@@ -343,7 +502,11 @@ class NativeRenderer(private val context: Context, private val rootContainer: Vi
             }
             view.background = shape
         } else if (backgroundColor != null) {
+            Log.d(TAG, "[Style] tag=$tag Setting simple background color: $backgroundColor")
             view.setBackgroundColor(backgroundColor!!)
+        } else {
+            // If no background is specified, we might want to clear it if it was set before
+            // but for now we leave it as is to avoid flickering
         }
         
         if (lp != null) {
@@ -351,130 +514,59 @@ class NativeRenderer(private val context: Context, private val rootContainer: Vi
         }
     }
 
-    private fun applyClassStyles(view: View, className: String) {
+    private fun applyThemedStyles(view: View, className: String) {
         val tag = view.id
         val type = viewTypes[tag] ?: "div"
         
+        Log.d(TAG, "[Styler] applyThemedStyles tag=$tag type=$type class='$className'")
+        
         try {
-            // Convert space-separated classes to JSON array as expected by the native styler
-            val classesList = className.split("\\s+".toRegex()).filter { it.isNotEmpty() }
-            val classesJson = gson.toJson(classesList)
+            // Use unified style cache (matches web behavior)
+            val styles = ThemedStylerModule.getStyles(type, className)
             
-            Log.d(TAG, "Calling nativeGetAndroidStyles for type=$type, classes=$classesJson, theme=$currentThemeJson")
-            val stylesJson = ThemedStylerModule.nativeGetAndroidStyles(type, classesJson, currentThemeJson)
-            Log.d(TAG, "nativeGetAndroidStyles returned: $stylesJson")
+            Log.d(TAG, "[Styler] getStyles for tag=$tag type=$type class='$className' -> ${styles.size} properties")
             
-            if (stylesJson != null && stylesJson.isNotEmpty() && stylesJson != "{}") {
-                val styles = gson.fromJson(stylesJson, Map::class.java) as? Map<String, Any>
-                if (styles != null) {
-                    Log.d(TAG, "Applying styles from styler: $styles")
-                    applyStyles(view, styles)
-                    return
-                }
+            if (styles.isNotEmpty()) {
+                Log.d(TAG, "[Styler] Applying ${styles.size} cached styles for tag=$tag")
+                applyStyles(view, styles)
             } else {
-                Log.w(TAG, "Styler returned no styles for class $className. No fallback applied.")
+                Log.w(TAG, "[Styler] No styles found for tag=$tag type=$type class='$className'")
             }
         } catch (e: Exception) {
-            Log.e(TAG, "Error applying themed styles for class $className", e)
+            Log.e(TAG, "[Styler] Error applying styles for class $className (tag=$tag)", e)
         }
     }
 
     private fun applyBasicClassStyles(view: View, className: String) {
-        // Simple utility class support
-        val classes = className.split("\\s+".toRegex()).filter { it.isNotEmpty() }
-        val lp = view.layoutParams as? ViewGroup.MarginLayoutParams
-        
-        for (cls in classes) {
-            when {
-                cls == "flex" -> { /* handled in applyStyles if styler returns it */ }
-                cls == "flex-row" -> if (view is LinearLayout) view.orientation = LinearLayout.HORIZONTAL
-                cls == "flex-col" -> if (view is LinearLayout) view.orientation = LinearLayout.VERTICAL
-                cls.startsWith("shadow") -> {
-                    view.elevation = when (cls) {
-                        "shadow-sm" -> dpToPx(2f).toFloat()
-                        "shadow" -> dpToPx(4f).toFloat()
-                        "shadow-md" -> dpToPx(8f).toFloat()
-                        "shadow-lg" -> dpToPx(16f).toFloat()
-                        "shadow-xl" -> dpToPx(24f).toFloat()
-                        "shadow-2xl" -> dpToPx(40f).toFloat()
-                        else -> dpToPx(4f).toFloat()
-                    }
-                }
-                cls.startsWith("p-") -> {
-                    val p = cls.substring(2).toIntOrNull()?.let { dpToPx(it * 4f) } ?: 0
-                    view.setPadding(p, p, p, p)
-                }
-                cls.startsWith("px-") -> {
-                    val p = cls.substring(3).toIntOrNull()?.let { dpToPx(it * 4f) } ?: 0
-                    view.setPadding(p, view.paddingTop, p, view.paddingBottom)
-                }
-                cls.startsWith("py-") -> {
-                    val p = cls.substring(3).toIntOrNull()?.let { dpToPx(it * 4f) } ?: 0
-                    view.setPadding(view.paddingLeft, p, view.paddingRight, p)
-                }
-                cls.startsWith("m-") -> {
-                    val m = cls.substring(2).toIntOrNull()?.let { dpToPx(it * 4f) } ?: 0
-                    lp?.setMargins(m, m, m, m)
-                }
-                cls.startsWith("mx-") -> {
-                    val m = cls.substring(3).toIntOrNull()?.let { dpToPx(it * 4f) } ?: 0
-                    lp?.leftMargin = m
-                    lp?.rightMargin = m
-                }
-                cls.startsWith("my-") -> {
-                    val m = cls.substring(3).toIntOrNull()?.let { dpToPx(it * 4f) } ?: 0
-                    lp?.topMargin = m
-                    lp?.bottomMargin = m
-                }
-                cls.startsWith("mb-") -> {
-                    val m = cls.substring(3).toIntOrNull()?.let { dpToPx(it * 4f) } ?: 0
-                    lp?.bottomMargin = m
-                }
-                cls.startsWith("mt-") -> {
-                    val m = cls.substring(3).toIntOrNull()?.let { dpToPx(it * 4f) } ?: 0
-                    lp?.topMargin = m
-                }
-                cls.startsWith("ml-") -> {
-                    val m = cls.substring(3).toIntOrNull()?.let { dpToPx(it * 4f) } ?: 0
-                    lp?.leftMargin = m
-                }
-                cls.startsWith("mr-") -> {
-                    val m = cls.substring(3).toIntOrNull()?.let { dpToPx(it * 4f) } ?: 0
-                    lp?.rightMargin = m
-                }
-                cls.startsWith("rounded") -> {
-                    // Basic rounded support if styler misses it
-                    val r = when (cls) {
-                        "rounded-sm" -> 2f
-                        "rounded" -> 4f
-                        "rounded-md" -> 6f
-                        "rounded-lg" -> 8f
-                        "rounded-xl" -> 12f
-                        "rounded-2xl" -> 16f
-                        "rounded-full" -> 999f
-                        else -> 4f
-                    }
-                    // We'll let applyStyles handle the actual background creation if possible,
-                    // but we can store it in a tag for now.
-                    view.setTag(android.R.id.custom, r)
-                }
-            }
-        }
-        if (lp != null) view.layoutParams = lp
+        // Minimal fallback - themed-styler crate handles all utility classes and conversions
+        // This should rarely be called as the Rust crate handles all standard classes  
+        Log.d(TAG, "[BasicStyles] Fallback (rarely used): $className for tag=${view.id}")
     }
 
     fun addChild(parentTag: Int, childTag: Int, index: Int) {
         Log.d(TAG, "addChild: parent=$parentTag, child=$childTag, index=$index")
-        mainHandler.post {
+        runOnMainThreadBlocking {
+            val epoch = renderEpoch.get()  // Capture inside main thread
+            Log.d(TAG, "[ADD_CHILD_MAIN] parent=$parentTag, child=$childTag, epoch=$epoch")
+            val parentNode = nodes[parentTag]
+            val child = nodes[childTag] ?: run {
+                Log.w(TAG, "addChild failed: child node $childTag not found")
+                return@runOnMainThreadBlocking
+            }
+
+            // If parent is not a ViewGroup (e.g., TextView/Button), merge text instead of failing
+            if (parentTag != -1 && parentNode is TextView && child is TextView) {
+                Log.d(TAG, "Merging text child $childTag into non-ViewGroup parent $parentTag")
+                parentNode.text = child.text
+                nodes.remove(childTag)
+                return@runOnMainThreadBlocking
+            }
+
             val parent = if (parentTag == -1) {
                 Log.d(TAG, "Adding child $childTag to rootContainer")
                 rootContainer
             } else {
-                nodes[parentTag] as? ViewGroup
-            }
-            val child = nodes[childTag] ?: run {
-                Log.w(TAG, "addChild failed: child node $childTag not found")
-                return@post
+                parentNode as? ViewGroup
             }
 
             if (child.parent != null) {
@@ -504,6 +596,11 @@ class NativeRenderer(private val context: Context, private val rootContainer: Vi
                     parent.addView(child)
                 }
                 
+                Log.d(TAG, "Successfully added child $childTag to parent $parentTag, parent.childCount=${parent.childCount}")
+                if (parentTag == -1) {
+                    Log.d(TAG, "[ROOT_CHILD] Child added to root, rootContainer.childCount=${rootContainer.childCount}")
+                }
+                
                 // Inherit text styles from parent if child is a TextView
                 if (child is TextView) {
                     val parentTag = parent.id
@@ -524,20 +621,29 @@ class NativeRenderer(private val context: Context, private val rootContainer: Vi
     }
 
     fun removeChild(parentTag: Int, childTag: Int) {
-        mainHandler.post {
+        runOnMainThreadBlocking {
             val parent = if (parentTag == -1) rootContainer else nodes[parentTag] as? ViewGroup
-            val child = nodes[childTag] ?: return@post
+            val child = nodes[childTag] ?: return@runOnMainThreadBlocking
             parent?.removeView(child)
         }
     }
 
-    fun clear() {
-        Log.d(TAG, "Clearing renderer. Total views in last session: $viewsCreatedInCurrentRender")
-        runOnMainThread {
+    fun clear(reason: String = "unspecified") {
+        runOnMainThreadBlocking {
+            val caller = Throwable().stackTrace.getOrNull(1)
+            val callerInfo = caller?.let { "${it.className}.${it.methodName}:${it.lineNumber}" } ?: "unknown"
+            val oldEpoch = renderEpoch.get()
+            Log.d(TAG, "[CLEAR] reason=$reason, caller=$callerInfo, oldEpoch=$oldEpoch, viewsInLastSession=$viewsCreatedInCurrentRender")
+            val newEpoch = renderEpoch.incrementAndGet()
+            Log.d(TAG, "[CLEAR] Epoch incremented: $oldEpoch -> $newEpoch")
+            
             nodes.clear()
             viewTypes.clear()
+            lastAppliedStyles.clear()
             rootContainer.removeAllViews()
             viewsCreatedInCurrentRender = 0
+            Log.d(TAG, "[CLEAR] Complete. New epoch=$newEpoch, ready for fresh render")
+            Log.d(TAG, "[CLEAR] RootContainer state: childCount=${rootContainer.childCount}, visibility=${rootContainer.visibility}, alpha=${rootContainer.alpha}")
         }
     }
 }

@@ -2,6 +2,7 @@ use super::*;
 use serde::Serialize;
 use serde_wasm_bindgen::to_value;
 use wasm_bindgen::prelude::*;
+use std::sync::Mutex;
 
 #[derive(Serialize)]
 struct WasmTranspileResult {
@@ -16,12 +17,65 @@ struct WasmTranspileResultWithMetadata {
     error: Option<String>,
 }
 
+#[derive(Serialize)]
+struct WasmDebugInfo {
+    logs: Vec<DebugEntry>,
+    formatted: String,
+}
+
+// Thread-local debug context for WASM
+thread_local! {
+    static WASM_DEBUG_LEVEL: Mutex<DebugLevel> = Mutex::new(DebugLevel::default());
+}
+
+#[wasm_bindgen]
+pub fn set_debug_level(level: &str) -> bool {
+    match level.parse::<DebugLevel>() {
+        Ok(debug_level) => {
+            WASM_DEBUG_LEVEL.with(|dl| {
+                if let Ok(mut level_guard) = dl.lock() {
+                    *level_guard = debug_level;
+                    true
+                } else {
+                    false
+                }
+            })
+        }
+        Err(_) => false,
+    }
+}
+
+#[wasm_bindgen]
+pub fn get_debug_level() -> String {
+    WASM_DEBUG_LEVEL.with(|dl| {
+        dl.lock()
+            .map(|level| level.to_string())
+            .unwrap_or_else(|_| "unknown".to_string())
+    })
+}
+
 #[wasm_bindgen]
 pub fn transpile_jsx(source: &str, filename: &str, is_typescript: Option<bool>) -> JsValue {
     let is_typescript = is_typescript.unwrap_or_else(|| {
         filename.ends_with(".ts") || filename.ends_with(".tsx")
     });
-    let opts = TranspileOptions { is_typescript };
+    
+    let debug_level = WASM_DEBUG_LEVEL.with(|dl| {
+        dl.lock()
+            .map(|level| *level)
+            .unwrap_or(DebugLevel::default())
+    });
+    
+    let opts = TranspileOptions {
+        is_typescript,
+        target: TranspileTarget::Web,  // Web browsers support modern JS
+        filename: Some(filename.to_string()),
+        source_maps: false,
+        inline_source_map: false,
+        compat_for_jsc: false,
+        debug_level,
+        ..Default::default()
+    };
     
     let result = match transpile_jsx_with_options(source, &opts) {
         Ok(code) => WasmTranspileResult {

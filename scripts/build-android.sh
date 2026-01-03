@@ -8,9 +8,12 @@ TARGETS=("aarch64-linux-android" "armv7-linux-androideabi" "x86_64-linux-android
 JNI_LIBS_DIR="android/jniLibs"
 mkdir -p $JNI_LIBS_DIR
 
+# Ensure we are in the root directory
+cd "$(dirname "$0")/.."
+
 for TARGET in "${TARGETS[@]}"; do
     echo "Building for $TARGET..."
-    cargo ndk -t $TARGET build --release --features android
+    cargo ndk -t $TARGET build --release --features android --manifest-path "$PWD/Cargo.toml"
 
     # Map rust target to android jni dir name
     case $TARGET in

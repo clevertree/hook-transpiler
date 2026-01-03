@@ -24,26 +24,23 @@ export async function initWasmTranspiler() {
     try {
         // @ts-ignore - this will be resolved by the bundler in the web app
         const { default: init, transpile_jsx, transpile_jsx_with_metadata, get_version, run_self_test } = await import('../wasm/relay_hook_transpiler.js');
-        // Get WASM module path - only for web builds
-        let wasmPath;
-        try {
-            // Use the unified /wasm/ path for reliable loading in various environments
-            wasmPath = new URL('/wasm/relay_hook_transpiler_bg.wasm', window.location.origin).toString();
-        }
-        catch (e) {
-            console.warn('[hook-transpiler] Failed to construct wasm path via URL, using fallback string');
-            wasmPath = '/wasm/relay_hook_transpiler_bg.wasm';
-        }
-        // Workaround for esbuild: if wasmPath is an object, convert to string
-        const wasmUrl = wasmPath;
-        if (isNode && typeof wasmUrl === 'string' && wasmUrl.startsWith('file:')) {
+        if (isNode) {
+            // Node path: resolve the wasm file relative to this module and load from disk to avoid fetch URL issues.
             const fs = await import('node:fs/promises');
-            const buffer = await fs.readFile(new URL(wasmUrl));
+            const wasmFile = new URL('../wasm/relay_hook_transpiler_bg.wasm', import.meta.url);
+            const buffer = await fs.readFile(wasmFile);
             await init({ module_or_path: buffer });
         }
         else {
-            // Pass as an object to avoid deprecation warning
-            await init({ module_or_path: wasmUrl });
+            // Browser path: construct a URL relative to origin, fall back to the standard /wasm/ path.
+            let wasmPath = '/wasm/relay_hook_transpiler_bg.wasm';
+            try {
+                wasmPath = new URL('/wasm/relay_hook_transpiler_bg.wasm', window.location.origin);
+            }
+            catch (e) {
+                console.warn('[hook-transpiler] Failed to construct wasm path via URL, using fallback string');
+            }
+            await init({ module_or_path: wasmPath });
         }
         const transpileFn = (code, filename, isTypescript) => {
             return transpile_jsx(code, filename || 'module.tsx', isTypescript);

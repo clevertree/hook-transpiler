@@ -13,13 +13,13 @@ export type InitInput = RequestInfo | URL | Response | BufferSource | WebAssembl
 
 export interface InitOutput {
   readonly memory: WebAssembly.Memory;
+  readonly hook_transpile_jsx: (a: number, b: number, c: number) => number;
+  readonly hook_transpiler_free_string: (a: number) => void;
+  readonly hook_transpiler_version: () => number;
   readonly get_version: () => [number, number];
   readonly run_self_test: () => any;
   readonly transpile_jsx: (a: number, b: number, c: number, d: number, e: number) => any;
   readonly transpile_jsx_with_metadata: (a: number, b: number, c: number, d: number, e: number) => any;
-  readonly hook_transpile_jsx: (a: number, b: number, c: number) => number;
-  readonly hook_transpiler_free_string: (a: number) => void;
-  readonly hook_transpiler_version: () => number;
   readonly __wbindgen_malloc: (a: number, b: number) => number;
   readonly __wbindgen_realloc: (a: number, b: number, c: number, d: number) => number;
   readonly __wbindgen_externrefs: WebAssembly.Table;

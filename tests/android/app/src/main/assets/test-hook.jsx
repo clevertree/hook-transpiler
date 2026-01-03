@@ -1,94 +1,84 @@
-import { useEffect, useMemo, useState } from "react";
-import ListItem from "./components/list-item.jsx";
-import sample from "./sample-data.js";
-import { namespaceValue as nsValue, tags as nsTags } from "./ns-helper.js";
+import React, { useState, useEffect } from 'react';
+import { setCurrentTheme, getThemes } from '@clevertree/themed-styler';
 
-const { items: seededItems, meta, mapNote } = sample;
+import UseStateTest from './tests/useState-test.jsx';
+import UseEffectTest from './tests/useEffect-test.jsx';
+import StylingTest from './tests/styling-test.jsx';
+import ArrayTest from './tests/array-test.jsx';
+import DynamicImportTest from './tests/dynamic-import-test.jsx';
+import RemoteFetchTest from './tests/remote-fetch-test.jsx';
 
-export default function TestHook(context = {}) {
-    // console.log("[TestHook] Component function called");
-    const { env: { theme = "light" } = {} } = context;
-    const [items, setItems] = useState(seededItems);
-    const [{ lazyMessage, nestedMessage }, setLazyState] = useState({ lazyMessage: null, nestedMessage: null });
+const TABS = [
+  { id: 'state', label: 'useState', component: UseStateTest },
+  { id: 'effect', label: 'useEffect', component: UseEffectTest },
+  { id: 'styling', label: 'Styling', component: StylingTest },
+  { id: 'array', label: '.map()', component: ArrayTest },
+  { id: 'lazy', label: 'Lazy Load', component: DynamicImportTest },
+  { id: 'fetch', label: 'Fetch', component: RemoteFetchTest },
+];
 
-    useEffect(() => {
-        let active = true;
+export default function TestSuite() {
+  const [activeTab, setActiveTab] = useState('state');
+  const [themeState, setThemeState] = useState(() => getThemes());
+  const currentTheme = themeState.currentTheme || 'light';
 
-        console.log("[TestHook] Starting lazy imports...");
-        
-        Promise.all([
-            import("./lazy-data.js"),
-            import("/hooks/lazy-data.js?x=1#frag"),
-            import("./nested/data.js"),
-            import("./dir/index.js")
-        ])
-            .then(([rel, abs, nested, dirIndex]) => {
-                console.log("[TestHook] Lazy imports resolved:", { rel: !!rel, relDefault: rel.default, absDefault: abs.default });
-                if (!active) return;
-                setLazyState({
-                    lazyMessage: `${rel.default} + ${abs.default}`,
-                    nestedMessage: `${nested.default} + ${dirIndex.default}`
-                });
-            })
-            .catch((err) => {
-                console.error("[TestHook] Lazy import failed:", err);
-                if (!active) return;
-                setLazyState({ lazyMessage: `Lazy load failed: ${err.message}`, nestedMessage: null });
-            });
+  const handleThemeChange = (theme) => {
+    setCurrentTheme(theme);
+    setThemeState(getThemes());
+  };
 
-        return () => {
-            active = false;
-        };
-    }, []);
+  const ActiveComponent = TABS.find(t => t.id === activeTab)?.component || (() => null);
+  const themeOptions = Object.keys(themeState.themes || {}).filter(t => t !== 'default');
 
-    const tagsById = useMemo(() => new Map(items.map(({ id, tags = [] }) => [id, tags])), [items]);
-    const [primaryTag, ...otherTags] = nsTags;
-
-    const addItem = () => {
-        const nextId = items.length + 1;
-        setItems([...items, { id: nextId, name: `Item ${nextId}`, tags: [primaryTag, ...otherTags].slice(0, 2) }]);
-    };
-
-    return <div className="p-4 bg-white text-gray-800 rounded shadow-lg">
-        <h1 className="text-2xl font-bold mb-1">{meta.title}</h1>
-        <p className="text-sm text-gray-500 mb-4">{meta.subtitle}</p>
-
-        <div className="mt-2">
-            <p className="text-xs text-gray-500 mb-2">Select a theme for the application</p>
-            <button className="px-3 py-1 bg-blue-600 text-white rounded">Test Button with Classes</button>
+  return (
+    <div className="flex flex-col h-full bg-surface">
+      {/* Header & Theme Switcher */}
+      <div className="p-4 bg-bg border-b border-themed flex flex-row justify-between items-center">
+        <h1 className="text-xl font-bold text-themed">Relay Hook Test</h1>
+        <div className="flex flex-row bg-surface rounded-lg p-1">
+          {themeOptions.map(theme => (
+            <button
+              key={theme}
+              onClick={() => handleThemeChange(theme)}
+              className={`px-3 py-1 rounded-md text-sm capitalize ${currentTheme === theme ? 'bg-bg shadow-sm font-bold text-themed' : 'text-muted'}`}
+            >
+              {theme}
+            </button>
+          ))}
         </div>
+      </div>
 
-        <div className="space-y-2">
-            {items.map((item) => (
-                <ListItem key={item.id} item={item} tags={tagsById.get(item.id)} />
-            ))}
+      {/* Horizontal Tab View */}
+      <div className="bg-bg border-b border-themed">
+        <div className="flex flex-row overflow-x-auto px-2 py-1">
+          {TABS.map(tab => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`px-4 py-2 mx-1 whitespace-nowrap rounded-full text-sm transition-colors ${activeTab === tab.id
+                ? 'bg-primary text-white font-medium'
+                : 'text-muted hover:bg-surface'
+                }`}
+            >
+              {tab.label}
+            </button>
+          ))}
         </div>
+      </div>
 
-        <div className="mt-4 flex gap-2">
-            <button className="px-3 py-1 bg-blue-600 text-white rounded" onClick={addItem}>Add item</button>
-            <span className="text-xs text-gray-600">{mapNote}</span>
+      {/* Content Area */}
+      <div className="flex-1 p-4">
+        <div className="bg-bg rounded-xl shadow-sm border-themed p-4 min-h-[300px]">
+          <ActiveComponent />
         </div>
+      </div>
 
-        <div className="mt-4 p-2 bg-blue-50 text-blue-800 rounded">
-            <p>Lazy Data: {lazyMessage || "Loading..."}</p>
-            <p>Nested: {nestedMessage || "Loading nested..."}</p>
-        </div>
-
-        <div className="mt-4 p-2 bg-green-50 text-green-800 rounded">
-            <p>Namespace Value: {nsValue}</p>
-            <p>Primary tag: {primaryTag}</p>
-            <p>Theme from context: {theme}</p>
-        </div>
-
-        <div className="mt-4 text-sm text-gray-500">
-            <p>This string contains JSX-like text: {"<div>test</div>"}</p>
-        </div>
-
-        <div className="mt-4 p-2 bg-purple-50 text-purple-800 rounded">
-            <h3 className="font-semibold mb-2">Reserved Keywords in strings Test</h3>
-            <p>
-                This paragraph has reserved keywords like interface await default import export but should still render correctly.
-            </p>
-        </div>
-    </div >;
+      {/* Footer Info */}
+      <div className="p-4 text-center">
+        <p className="text-xs text-muted">
+          Transpiler v1.3.20 • Styler v1.2.7 • JSCBridge v1.0.0
+        </p>
+      </div>
+    </div>
+  );
 }

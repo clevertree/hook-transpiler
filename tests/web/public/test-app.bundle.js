@@ -36,7 +36,7 @@ var require_react_development = __commonJS({
   "node_modules/react/cjs/react.development.js"(exports, module) {
     "use strict";
     if (true) {
-      (function() {
+      (function () {
         "use strict";
         if (typeof __REACT_DEVTOOLS_GLOBAL_HOOK__ !== "undefined" && typeof __REACT_DEVTOOLS_GLOBAL_HOOK__.registerInternalModuleStart === "function") {
           __REACT_DEVTOOLS_GLOBAL_HOOK__.registerInternalModuleStart(new Error());
@@ -98,13 +98,13 @@ var require_react_development = __commonJS({
           }
         }
         {
-          ReactDebugCurrentFrame.setExtraStackFrame = function(stack) {
+          ReactDebugCurrentFrame.setExtraStackFrame = function (stack) {
             {
               currentExtraStackFrame = stack;
             }
           };
           ReactDebugCurrentFrame.getCurrentStack = null;
-          ReactDebugCurrentFrame.getStackAddendum = function() {
+          ReactDebugCurrentFrame.getStackAddendum = function () {
             var stack = "";
             if (currentExtraStackFrame) {
               stack += currentExtraStackFrame;
@@ -158,7 +158,7 @@ var require_react_development = __commonJS({
               format += "%s";
               args = args.concat([stack]);
             }
-            var argsWithFormat = args.map(function(item) {
+            var argsWithFormat = args.map(function (item) {
               return String(item);
             });
             argsWithFormat.unshift("Warning: " + format);
@@ -186,7 +186,7 @@ var require_react_development = __commonJS({
            * @protected
            * @final
            */
-          isMounted: function(publicInstance) {
+          isMounted: function (publicInstance) {
             return false;
           },
           /**
@@ -204,7 +204,7 @@ var require_react_development = __commonJS({
            * @param {?string} callerName name of the calling function in the public API.
            * @internal
            */
-          enqueueForceUpdate: function(publicInstance, callback, callerName) {
+          enqueueForceUpdate: function (publicInstance, callback, callerName) {
             warnNoop(publicInstance, "forceUpdate");
           },
           /**
@@ -220,7 +220,7 @@ var require_react_development = __commonJS({
            * @param {?string} callerName name of the calling function in the public API.
            * @internal
            */
-          enqueueReplaceState: function(publicInstance, completeState, callback, callerName) {
+          enqueueReplaceState: function (publicInstance, completeState, callback, callerName) {
             warnNoop(publicInstance, "replaceState");
           },
           /**
@@ -235,7 +235,7 @@ var require_react_development = __commonJS({
            * @param {?string} Name of the calling function in the public API.
            * @internal
            */
-          enqueueSetState: function(publicInstance, partialState, callback, callerName) {
+          enqueueSetState: function (publicInstance, partialState, callback, callerName) {
             warnNoop(publicInstance, "setState");
           }
         };
@@ -251,13 +251,13 @@ var require_react_development = __commonJS({
           this.updater = updater || ReactNoopUpdateQueue;
         }
         Component.prototype.isReactComponent = {};
-        Component.prototype.setState = function(partialState, callback) {
+        Component.prototype.setState = function (partialState, callback) {
           if (typeof partialState !== "object" && typeof partialState !== "function" && partialState != null) {
             throw new Error("setState(...): takes an object of state variables to update or a function which returns an object of state variables.");
           }
           this.updater.enqueueSetState(this, partialState, callback, "setState");
         };
-        Component.prototype.forceUpdate = function(callback) {
+        Component.prototype.forceUpdate = function (callback) {
           this.updater.enqueueForceUpdate(this, callback, "forceUpdate");
         };
         {
@@ -265,9 +265,9 @@ var require_react_development = __commonJS({
             isMounted: ["isMounted", "Instead, make sure to clean up subscriptions and pending requests in componentWillUnmount to prevent memory leaks."],
             replaceState: ["replaceState", "Refactor your code to use setState instead (see https://github.com/facebook/react/issues/3236)."]
           };
-          var defineDeprecationWarning = function(methodName, info) {
+          var defineDeprecationWarning = function (methodName, info) {
             Object.defineProperty(Component.prototype, methodName, {
-              get: function() {
+              get: function () {
                 warn2("%s(...) is deprecated in plain JavaScript React classes. %s", info[0], info[1]);
                 return void 0;
               }
@@ -437,7 +437,7 @@ var require_react_development = __commonJS({
           return config.key !== void 0;
         }
         function defineKeyPropWarningGetter(props, displayName) {
-          var warnAboutAccessingKey = function() {
+          var warnAboutAccessingKey = function () {
             {
               if (!specialPropKeyWarningShown) {
                 specialPropKeyWarningShown = true;
@@ -452,7 +452,7 @@ var require_react_development = __commonJS({
           });
         }
         function defineRefPropWarningGetter(props, displayName) {
-          var warnAboutAccessingRef = function() {
+          var warnAboutAccessingRef = function () {
             {
               if (!specialPropRefWarningShown) {
                 specialPropRefWarningShown = true;
@@ -477,7 +477,7 @@ var require_react_development = __commonJS({
             }
           }
         }
-        var ReactElement = function(type, key2, ref, self, source, owner, props) {
+        var ReactElement = function (type, key2, ref, self, source, owner, props) {
           var element = {
             // This tag allows us to uniquely identify this as a React Element
             $$typeof: REACT_ELEMENT_TYPE,
@@ -643,7 +643,7 @@ var require_react_development = __commonJS({
             "=": "=0",
             ":": "=2"
           };
-          var escapedString = key2.replace(escapeRegex, function(match) {
+          var escapedString = key2.replace(escapeRegex, function (match) {
             return escaperLookup[match];
           });
           return "$" + escapedString;
@@ -693,7 +693,7 @@ var require_react_development = __commonJS({
               if (childKey != null) {
                 escapedChildKey = escapeUserProvidedKey(childKey) + "/";
               }
-              mapIntoArray(mappedChild, array, escapedChildKey, "", function(c) {
+              mapIntoArray(mappedChild, array, escapedChildKey, "", function (c) {
                 return c;
               });
             } else if (mappedChild != null) {
@@ -762,25 +762,25 @@ var require_react_development = __commonJS({
           }
           var result = [];
           var count = 0;
-          mapIntoArray(children, result, "", "", function(child) {
+          mapIntoArray(children, result, "", "", function (child) {
             return func.call(context, child, count++);
           });
           return result;
         }
         function countChildren(children) {
           var n = 0;
-          mapChildren(children, function() {
+          mapChildren(children, function () {
             n++;
           });
           return n;
         }
         function forEachChildren(children, forEachFunc, forEachContext) {
-          mapChildren(children, function() {
+          mapChildren(children, function () {
             forEachFunc.apply(this, arguments);
           }, forEachContext);
         }
         function toArray(children) {
-          return mapChildren(children, function(child) {
+          return mapChildren(children, function (child) {
             return child;
           }) || [];
         }
@@ -824,43 +824,43 @@ var require_react_development = __commonJS({
             };
             Object.defineProperties(Consumer, {
               Provider: {
-                get: function() {
+                get: function () {
                   if (!hasWarnedAboutUsingConsumerProvider) {
                     hasWarnedAboutUsingConsumerProvider = true;
                     error("Rendering <Context.Consumer.Provider> is not supported and will be removed in a future major release. Did you mean to render <Context.Provider> instead?");
                   }
                   return context.Provider;
                 },
-                set: function(_Provider) {
+                set: function (_Provider) {
                   context.Provider = _Provider;
                 }
               },
               _currentValue: {
-                get: function() {
+                get: function () {
                   return context._currentValue;
                 },
-                set: function(_currentValue) {
+                set: function (_currentValue) {
                   context._currentValue = _currentValue;
                 }
               },
               _currentValue2: {
-                get: function() {
+                get: function () {
                   return context._currentValue2;
                 },
-                set: function(_currentValue2) {
+                set: function (_currentValue2) {
                   context._currentValue2 = _currentValue2;
                 }
               },
               _threadCount: {
-                get: function() {
+                get: function () {
                   return context._threadCount;
                 },
-                set: function(_threadCount) {
+                set: function (_threadCount) {
                   context._threadCount = _threadCount;
                 }
               },
               Consumer: {
-                get: function() {
+                get: function () {
                   if (!hasWarnedAboutUsingNestedContextConsumers) {
                     hasWarnedAboutUsingNestedContextConsumers = true;
                     error("Rendering <Context.Consumer.Consumer> is not supported and will be removed in a future major release. Did you mean to render <Context.Consumer> instead?");
@@ -869,10 +869,10 @@ var require_react_development = __commonJS({
                 }
               },
               displayName: {
-                get: function() {
+                get: function () {
                   return context.displayName;
                 },
-                set: function(displayName) {
+                set: function (displayName) {
                   if (!hasWarnedAboutDisplayNameOnConsumer) {
                     warn2("Setting `displayName` on Context.Consumer has no effect. You should set it directly on the context with Context.displayName = '%s'.", displayName);
                     hasWarnedAboutDisplayNameOnConsumer = true;
@@ -896,13 +896,13 @@ var require_react_development = __commonJS({
           if (payload._status === Uninitialized) {
             var ctor = payload._result;
             var thenable = ctor();
-            thenable.then(function(moduleObject2) {
+            thenable.then(function (moduleObject2) {
               if (payload._status === Pending || payload._status === Uninitialized) {
                 var resolved = payload;
                 resolved._status = Resolved;
                 resolved._result = moduleObject2;
               }
-            }, function(error2) {
+            }, function (error2) {
               if (payload._status === Pending || payload._status === Uninitialized) {
                 var rejected = payload;
                 rejected._status = Rejected;
@@ -949,10 +949,10 @@ var require_react_development = __commonJS({
             Object.defineProperties(lazyType, {
               defaultProps: {
                 configurable: true,
-                get: function() {
+                get: function () {
                   return defaultProps;
                 },
-                set: function(newDefaultProps) {
+                set: function (newDefaultProps) {
                   error("React.lazy(...): It is not supported to assign `defaultProps` to a lazy component import. Either specify them where the component is defined, or create a wrapping component around it.");
                   defaultProps = newDefaultProps;
                   Object.defineProperty(lazyType, "defaultProps", {
@@ -962,10 +962,10 @@ var require_react_development = __commonJS({
               },
               propTypes: {
                 configurable: true,
-                get: function() {
+                get: function () {
                   return propTypes;
                 },
-                set: function(newPropTypes) {
+                set: function (newPropTypes) {
                   error("React.lazy(...): It is not supported to assign `propTypes` to a lazy component import. Either specify them where the component is defined, or create a wrapping component around it.");
                   propTypes = newPropTypes;
                   Object.defineProperty(lazyType, "propTypes", {
@@ -1003,10 +1003,10 @@ var require_react_development = __commonJS({
             Object.defineProperty(elementType, "displayName", {
               enumerable: false,
               configurable: true,
-              get: function() {
+              get: function () {
                 return ownName;
               },
-              set: function(name) {
+              set: function (name) {
                 ownName = name;
                 if (!render.name && !render.displayName) {
                   render.displayName = name;
@@ -1029,10 +1029,10 @@ var require_react_development = __commonJS({
           }
           if (typeof type === "object" && type !== null) {
             if (type.$$typeof === REACT_LAZY_TYPE || type.$$typeof === REACT_MEMO_TYPE || type.$$typeof === REACT_PROVIDER_TYPE || type.$$typeof === REACT_CONTEXT_TYPE || type.$$typeof === REACT_FORWARD_REF_TYPE || // This needs to include all possible module reference object
-            // types supported by any Flight configuration anywhere since
-            // we don't know which Flight build this will end up being used
-            // with.
-            type.$$typeof === REACT_MODULE_REFERENCE || type.getModuleId !== void 0) {
+              // types supported by any Flight configuration anywhere since
+              // we don't know which Flight build this will end up being used
+              // with.
+              type.$$typeof === REACT_MODULE_REFERENCE || type.getModuleId !== void 0) {
               return true;
             }
           }
@@ -1054,10 +1054,10 @@ var require_react_development = __commonJS({
             Object.defineProperty(elementType, "displayName", {
               enumerable: false,
               configurable: true,
-              get: function() {
+              get: function () {
                 return ownName;
               },
-              set: function(name) {
+              set: function (name) {
                 ownName = name;
                 if (!type.name && !type.displayName) {
                   type.displayName = name;
@@ -1269,11 +1269,11 @@ var require_react_development = __commonJS({
           }
           try {
             if (construct) {
-              var Fake = function() {
+              var Fake = function () {
                 throw Error();
               };
               Object.defineProperty(Fake.prototype, "props", {
-                set: function() {
+                set: function () {
                   throw Error();
                 }
               });
@@ -1549,8 +1549,8 @@ var require_react_development = __commonJS({
             if (typeof type === "function") {
               propTypes = type.propTypes;
             } else if (typeof type === "object" && (type.$$typeof === REACT_FORWARD_REF_TYPE || // Note: Memo only checks outer props here.
-            // Inner props are checked in the reconciler.
-            type.$$typeof === REACT_MEMO_TYPE)) {
+              // Inner props are checked in the reconciler.
+              type.$$typeof === REACT_MEMO_TYPE)) {
               propTypes = type.propTypes;
             } else {
               return;
@@ -1642,7 +1642,7 @@ var require_react_development = __commonJS({
             }
             Object.defineProperty(validatedFactory, "type", {
               enumerable: false,
-              get: function() {
+              get: function () {
                 warn2("Factory.type is deprecated. Access the class directly before passing it to createFactory.");
                 Object.defineProperty(this, "type", {
                   value: type
@@ -1692,7 +1692,7 @@ var require_react_development = __commonJS({
               var nodeRequire = module && module[requireString];
               enqueueTaskImpl = nodeRequire.call(module, "timers").setImmediate;
             } catch (_err) {
-              enqueueTaskImpl = function(callback) {
+              enqueueTaskImpl = function (callback) {
                 {
                   if (didWarnAboutMessageChannel === false) {
                     didWarnAboutMessageChannel = true;
@@ -1740,16 +1740,16 @@ var require_react_development = __commonJS({
               var thenableResult = result;
               var wasAwaited = false;
               var thenable = {
-                then: function(resolve, reject) {
+                then: function (resolve, reject) {
                   wasAwaited = true;
-                  thenableResult.then(function(returnValue2) {
+                  thenableResult.then(function (returnValue2) {
                     popActScope(prevActScopeDepth);
                     if (actScopeDepth === 0) {
                       recursivelyFlushAsyncActWork(returnValue2, resolve, reject);
                     } else {
                       resolve(returnValue2);
                     }
-                  }, function(error2) {
+                  }, function (error2) {
                     popActScope(prevActScopeDepth);
                     reject(error2);
                   });
@@ -1757,8 +1757,8 @@ var require_react_development = __commonJS({
               };
               {
                 if (!didWarnNoAwaitAct && typeof Promise !== "undefined") {
-                  Promise.resolve().then(function() {
-                  }).then(function() {
+                  Promise.resolve().then(function () {
+                  }).then(function () {
                     if (!wasAwaited) {
                       didWarnNoAwaitAct = true;
                       error("You called act(async () => ...) without await. This could lead to unexpected testing behaviour, interleaving multiple act calls and mixing their scopes. You should - await act(async () => ...);");
@@ -1777,7 +1777,7 @@ var require_react_development = __commonJS({
                   ReactCurrentActQueue.current = null;
                 }
                 var _thenable = {
-                  then: function(resolve, reject) {
+                  then: function (resolve, reject) {
                     if (ReactCurrentActQueue.current === null) {
                       ReactCurrentActQueue.current = [];
                       recursivelyFlushAsyncActWork(returnValue, resolve, reject);
@@ -1789,7 +1789,7 @@ var require_react_development = __commonJS({
                 return _thenable;
               } else {
                 var _thenable2 = {
-                  then: function(resolve, reject) {
+                  then: function (resolve, reject) {
                     resolve(returnValue);
                   }
                 };
@@ -1812,7 +1812,7 @@ var require_react_development = __commonJS({
             if (queue !== null) {
               try {
                 flushActQueue(queue);
-                enqueueTask(function() {
+                enqueueTask(function () {
                   if (queue.length === 0) {
                     ReactCurrentActQueue.current = null;
                     resolve(returnValue);
@@ -1922,7 +1922,7 @@ var require_scheduler_development = __commonJS({
   "node_modules/scheduler/cjs/scheduler.development.js"(exports) {
     "use strict";
     if (true) {
-      (function() {
+      (function () {
         "use strict";
         if (typeof __REACT_DEVTOOLS_GLOBAL_HOOK__ !== "undefined" && typeof __REACT_DEVTOOLS_GLOBAL_HOOK__.registerInternalModuleStart === "function") {
           __REACT_DEVTOOLS_GLOBAL_HOOK__.registerInternalModuleStart(new Error());
@@ -2006,13 +2006,13 @@ var require_scheduler_development = __commonJS({
         var hasPerformanceNow = typeof performance === "object" && typeof performance.now === "function";
         if (hasPerformanceNow) {
           var localPerformance = performance;
-          exports.unstable_now = function() {
+          exports.unstable_now = function () {
             return localPerformance.now();
           };
         } else {
           var localDate = Date;
           var initialTime = localDate.now();
-          exports.unstable_now = function() {
+          exports.unstable_now = function () {
             return localDate.now() - initialTime;
           };
         }
@@ -2172,7 +2172,7 @@ var require_scheduler_development = __commonJS({
         }
         function unstable_wrapCallback(callback) {
           var parentPriorityLevel = currentPriorityLevel;
-          return function() {
+          return function () {
             var previousPriorityLevel = currentPriorityLevel;
             currentPriorityLevel = parentPriorityLevel;
             try {
@@ -2286,7 +2286,7 @@ var require_scheduler_development = __commonJS({
             frameInterval = frameYieldMs;
           }
         }
-        var performWorkUntilDeadline = function() {
+        var performWorkUntilDeadline = function () {
           if (scheduledHostCallback !== null) {
             var currentTime = exports.unstable_now();
             startTime = currentTime;
@@ -2308,18 +2308,18 @@ var require_scheduler_development = __commonJS({
         };
         var schedulePerformWorkUntilDeadline;
         if (typeof localSetImmediate === "function") {
-          schedulePerformWorkUntilDeadline = function() {
+          schedulePerformWorkUntilDeadline = function () {
             localSetImmediate(performWorkUntilDeadline);
           };
         } else if (typeof MessageChannel !== "undefined") {
           var channel = new MessageChannel();
           var port = channel.port2;
           channel.port1.onmessage = performWorkUntilDeadline;
-          schedulePerformWorkUntilDeadline = function() {
+          schedulePerformWorkUntilDeadline = function () {
             port.postMessage(null);
           };
         } else {
-          schedulePerformWorkUntilDeadline = function() {
+          schedulePerformWorkUntilDeadline = function () {
             localSetTimeout(performWorkUntilDeadline, 0);
           };
         }
@@ -2331,7 +2331,7 @@ var require_scheduler_development = __commonJS({
           }
         }
         function requestHostTimeout(callback, ms) {
-          taskTimeoutID = localSetTimeout(function() {
+          taskTimeoutID = localSetTimeout(function () {
             callback(exports.unstable_now());
           }, ms);
         }
@@ -2384,7 +2384,7 @@ var require_react_dom_development = __commonJS({
   "node_modules/react-dom/cjs/react-dom.development.js"(exports) {
     "use strict";
     if (true) {
-      (function() {
+      (function () {
         "use strict";
         if (typeof __REACT_DEVTOOLS_GLOBAL_HOOK__ !== "undefined" && typeof __REACT_DEVTOOLS_GLOBAL_HOOK__.registerInternalModuleStart === "function") {
           __REACT_DEVTOOLS_GLOBAL_HOOK__.registerInternalModuleStart(new Error());
@@ -2426,7 +2426,7 @@ var require_react_dom_development = __commonJS({
               format += "%s";
               args = args.concat([stack]);
             }
-            var argsWithFormat = args.map(function(item) {
+            var argsWithFormat = args.map(function (item) {
               return String(item);
             });
             argsWithFormat.unshift("Warning: " + format);
@@ -2679,7 +2679,7 @@ var require_react_dom_development = __commonJS({
           "suppressHydrationWarning",
           "style"
         ];
-        reservedProps.forEach(function(name) {
+        reservedProps.forEach(function (name) {
           properties[name] = new PropertyInfoRecord(
             name,
             RESERVED,
@@ -2694,7 +2694,7 @@ var require_react_dom_development = __commonJS({
             false
           );
         });
-        [["acceptCharset", "accept-charset"], ["className", "class"], ["htmlFor", "for"], ["httpEquiv", "http-equiv"]].forEach(function(_ref) {
+        [["acceptCharset", "accept-charset"], ["className", "class"], ["htmlFor", "for"], ["httpEquiv", "http-equiv"]].forEach(function (_ref) {
           var name = _ref[0], attributeName = _ref[1];
           properties[name] = new PropertyInfoRecord(
             name,
@@ -2710,7 +2710,7 @@ var require_react_dom_development = __commonJS({
             false
           );
         });
-        ["contentEditable", "draggable", "spellCheck", "value"].forEach(function(name) {
+        ["contentEditable", "draggable", "spellCheck", "value"].forEach(function (name) {
           properties[name] = new PropertyInfoRecord(
             name,
             BOOLEANISH_STRING,
@@ -2725,7 +2725,7 @@ var require_react_dom_development = __commonJS({
             false
           );
         });
-        ["autoReverse", "externalResourcesRequired", "focusable", "preserveAlpha"].forEach(function(name) {
+        ["autoReverse", "externalResourcesRequired", "focusable", "preserveAlpha"].forEach(function (name) {
           properties[name] = new PropertyInfoRecord(
             name,
             BOOLEANISH_STRING,
@@ -2767,7 +2767,7 @@ var require_react_dom_development = __commonJS({
           "seamless",
           // Microdata
           "itemScope"
-        ].forEach(function(name) {
+        ].forEach(function (name) {
           properties[name] = new PropertyInfoRecord(
             name,
             BOOLEAN,
@@ -2792,7 +2792,7 @@ var require_react_dom_development = __commonJS({
           // NOTE: if you add a camelCased prop to this list,
           // you'll need to set attributeName to name.toLowerCase()
           // instead in the assignment below.
-        ].forEach(function(name) {
+        ].forEach(function (name) {
           properties[name] = new PropertyInfoRecord(
             name,
             BOOLEAN,
@@ -2813,7 +2813,7 @@ var require_react_dom_development = __commonJS({
           // NOTE: if you add a camelCased prop to this list,
           // you'll need to set attributeName to name.toLowerCase()
           // instead in the assignment below.
-        ].forEach(function(name) {
+        ].forEach(function (name) {
           properties[name] = new PropertyInfoRecord(
             name,
             OVERLOADED_BOOLEAN,
@@ -2836,7 +2836,7 @@ var require_react_dom_development = __commonJS({
           // NOTE: if you add a camelCased prop to this list,
           // you'll need to set attributeName to name.toLowerCase()
           // instead in the assignment below.
-        ].forEach(function(name) {
+        ].forEach(function (name) {
           properties[name] = new PropertyInfoRecord(
             name,
             POSITIVE_NUMERIC,
@@ -2851,7 +2851,7 @@ var require_react_dom_development = __commonJS({
             false
           );
         });
-        ["rowSpan", "start"].forEach(function(name) {
+        ["rowSpan", "start"].forEach(function (name) {
           properties[name] = new PropertyInfoRecord(
             name,
             NUMERIC,
@@ -2867,7 +2867,7 @@ var require_react_dom_development = __commonJS({
           );
         });
         var CAMELIZE = /[\-\:]([a-z])/g;
-        var capitalize = function(token) {
+        var capitalize = function (token) {
           return token[1].toUpperCase();
         };
         [
@@ -2947,7 +2947,7 @@ var require_react_dom_development = __commonJS({
           // NOTE: if you add a camelCased prop to this list,
           // you'll need to set attributeName to name.toLowerCase()
           // instead in the assignment below.
-        ].forEach(function(attributeName) {
+        ].forEach(function (attributeName) {
           var name = attributeName.replace(CAMELIZE, capitalize);
           properties[name] = new PropertyInfoRecord(
             name,
@@ -2972,7 +2972,7 @@ var require_react_dom_development = __commonJS({
           // NOTE: if you add a camelCased prop to this list,
           // you'll need to set attributeName to name.toLowerCase()
           // instead in the assignment below.
-        ].forEach(function(attributeName) {
+        ].forEach(function (attributeName) {
           var name = attributeName.replace(CAMELIZE, capitalize);
           properties[name] = new PropertyInfoRecord(
             name,
@@ -2993,7 +2993,7 @@ var require_react_dom_development = __commonJS({
           // NOTE: if you add a camelCased prop to this list,
           // you'll need to set attributeName to name.toLowerCase()
           // instead in the assignment below.
-        ].forEach(function(attributeName) {
+        ].forEach(function (attributeName) {
           var name = attributeName.replace(CAMELIZE, capitalize);
           properties[name] = new PropertyInfoRecord(
             name,
@@ -3007,7 +3007,7 @@ var require_react_dom_development = __commonJS({
             false
           );
         });
-        ["tabIndex", "crossOrigin"].forEach(function(attributeName) {
+        ["tabIndex", "crossOrigin"].forEach(function (attributeName) {
           properties[attributeName] = new PropertyInfoRecord(
             attributeName,
             STRING,
@@ -3034,7 +3034,7 @@ var require_react_dom_development = __commonJS({
           // sanitizeURL
           false
         );
-        ["src", "href", "action", "formAction"].forEach(function(attributeName) {
+        ["src", "href", "action", "formAction"].forEach(function (attributeName) {
           properties[attributeName] = new PropertyInfoRecord(
             attributeName,
             STRING,
@@ -3335,11 +3335,11 @@ var require_react_dom_development = __commonJS({
           }
           try {
             if (construct) {
-              var Fake = function() {
+              var Fake = function () {
                 throw Error();
               };
               Object.defineProperty(Fake.prototype, "props", {
-                set: function() {
+                set: function () {
                   throw Error();
                 }
               });
@@ -3688,7 +3688,7 @@ var require_react_dom_development = __commonJS({
             isRendering = rendering;
           }
         }
-        function toString2(value2) {
+        function toString(value2) {
           return "" + value2;
         }
         function getToStringValue(value2) {
@@ -3762,10 +3762,10 @@ var require_react_dom_development = __commonJS({
           var get2 = descriptor.get, set3 = descriptor.set;
           Object.defineProperty(node, valueField, {
             configurable: true,
-            get: function() {
+            get: function () {
               return get2.call(this);
             },
-            set: function(value2) {
+            set: function (value2) {
               {
                 checkFormFieldValueStringCoercion(value2);
               }
@@ -3777,16 +3777,16 @@ var require_react_dom_development = __commonJS({
             enumerable: descriptor.enumerable
           });
           var tracker = {
-            getValue: function() {
+            getValue: function () {
               return currentValue;
             },
-            setValue: function(value2) {
+            setValue: function (value2) {
               {
                 checkFormFieldValueStringCoercion(value2);
               }
               currentValue = "" + value2;
             },
-            stopTracking: function() {
+            stopTracking: function () {
               detachTracker(node);
               delete node[valueField];
             }
@@ -3891,12 +3891,12 @@ var require_react_dom_development = __commonJS({
           if (value2 != null) {
             if (type === "number") {
               if (value2 === 0 && node.value === "" || // We explicitly want to coerce to number here if possible.
-              // eslint-disable-next-line
-              node.value != value2) {
-                node.value = toString2(value2);
+                // eslint-disable-next-line
+                node.value != value2) {
+                node.value = toString(value2);
               }
-            } else if (node.value !== toString2(value2)) {
-              node.value = toString2(value2);
+            } else if (node.value !== toString(value2)) {
+              node.value = toString(value2);
             }
           } else if (type === "submit" || type === "reset") {
             node.removeAttribute("value");
@@ -3923,7 +3923,7 @@ var require_react_dom_development = __commonJS({
             if (isButton && (props.value === void 0 || props.value === null)) {
               return;
             }
-            var initialValue = toString2(node._wrapperState.initialValue);
+            var initialValue = toString(node._wrapperState.initialValue);
             if (!isHydrating2) {
               {
                 if (initialValue !== node.value) {
@@ -3983,9 +3983,9 @@ var require_react_dom_development = __commonJS({
             type !== "number" || getActiveElement(node.ownerDocument) !== node
           ) {
             if (value2 == null) {
-              node.defaultValue = toString2(node._wrapperState.initialValue);
-            } else if (node.defaultValue !== toString2(value2)) {
-              node.defaultValue = toString2(value2);
+              node.defaultValue = toString(node._wrapperState.initialValue);
+            } else if (node.defaultValue !== toString(value2)) {
+              node.defaultValue = toString(value2);
             }
           }
         }
@@ -3996,7 +3996,7 @@ var require_react_dom_development = __commonJS({
           {
             if (props.value == null) {
               if (typeof props.children === "object" && props.children !== null) {
-                React5.Children.forEach(props.children, function(child) {
+                React5.Children.forEach(props.children, function (child) {
                   if (child == null) {
                     return;
                   }
@@ -4023,7 +4023,7 @@ var require_react_dom_development = __commonJS({
         }
         function postMountWrapper$1(element, props) {
           if (props.value != null) {
-            element.setAttribute("value", toString2(getToStringValue(props.value)));
+            element.setAttribute("value", toString(getToStringValue(props.value)));
           }
         }
         var isArrayImpl = Array.isArray;
@@ -4077,7 +4077,7 @@ var require_react_dom_development = __commonJS({
               }
             }
           } else {
-            var _selectedValue = toString2(getToStringValue(propValue));
+            var _selectedValue = toString(getToStringValue(propValue));
             var defaultSelected = null;
             for (var _i2 = 0; _i2 < options3.length; _i2++) {
               if (options3[_i2].value === _selectedValue) {
@@ -4157,7 +4157,7 @@ var require_react_dom_development = __commonJS({
           var hostProps = assign({}, props, {
             value: void 0,
             defaultValue: void 0,
-            children: toString2(node._wrapperState.initialValue)
+            children: toString(node._wrapperState.initialValue)
           });
           return hostProps;
         }
@@ -4204,7 +4204,7 @@ var require_react_dom_development = __commonJS({
           var value2 = getToStringValue(props.value);
           var defaultValue = getToStringValue(props.defaultValue);
           if (value2 != null) {
-            var newValue = toString2(value2);
+            var newValue = toString(value2);
             if (newValue !== node.value) {
               node.value = newValue;
             }
@@ -4213,7 +4213,7 @@ var require_react_dom_development = __commonJS({
             }
           }
           if (defaultValue != null) {
-            node.defaultValue = toString2(defaultValue);
+            node.defaultValue = toString(defaultValue);
           }
         }
         function postMountWrapper$3(element, props) {
@@ -4250,10 +4250,10 @@ var require_react_dom_development = __commonJS({
           }
           return parentNamespace;
         }
-        var createMicrosoftUnsafeLocalFunction = function(func) {
+        var createMicrosoftUnsafeLocalFunction = function (func) {
           if (typeof MSApp !== "undefined" && MSApp.execUnsafeLocalFunction) {
-            return function(arg0, arg1, arg2, arg3) {
-              MSApp.execUnsafeLocalFunction(function() {
+            return function (arg0, arg1, arg2, arg3) {
+              MSApp.execUnsafeLocalFunction(function () {
                 return func(arg0, arg1, arg2, arg3);
               });
             };
@@ -4262,7 +4262,7 @@ var require_react_dom_development = __commonJS({
           }
         };
         var reusableSVGContainer;
-        var setInnerHTML = createMicrosoftUnsafeLocalFunction(function(node, html) {
+        var setInnerHTML = createMicrosoftUnsafeLocalFunction(function (node, html) {
           if (node.namespaceURI === SVG_NAMESPACE) {
             if (!("innerHTML" in node)) {
               reusableSVGContainer = reusableSVGContainer || document.createElement("div");
@@ -4284,7 +4284,7 @@ var require_react_dom_development = __commonJS({
         var COMMENT_NODE = 8;
         var DOCUMENT_NODE = 9;
         var DOCUMENT_FRAGMENT_NODE = 11;
-        var setTextContent = function(node, text) {
+        var setTextContent = function (node, text) {
           if (text) {
             var firstChild = node.firstChild;
             if (firstChild && firstChild === node.lastChild && firstChild.nodeType === TEXT_NODE) {
@@ -4393,8 +4393,8 @@ var require_react_dom_development = __commonJS({
           return prefix2 + key2.charAt(0).toUpperCase() + key2.substring(1);
         }
         var prefixes = ["Webkit", "ms", "Moz", "O"];
-        Object.keys(isUnitlessNumber).forEach(function(prop) {
-          prefixes.forEach(function(prefix2) {
+        Object.keys(isUnitlessNumber).forEach(function (prop) {
+          prefixes.forEach(function (prefix2) {
             isUnitlessNumber[prefixKey(prefix2, prop)] = isUnitlessNumber[prop];
           });
         });
@@ -4416,7 +4416,7 @@ var require_react_dom_development = __commonJS({
         function hyphenateStyleName(name) {
           return name.replace(uppercasePattern, "-$1").toLowerCase().replace(msPattern, "-ms-");
         }
-        var warnValidStyle = function() {
+        var warnValidStyle = function () {
         };
         {
           var badVendoredStyleNamePattern = /^(?:webkit|moz|o)[A-Z]/;
@@ -4427,12 +4427,12 @@ var require_react_dom_development = __commonJS({
           var warnedStyleValues = {};
           var warnedForNaNValue = false;
           var warnedForInfinityValue = false;
-          var camelize = function(string2) {
-            return string2.replace(hyphenPattern, function(_, character) {
+          var camelize = function (string2) {
+            return string2.replace(hyphenPattern, function (_, character) {
               return character.toUpperCase();
             });
           };
-          var warnHyphenatedStyleName = function(name) {
+          var warnHyphenatedStyleName = function (name) {
             if (warnedStyleNames.hasOwnProperty(name) && warnedStyleNames[name]) {
               return;
             }
@@ -4446,35 +4446,35 @@ var require_react_dom_development = __commonJS({
               camelize(name.replace(msPattern$1, "ms-"))
             );
           };
-          var warnBadVendoredStyleName = function(name) {
+          var warnBadVendoredStyleName = function (name) {
             if (warnedStyleNames.hasOwnProperty(name) && warnedStyleNames[name]) {
               return;
             }
             warnedStyleNames[name] = true;
             error("Unsupported vendor-prefixed style property %s. Did you mean %s?", name, name.charAt(0).toUpperCase() + name.slice(1));
           };
-          var warnStyleValueWithSemicolon = function(name, value2) {
+          var warnStyleValueWithSemicolon = function (name, value2) {
             if (warnedStyleValues.hasOwnProperty(value2) && warnedStyleValues[value2]) {
               return;
             }
             warnedStyleValues[value2] = true;
             error(`Style property values shouldn't contain a semicolon. Try "%s: %s" instead.`, name, value2.replace(badStyleValueWithSemicolonPattern, ""));
           };
-          var warnStyleValueIsNaN = function(name, value2) {
+          var warnStyleValueIsNaN = function (name, value2) {
             if (warnedForNaNValue) {
               return;
             }
             warnedForNaNValue = true;
             error("`NaN` is an invalid value for the `%s` css style property.", name);
           };
-          var warnStyleValueIsInfinity = function(name, value2) {
+          var warnStyleValueIsInfinity = function (name, value2) {
             if (warnedForInfinityValue) {
               return;
             }
             warnedForInfinityValue = true;
             error("`Infinity` is an invalid value for the `%s` css style property.", name);
           };
-          warnValidStyle = function(name, value2) {
+          warnValidStyle = function (name, value2) {
             if (name.indexOf("-") > -1) {
               warnHyphenatedStyleName(name);
             } else if (badVendoredStyleNamePattern.test(name)) {
@@ -5230,7 +5230,7 @@ var require_react_dom_development = __commonJS({
                 invalidProps.push(key2);
               }
             }
-            var unknownPropString = invalidProps.map(function(prop) {
+            var unknownPropString = invalidProps.map(function (prop) {
               return "`" + prop + "`";
             }).join(", ");
             if (invalidProps.length === 1) {
@@ -5262,7 +5262,7 @@ var require_react_dom_development = __commonJS({
             }
           }
         }
-        var validateProperty$1 = function() {
+        var validateProperty$1 = function () {
         };
         {
           var warnedProperties$1 = {};
@@ -5270,7 +5270,7 @@ var require_react_dom_development = __commonJS({
           var INVALID_EVENT_NAME_REGEX = /^on[^A-Z]/;
           var rARIA$1 = new RegExp("^(aria)-[" + ATTRIBUTE_NAME_CHAR + "]*$");
           var rARIACamel$1 = new RegExp("^(aria)[A-Z][" + ATTRIBUTE_NAME_CHAR + "]*$");
-          validateProperty$1 = function(tagName, name, value2, eventRegistry) {
+          validateProperty$1 = function (tagName, name, value2, eventRegistry) {
             if (hasOwnProperty.call(warnedProperties$1, name) && warnedProperties$1[name]) {
               return true;
             }
@@ -5364,7 +5364,7 @@ var require_react_dom_development = __commonJS({
             return true;
           };
         }
-        var warnUnknownProperties = function(type, props, eventRegistry) {
+        var warnUnknownProperties = function (type, props, eventRegistry) {
           {
             var unknownProps = [];
             for (var key2 in props) {
@@ -5373,7 +5373,7 @@ var require_react_dom_development = __commonJS({
                 unknownProps.push(key2);
               }
             }
-            var unknownPropString = unknownProps.map(function(prop) {
+            var unknownPropString = unknownProps.map(function (prop) {
               return "`" + prop + "`";
             }).join(", ");
             if (unknownProps.length === 1) {
@@ -5469,10 +5469,10 @@ var require_react_dom_development = __commonJS({
             }
           }
         }
-        var batchedUpdatesImpl = function(fn, bookkeeping) {
+        var batchedUpdatesImpl = function (fn, bookkeeping) {
           return fn(bookkeeping);
         };
-        var flushSyncImpl = function() {
+        var flushSyncImpl = function () {
         };
         var isInsideEventHandler = false;
         function finishEventHandler() {
@@ -5542,7 +5542,7 @@ var require_react_dom_development = __commonJS({
           try {
             var options2 = {};
             Object.defineProperty(options2, "passive", {
-              get: function() {
+              get: function () {
                 passiveBrowserEventsSupported = true;
               }
             });
@@ -5634,7 +5634,7 @@ var require_react_dom_development = __commonJS({
         var hasRethrowError = false;
         var rethrowError = null;
         var reporter = {
-          onError: function(error2) {
+          onError: function (error2) {
             hasError = true;
             caughtError = error2;
           }
@@ -6635,8 +6635,8 @@ var require_react_dom_development = __commonJS({
             return NoLanes;
           }
           if (wipLanes !== NoLanes && wipLanes !== nextLanes && // If we already suspended with a delay, then interrupting is fine. Don't
-          // bother waiting until the root is complete.
-          (wipLanes & suspendedLanes) === NoLanes) {
+            // bother waiting until the root is complete.
+            (wipLanes & suspendedLanes) === NoLanes) {
             var nextLane = getHighestPriorityLane(nextLanes);
             var wipLane = getHighestPriorityLane(wipLanes);
             if (
@@ -6971,7 +6971,7 @@ var require_react_dom_development = __commonJS({
             var lane = 1 << index2;
             var updaters = pendingUpdatersLaneMap[index2];
             if (updaters.size > 0) {
-              updaters.forEach(function(fiber) {
+              updaters.forEach(function (fiber) {
                 var alternate = fiber.alternate;
                 if (alternate === null || !memoizedUpdaters.has(alternate)) {
                   memoizedUpdaters.add(fiber);
@@ -7195,7 +7195,7 @@ var require_react_dom_development = __commonJS({
                 var instance = getSuspenseInstanceFromFiber(nearestMounted);
                 if (instance !== null) {
                   queuedTarget.blockedOn = instance;
-                  attemptHydrationAtPriority(queuedTarget.priority, function() {
+                  attemptHydrationAtPriority(queuedTarget.priority, function () {
                     attemptHydrationAtCurrentPriority(nearestMounted);
                   });
                   return;
@@ -7304,7 +7304,7 @@ var require_react_dom_development = __commonJS({
           if (queuedMouse !== null) {
             scheduleCallbackIfUnblocked(queuedMouse, unblocked);
           }
-          var unblock = function(queuedEvent2) {
+          var unblock = function (queuedEvent2) {
             return scheduleCallbackIfUnblocked(queuedEvent2, unblocked);
           };
           queuedPointers.forEach(unblock);
@@ -7662,7 +7662,7 @@ var require_react_dom_development = __commonJS({
             return this;
           }
           assign(SyntheticBaseEvent.prototype, {
-            preventDefault: function() {
+            preventDefault: function () {
               this.defaultPrevented = true;
               var event = this.nativeEvent;
               if (!event) {
@@ -7675,7 +7675,7 @@ var require_react_dom_development = __commonJS({
               }
               this.isDefaultPrevented = functionThatReturnsTrue;
             },
-            stopPropagation: function() {
+            stopPropagation: function () {
               var event = this.nativeEvent;
               if (!event) {
                 return;
@@ -7692,7 +7692,7 @@ var require_react_dom_development = __commonJS({
              * them back into the pool. This allows a way to hold onto a reference that
              * won't be added back into the pool.
              */
-            persist: function() {
+            persist: function () {
             },
             /**
              * Checks if this event should be released back into the pool.
@@ -7707,7 +7707,7 @@ var require_react_dom_development = __commonJS({
           eventPhase: 0,
           bubbles: 0,
           cancelable: 0,
-          timeStamp: function(event) {
+          timeStamp: function (event) {
             return event.timeStamp || Date.now();
           },
           defaultPrevented: 0,
@@ -7748,19 +7748,19 @@ var require_react_dom_development = __commonJS({
           getModifierState: getEventModifierState,
           button: 0,
           buttons: 0,
-          relatedTarget: function(event) {
+          relatedTarget: function (event) {
             if (event.relatedTarget === void 0)
               return event.fromElement === event.srcElement ? event.toElement : event.fromElement;
             return event.relatedTarget;
           },
-          movementX: function(event) {
+          movementX: function (event) {
             if ("movementX" in event) {
               return event.movementX;
             }
             updateMouseMovementPolyfillState(event);
             return lastMovementX;
           },
-          movementY: function(event) {
+          movementY: function (event) {
             if ("movementY" in event) {
               return event.movementY;
             }
@@ -7783,7 +7783,7 @@ var require_react_dom_development = __commonJS({
         });
         var SyntheticAnimationEvent = createSyntheticEvent(AnimationEventInterface);
         var ClipboardEventInterface = assign({}, EventInterface, {
-          clipboardData: function(event) {
+          clipboardData: function (event) {
             return "clipboardData" in event ? event.clipboardData : window.clipboardData;
           }
         });
@@ -7891,19 +7891,19 @@ var require_react_dom_development = __commonJS({
           locale: 0,
           getModifierState: getEventModifierState,
           // Legacy Interface
-          charCode: function(event) {
+          charCode: function (event) {
             if (event.type === "keypress") {
               return getEventCharCode(event);
             }
             return 0;
           },
-          keyCode: function(event) {
+          keyCode: function (event) {
             if (event.type === "keydown" || event.type === "keyup") {
               return event.keyCode;
             }
             return 0;
           },
-          which: function(event) {
+          which: function (event) {
             if (event.type === "keypress") {
               return getEventCharCode(event);
             }
@@ -7945,13 +7945,13 @@ var require_react_dom_development = __commonJS({
         });
         var SyntheticTransitionEvent = createSyntheticEvent(TransitionEventInterface);
         var WheelEventInterface = assign({}, MouseEventInterface, {
-          deltaX: function(event) {
+          deltaX: function (event) {
             return "deltaX" in event ? event.deltaX : (
               // Fallback to `wheelDeltaX` for Webkit and normalize (right is positive).
               "wheelDeltaX" in event ? -event.wheelDeltaX : 0
             );
           },
-          deltaY: function(event) {
+          deltaY: function (event) {
             return "deltaY" in event ? event.deltaY : (
               // Fallback to `wheelDeltaY` for Webkit and normalize (down is positive).
               "wheelDeltaY" in event ? -event.wheelDeltaY : (
@@ -7988,7 +7988,7 @@ var require_react_dom_development = __commonJS({
         var hasSpaceKeypress = false;
         function isKeypressCommand(nativeEvent) {
           return (nativeEvent.ctrlKey || nativeEvent.altKey || nativeEvent.metaKey) && // ctrlKey && altKey is equivalent to AltGr, and is not a command.
-          !(nativeEvent.ctrlKey && nativeEvent.altKey);
+            !(nativeEvent.ctrlKey && nativeEvent.altKey);
         }
         function getCompositionEventType(domEventName) {
           switch (domEventName) {
@@ -8467,42 +8467,42 @@ var require_react_dom_development = __commonJS({
           var node = outerNode;
           var parentNode = null;
           outer:
+          while (true) {
+            var next = null;
             while (true) {
-              var next = null;
-              while (true) {
-                if (node === anchorNode && (anchorOffset === 0 || node.nodeType === TEXT_NODE)) {
-                  start = length + anchorOffset;
-                }
-                if (node === focusNode && (focusOffset === 0 || node.nodeType === TEXT_NODE)) {
-                  end = length + focusOffset;
-                }
-                if (node.nodeType === TEXT_NODE) {
-                  length += node.nodeValue.length;
-                }
-                if ((next = node.firstChild) === null) {
-                  break;
-                }
-                parentNode = node;
-                node = next;
+              if (node === anchorNode && (anchorOffset === 0 || node.nodeType === TEXT_NODE)) {
+                start = length + anchorOffset;
               }
-              while (true) {
-                if (node === outerNode) {
-                  break outer;
-                }
-                if (parentNode === anchorNode && ++indexWithinAnchor === anchorOffset) {
-                  start = length;
-                }
-                if (parentNode === focusNode && ++indexWithinFocus === focusOffset) {
-                  end = length;
-                }
-                if ((next = node.nextSibling) !== null) {
-                  break;
-                }
-                node = parentNode;
-                parentNode = node.parentNode;
+              if (node === focusNode && (focusOffset === 0 || node.nodeType === TEXT_NODE)) {
+                end = length + focusOffset;
               }
+              if (node.nodeType === TEXT_NODE) {
+                length += node.nodeValue.length;
+              }
+              if ((next = node.firstChild) === null) {
+                break;
+              }
+              parentNode = node;
               node = next;
             }
+            while (true) {
+              if (node === outerNode) {
+                break outer;
+              }
+              if (parentNode === anchorNode && ++indexWithinAnchor === anchorOffset) {
+                start = length;
+              }
+              if (parentNode === focusNode && ++indexWithinFocus === focusOffset) {
+                end = length;
+              }
+              if ((next = node.nextSibling) !== null) {
+                break;
+              }
+              node = parentNode;
+              parentNode = node.parentNode;
+            }
+            node = next;
+          }
           if (start === -1 || end === -1) {
             return null;
           }
@@ -8891,10 +8891,10 @@ var require_react_dom_development = __commonJS({
           var inCapturePhase = (eventSystemFlags & IS_CAPTURE_PHASE) !== 0;
           {
             var accumulateTargetOnly = !inCapturePhase && // TODO: ideally, we'd eventually add all events from
-            // nonDelegatedEvents list in DOMPluginEventSystem.
-            // Then we can remove this special list.
-            // This is a breaking change that can wait until React 18.
-            domEventName === "scroll";
+              // nonDelegatedEvents list in DOMPluginEventSystem.
+              // Then we can remove this special list.
+              // This is a breaking change that can wait until React 18.
+              domEventName === "scroll";
             var _listeners = accumulateSinglePhaseListeners(targetInst, reactName, nativeEvent.type, inCapturePhase, accumulateTargetOnly);
             if (_listeners.length > 0) {
               var _event = new SyntheticEventCtor(reactName, reactEventType, null, nativeEvent, nativeEventTarget);
@@ -8994,7 +8994,7 @@ var require_react_dom_development = __commonJS({
         function listenToAllSupportedEvents(rootContainerElement) {
           if (!rootContainerElement[listeningMarker]) {
             rootContainerElement[listeningMarker] = true;
-            allNativeEvents.forEach(function(domEventName) {
+            allNativeEvents.forEach(function (domEventName) {
               if (domEventName !== "selectionchange") {
                 if (!nonDelegatedEvents.has(domEventName)) {
                   listenToNativeEvent(domEventName, false, rootContainerElement);
@@ -9045,47 +9045,47 @@ var require_react_dom_development = __commonJS({
             if (targetInst !== null) {
               var node = targetInst;
               mainLoop:
-                while (true) {
-                  if (node === null) {
-                    return;
-                  }
-                  var nodeTag = node.tag;
-                  if (nodeTag === HostRoot || nodeTag === HostPortal) {
-                    var container = node.stateNode.containerInfo;
-                    if (isMatchingRootContainer(container, targetContainerNode)) {
-                      break;
-                    }
-                    if (nodeTag === HostPortal) {
-                      var grandNode = node.return;
-                      while (grandNode !== null) {
-                        var grandTag = grandNode.tag;
-                        if (grandTag === HostRoot || grandTag === HostPortal) {
-                          var grandContainer = grandNode.stateNode.containerInfo;
-                          if (isMatchingRootContainer(grandContainer, targetContainerNode)) {
-                            return;
-                          }
-                        }
-                        grandNode = grandNode.return;
-                      }
-                    }
-                    while (container !== null) {
-                      var parentNode = getClosestInstanceFromNode(container);
-                      if (parentNode === null) {
-                        return;
-                      }
-                      var parentTag = parentNode.tag;
-                      if (parentTag === HostComponent || parentTag === HostText) {
-                        node = ancestorInst = parentNode;
-                        continue mainLoop;
-                      }
-                      container = container.parentNode;
-                    }
-                  }
-                  node = node.return;
+              while (true) {
+                if (node === null) {
+                  return;
                 }
+                var nodeTag = node.tag;
+                if (nodeTag === HostRoot || nodeTag === HostPortal) {
+                  var container = node.stateNode.containerInfo;
+                  if (isMatchingRootContainer(container, targetContainerNode)) {
+                    break;
+                  }
+                  if (nodeTag === HostPortal) {
+                    var grandNode = node.return;
+                    while (grandNode !== null) {
+                      var grandTag = grandNode.tag;
+                      if (grandTag === HostRoot || grandTag === HostPortal) {
+                        var grandContainer = grandNode.stateNode.containerInfo;
+                        if (isMatchingRootContainer(grandContainer, targetContainerNode)) {
+                          return;
+                        }
+                      }
+                      grandNode = grandNode.return;
+                    }
+                  }
+                  while (container !== null) {
+                    var parentNode = getClosestInstanceFromNode(container);
+                    if (parentNode === null) {
+                      return;
+                    }
+                    var parentTag = parentNode.tag;
+                    if (parentTag === HostComponent || parentTag === HostText) {
+                      node = ancestorInst = parentNode;
+                      continue mainLoop;
+                    }
+                    container = container.parentNode;
+                  }
+                }
+                node = node.return;
+              }
             }
           }
-          batchedUpdates(function() {
+          batchedUpdates(function () {
             return dispatchEventsForPlugins(domEventName, eventSystemFlags, nativeEvent, ancestorInst);
           });
         }
@@ -9255,7 +9255,7 @@ var require_react_dom_development = __commonJS({
             // @see https://electronjs.org/docs/api/webview-tag
             webview: true
           };
-          validatePropertiesInDevelopment = function(type, props) {
+          validatePropertiesInDevelopment = function (type, props) {
             validateProperties(type, props);
             validateProperties$1(type, props);
             validateProperties$2(type, props, {
@@ -9264,7 +9264,7 @@ var require_react_dom_development = __commonJS({
             });
           };
           canDiffStyleForHydrationWarning = canUseDOM && !document.documentMode;
-          warnForPropDifference = function(propName, serverValue, clientValue) {
+          warnForPropDifference = function (propName, serverValue, clientValue) {
             if (didWarnInvalidHydration) {
               return;
             }
@@ -9276,25 +9276,25 @@ var require_react_dom_development = __commonJS({
             didWarnInvalidHydration = true;
             error("Prop `%s` did not match. Server: %s Client: %s", propName, JSON.stringify(normalizedServerValue), JSON.stringify(normalizedClientValue));
           };
-          warnForExtraAttributes = function(attributeNames) {
+          warnForExtraAttributes = function (attributeNames) {
             if (didWarnInvalidHydration) {
               return;
             }
             didWarnInvalidHydration = true;
             var names = [];
-            attributeNames.forEach(function(name) {
+            attributeNames.forEach(function (name) {
               names.push(name);
             });
             error("Extra attributes from the server: %s", names);
           };
-          warnForInvalidEventListener = function(registrationName, listener) {
+          warnForInvalidEventListener = function (registrationName, listener) {
             if (listener === false) {
               error("Expected `%s` listener to be a function, instead got `false`.\n\nIf you used to conditionally omit it with %s={condition && value}, pass %s={condition ? value : undefined} instead.", registrationName, registrationName, registrationName);
             } else {
               error("Expected `%s` listener to be a function, instead got a value of `%s` type.", registrationName, typeof listener);
             }
           };
-          normalizeHTML = function(parent, html) {
+          normalizeHTML = function (parent, html) {
             var testElement = parent.namespaceURI === HTML_NAMESPACE ? parent.ownerDocument.createElement(parent.tagName) : parent.ownerDocument.createElementNS(parent.namespaceURI, parent.tagName);
             testElement.innerHTML = html;
             return testElement.innerHTML;
@@ -9800,14 +9800,14 @@ var require_react_dom_development = __commonJS({
                 }
               }
             } else if (shouldWarnDev && true && // Convince Flow we've calculated it (it's DEV-only in this method.)
-            typeof isCustomComponentTag === "boolean") {
+              typeof isCustomComponentTag === "boolean") {
               var serverValue = void 0;
               var propertyInfo = isCustomComponentTag && enableCustomElementPropertySupport ? null : getPropertyInfo(propKey);
               if (rawProps[SUPPRESS_HYDRATION_WARNING] === true)
                 ;
               else if (propKey === SUPPRESS_CONTENT_EDITABLE_WARNING || propKey === SUPPRESS_HYDRATION_WARNING || // Controlled attributes are not validated
-              // TODO: Only ignore them on controlled tags.
-              propKey === "value" || propKey === "checked" || propKey === "selected")
+                // TODO: Only ignore them on controlled tags.
+                propKey === "value" || propKey === "checked" || propKey === "selected")
                 ;
               else if (propKey === DANGEROUSLY_SET_INNER_HTML) {
                 var serverHTML = domElement.innerHTML;
@@ -9948,9 +9948,9 @@ var require_react_dom_development = __commonJS({
               return;
           }
         }
-        var validateDOMNesting = function() {
+        var validateDOMNesting = function () {
         };
-        var updatedAncestorInfo = function() {
+        var updatedAncestorInfo = function () {
         };
         {
           var specialTags = ["address", "applet", "area", "article", "aside", "base", "basefont", "bgsound", "blockquote", "body", "br", "button", "caption", "center", "col", "colgroup", "dd", "details", "dir", "div", "dl", "dt", "embed", "fieldset", "figcaption", "figure", "footer", "form", "frame", "frameset", "h1", "h2", "h3", "h4", "h5", "h6", "head", "header", "hgroup", "hr", "html", "iframe", "img", "input", "isindex", "li", "link", "listing", "main", "marquee", "menu", "menuitem", "meta", "nav", "noembed", "noframes", "noscript", "object", "ol", "p", "param", "plaintext", "pre", "script", "section", "select", "source", "style", "summary", "table", "tbody", "td", "template", "textarea", "tfoot", "th", "thead", "title", "tr", "track", "ul", "wbr", "xmp"];
@@ -9983,7 +9983,7 @@ var require_react_dom_development = __commonJS({
             listItemTagAutoclosing: null,
             dlItemTagAutoclosing: null
           };
-          updatedAncestorInfo = function(oldInfo, tag2) {
+          updatedAncestorInfo = function (oldInfo, tag2) {
             var ancestorInfo = assign({}, oldInfo || emptyAncestorInfo);
             var info = {
               tag: tag2
@@ -10024,7 +10024,7 @@ var require_react_dom_development = __commonJS({
             }
             return ancestorInfo;
           };
-          var isTagValidWithParent = function(tag2, parentTag) {
+          var isTagValidWithParent = function (tag2, parentTag) {
             switch (parentTag) {
               case "select":
                 return tag2 === "option" || tag2 === "optgroup" || tag2 === "#text";
@@ -10080,7 +10080,7 @@ var require_react_dom_development = __commonJS({
             }
             return true;
           };
-          var findInvalidAncestorForTag = function(tag2, ancestorInfo) {
+          var findInvalidAncestorForTag = function (tag2, ancestorInfo) {
             switch (tag2) {
               case "address":
               case "article":
@@ -10135,7 +10135,7 @@ var require_react_dom_development = __commonJS({
             return null;
           };
           var didWarn$1 = {};
-          validateDOMNesting = function(childTag, childText, ancestorInfo) {
+          validateDOMNesting = function (childTag, childText, ancestorInfo) {
             ancestorInfo = ancestorInfo || emptyAncestorInfo;
             var parentInfo = ancestorInfo.current;
             var parentTag = parentInfo && parentInfo.tag;
@@ -10312,11 +10312,11 @@ var require_react_dom_development = __commonJS({
         var cancelTimeout = typeof clearTimeout === "function" ? clearTimeout : void 0;
         var noTimeout = -1;
         var localPromise = typeof Promise === "function" ? Promise : void 0;
-        var scheduleMicrotask = typeof queueMicrotask === "function" ? queueMicrotask : typeof localPromise !== "undefined" ? function(callback) {
+        var scheduleMicrotask = typeof queueMicrotask === "function" ? queueMicrotask : typeof localPromise !== "undefined" ? function (callback) {
           return localPromise.resolve(null).then(callback).catch(handleErrorInNextTick);
         } : scheduleTimeout;
         function handleErrorInNextTick(error2) {
-          setTimeout(function() {
+          setTimeout(function () {
             throw error2;
           });
         }
@@ -11577,19 +11577,19 @@ var require_react_dom_development = __commonJS({
           return ReactCurrentBatchConfig$1.transition;
         }
         var ReactStrictModeWarnings = {
-          recordUnsafeLifecycleWarnings: function(fiber, instance) {
+          recordUnsafeLifecycleWarnings: function (fiber, instance) {
           },
-          flushPendingUnsafeLifecycleWarnings: function() {
+          flushPendingUnsafeLifecycleWarnings: function () {
           },
-          recordLegacyContextWarning: function(fiber, instance) {
+          recordLegacyContextWarning: function (fiber, instance) {
           },
-          flushLegacyContextWarning: function() {
+          flushLegacyContextWarning: function () {
           },
-          discardPendingWarnings: function() {
+          discardPendingWarnings: function () {
           }
         };
         {
-          var findStrictRoot = function(fiber) {
+          var findStrictRoot = function (fiber) {
             var maybeStrictRoot = null;
             var node = fiber;
             while (node !== null) {
@@ -11600,9 +11600,9 @@ var require_react_dom_development = __commonJS({
             }
             return maybeStrictRoot;
           };
-          var setToSortedString = function(set3) {
+          var setToSortedString = function (set3) {
             var array = [];
-            set3.forEach(function(value2) {
+            set3.forEach(function (value2) {
               array.push(value2);
             });
             return array.sort().join(", ");
@@ -11614,12 +11614,12 @@ var require_react_dom_development = __commonJS({
           var pendingComponentWillUpdateWarnings = [];
           var pendingUNSAFE_ComponentWillUpdateWarnings = [];
           var didWarnAboutUnsafeLifecycles = /* @__PURE__ */ new Set();
-          ReactStrictModeWarnings.recordUnsafeLifecycleWarnings = function(fiber, instance) {
+          ReactStrictModeWarnings.recordUnsafeLifecycleWarnings = function (fiber, instance) {
             if (didWarnAboutUnsafeLifecycles.has(fiber.type)) {
               return;
             }
             if (typeof instance.componentWillMount === "function" && // Don't warn about react-lifecycles-compat polyfilled components.
-            instance.componentWillMount.__suppressDeprecationWarning !== true) {
+              instance.componentWillMount.__suppressDeprecationWarning !== true) {
               pendingComponentWillMountWarnings.push(fiber);
             }
             if (fiber.mode & StrictLegacyMode && typeof instance.UNSAFE_componentWillMount === "function") {
@@ -11638,10 +11638,10 @@ var require_react_dom_development = __commonJS({
               pendingUNSAFE_ComponentWillUpdateWarnings.push(fiber);
             }
           };
-          ReactStrictModeWarnings.flushPendingUnsafeLifecycleWarnings = function() {
+          ReactStrictModeWarnings.flushPendingUnsafeLifecycleWarnings = function () {
             var componentWillMountUniqueNames = /* @__PURE__ */ new Set();
             if (pendingComponentWillMountWarnings.length > 0) {
-              pendingComponentWillMountWarnings.forEach(function(fiber) {
+              pendingComponentWillMountWarnings.forEach(function (fiber) {
                 componentWillMountUniqueNames.add(getComponentNameFromFiber(fiber) || "Component");
                 didWarnAboutUnsafeLifecycles.add(fiber.type);
               });
@@ -11649,7 +11649,7 @@ var require_react_dom_development = __commonJS({
             }
             var UNSAFE_componentWillMountUniqueNames = /* @__PURE__ */ new Set();
             if (pendingUNSAFE_ComponentWillMountWarnings.length > 0) {
-              pendingUNSAFE_ComponentWillMountWarnings.forEach(function(fiber) {
+              pendingUNSAFE_ComponentWillMountWarnings.forEach(function (fiber) {
                 UNSAFE_componentWillMountUniqueNames.add(getComponentNameFromFiber(fiber) || "Component");
                 didWarnAboutUnsafeLifecycles.add(fiber.type);
               });
@@ -11657,7 +11657,7 @@ var require_react_dom_development = __commonJS({
             }
             var componentWillReceivePropsUniqueNames = /* @__PURE__ */ new Set();
             if (pendingComponentWillReceivePropsWarnings.length > 0) {
-              pendingComponentWillReceivePropsWarnings.forEach(function(fiber) {
+              pendingComponentWillReceivePropsWarnings.forEach(function (fiber) {
                 componentWillReceivePropsUniqueNames.add(getComponentNameFromFiber(fiber) || "Component");
                 didWarnAboutUnsafeLifecycles.add(fiber.type);
               });
@@ -11665,7 +11665,7 @@ var require_react_dom_development = __commonJS({
             }
             var UNSAFE_componentWillReceivePropsUniqueNames = /* @__PURE__ */ new Set();
             if (pendingUNSAFE_ComponentWillReceivePropsWarnings.length > 0) {
-              pendingUNSAFE_ComponentWillReceivePropsWarnings.forEach(function(fiber) {
+              pendingUNSAFE_ComponentWillReceivePropsWarnings.forEach(function (fiber) {
                 UNSAFE_componentWillReceivePropsUniqueNames.add(getComponentNameFromFiber(fiber) || "Component");
                 didWarnAboutUnsafeLifecycles.add(fiber.type);
               });
@@ -11673,7 +11673,7 @@ var require_react_dom_development = __commonJS({
             }
             var componentWillUpdateUniqueNames = /* @__PURE__ */ new Set();
             if (pendingComponentWillUpdateWarnings.length > 0) {
-              pendingComponentWillUpdateWarnings.forEach(function(fiber) {
+              pendingComponentWillUpdateWarnings.forEach(function (fiber) {
                 componentWillUpdateUniqueNames.add(getComponentNameFromFiber(fiber) || "Component");
                 didWarnAboutUnsafeLifecycles.add(fiber.type);
               });
@@ -11681,7 +11681,7 @@ var require_react_dom_development = __commonJS({
             }
             var UNSAFE_componentWillUpdateUniqueNames = /* @__PURE__ */ new Set();
             if (pendingUNSAFE_ComponentWillUpdateWarnings.length > 0) {
-              pendingUNSAFE_ComponentWillUpdateWarnings.forEach(function(fiber) {
+              pendingUNSAFE_ComponentWillUpdateWarnings.forEach(function (fiber) {
                 UNSAFE_componentWillUpdateUniqueNames.add(getComponentNameFromFiber(fiber) || "Component");
                 didWarnAboutUnsafeLifecycles.add(fiber.type);
               });
@@ -11714,7 +11714,7 @@ var require_react_dom_development = __commonJS({
           };
           var pendingLegacyContextWarning = /* @__PURE__ */ new Map();
           var didWarnAboutLegacyContext = /* @__PURE__ */ new Set();
-          ReactStrictModeWarnings.recordLegacyContextWarning = function(fiber, instance) {
+          ReactStrictModeWarnings.recordLegacyContextWarning = function (fiber, instance) {
             var strictRoot = findStrictRoot(fiber);
             if (strictRoot === null) {
               error("Expected to find a StrictMode component in a strict mode tree. This error is likely caused by a bug in React. Please file an issue.");
@@ -11732,14 +11732,14 @@ var require_react_dom_development = __commonJS({
               warningsForRoot.push(fiber);
             }
           };
-          ReactStrictModeWarnings.flushLegacyContextWarning = function() {
-            pendingLegacyContextWarning.forEach(function(fiberArray, strictRoot) {
+          ReactStrictModeWarnings.flushLegacyContextWarning = function () {
+            pendingLegacyContextWarning.forEach(function (fiberArray, strictRoot) {
               if (fiberArray.length === 0) {
                 return;
               }
               var firstFiber = fiberArray[0];
               var uniqueNames = /* @__PURE__ */ new Set();
-              fiberArray.forEach(function(fiber) {
+              fiberArray.forEach(function (fiber) {
                 uniqueNames.add(getComponentNameFromFiber(fiber) || "Component");
                 didWarnAboutLegacyContext.add(fiber.type);
               });
@@ -11752,7 +11752,7 @@ var require_react_dom_development = __commonJS({
               }
             });
           };
-          ReactStrictModeWarnings.discardPendingWarnings = function() {
+          ReactStrictModeWarnings.discardPendingWarnings = function () {
             pendingComponentWillMountWarnings = [];
             pendingUNSAFE_ComponentWillMountWarnings = [];
             pendingComponentWillReceivePropsWarnings = [];
@@ -11767,7 +11767,7 @@ var require_react_dom_development = __commonJS({
         var didWarnAboutStringRefs;
         var ownerHasKeyUseWarning;
         var ownerHasFunctionTypeWarning;
-        var warnForMissingKey = function(child, returnFiber) {
+        var warnForMissingKey = function (child, returnFiber) {
         };
         {
           didWarnAboutMaps = false;
@@ -11775,7 +11775,7 @@ var require_react_dom_development = __commonJS({
           didWarnAboutStringRefs = {};
           ownerHasKeyUseWarning = {};
           ownerHasFunctionTypeWarning = {};
-          warnForMissingKey = function(child, returnFiber) {
+          warnForMissingKey = function (child, returnFiber) {
             if (child === null || typeof child !== "object") {
               return;
             }
@@ -11802,12 +11802,12 @@ var require_react_dom_development = __commonJS({
           if (mixedRef !== null && typeof mixedRef !== "function" && typeof mixedRef !== "object") {
             {
               if ((returnFiber.mode & StrictLegacyMode || warnAboutStringRefs) && // We warn in ReactElement.js if owner and self are equal for string refs
-              // because these cannot be automatically converted to an arrow function
-              // using a codemod. Therefore, we don't have to warn about string refs again.
-              !(element._owner && element._self && element._owner.stateNode !== element._self) && // Will already throw with "Function components cannot have string refs"
-              !(element._owner && element._owner.tag !== ClassComponent) && // Will already warn with "Function components cannot be given refs"
-              !(typeof element.type === "function" && !isReactClass(element.type)) && // Will already throw with "Element ref was specified as a string (someStringRef) but no owner was set"
-              element._owner) {
+                // because these cannot be automatically converted to an arrow function
+                // using a codemod. Therefore, we don't have to warn about string refs again.
+                !(element._owner && element._self && element._owner.stateNode !== element._self) && // Will already throw with "Function components cannot have string refs"
+                !(element._owner && element._owner.tag !== ClassComponent) && // Will already warn with "Function components cannot be given refs"
+                !(typeof element.type === "function" && !isReactClass(element.type)) && // Will already throw with "Element ref was specified as a string (someStringRef) but no owner was set"
+                element._owner) {
                 var componentName = getComponentNameFromFiber(returnFiber) || "Component";
                 if (!didWarnAboutStringRefs[componentName]) {
                   {
@@ -11838,7 +11838,7 @@ var require_react_dom_development = __commonJS({
               if (current2 !== null && current2.ref !== null && typeof current2.ref === "function" && current2.ref._stringRef === stringRef) {
                 return current2.ref;
               }
-              var ref = function(value2) {
+              var ref = function (value2) {
                 var refs = resolvedInst.refs;
                 if (value2 === null) {
                   delete refs[stringRef];
@@ -11965,11 +11965,11 @@ var require_react_dom_development = __commonJS({
             }
             if (current2 !== null) {
               if (current2.elementType === elementType || // Keep this check inline so it only runs on the false path:
-              isCompatibleFamilyForHotReloading(current2, element) || // Lazy types should reconcile their resolved type.
-              // We need to do this after the Hot Reloading check above,
-              // because hot reloading has different semantics than prod because
-              // it doesn't resuspend. So we can't let the call below suspend.
-              typeof elementType === "object" && elementType !== null && elementType.$$typeof === REACT_LAZY_TYPE && resolveLazy(elementType) === current2.type) {
+                isCompatibleFamilyForHotReloading(current2, element) || // Lazy types should reconcile their resolved type.
+                // We need to do this after the Hot Reloading check above,
+                // because hot reloading has different semantics than prod because
+                // it doesn't resuspend. So we can't let the call below suspend.
+                typeof elementType === "object" && elementType !== null && elementType.$$typeof === REACT_LAZY_TYPE && resolveLazy(elementType) === current2.type) {
                 var existing = useFiber(current2, element.props);
                 existing.ref = coerceRef(returnFiber, current2, element);
                 existing.return = returnFiber;
@@ -12246,7 +12246,7 @@ var require_react_dom_development = __commonJS({
               }
             }
             if (shouldTrackSideEffects) {
-              existingChildren.forEach(function(child2) {
+              existingChildren.forEach(function (child2) {
                 return deleteChild(returnFiber, child2);
               });
             }
@@ -12263,7 +12263,7 @@ var require_react_dom_development = __commonJS({
             }
             {
               if (typeof Symbol === "function" && // $FlowFixMe Flow doesn't know about toStringTag
-              newChildrenIterable[Symbol.toStringTag] === "Generator") {
+                newChildrenIterable[Symbol.toStringTag] === "Generator") {
                 if (!didWarnAboutGenerators) {
                   error("Using Generators as children is unsupported and will likely yield unexpected results because enumerating a generator mutates it. You may convert it to an array with `Array.from()` or the `[...spread]` operator before rendering. Keep in mind you might need to polyfill these features for older browsers.");
                 }
@@ -12371,7 +12371,7 @@ var require_react_dom_development = __commonJS({
               }
             }
             if (shouldTrackSideEffects) {
-              existingChildren.forEach(function(child2) {
+              existingChildren.forEach(function (child2) {
                 return deleteChild(returnFiber, child2);
               });
             }
@@ -12412,11 +12412,11 @@ var require_react_dom_development = __commonJS({
                   }
                 } else {
                   if (child.elementType === elementType || // Keep this check inline so it only runs on the false path:
-                  isCompatibleFamilyForHotReloading(child, element) || // Lazy types should reconcile their resolved type.
-                  // We need to do this after the Hot Reloading check above,
-                  // because hot reloading has different semantics than prod because
-                  // it doesn't resuspend. So we can't let the call below suspend.
-                  typeof elementType === "object" && elementType !== null && elementType.$$typeof === REACT_LAZY_TYPE && resolveLazy(elementType) === child.type) {
+                    isCompatibleFamilyForHotReloading(child, element) || // Lazy types should reconcile their resolved type.
+                    // We need to do this after the Hot Reloading check above,
+                    // because hot reloading has different semantics than prod because
+                    // it doesn't resuspend. So we can't let the call below suspend.
+                    typeof elementType === "object" && elementType !== null && elementType.$$typeof === REACT_LAZY_TYPE && resolveLazy(elementType) === child.type) {
                     deleteRemainingChildren(returnFiber, child.sibling);
                     var _existing = useFiber(child, element.props);
                     _existing.ref = coerceRef(returnFiber, child, element);
@@ -13123,8 +13123,8 @@ var require_react_dom_development = __commonJS({
                 newState = getStateFromUpdate(workInProgress2, queue, update, newState, props, instance);
                 var callback = update.callback;
                 if (callback !== null && // If the update was already committed, we should not queue its
-                // callback again.
-                update.lane !== NoLane) {
+                  // callback again.
+                  update.lane !== NoLane) {
                   workInProgress2.flags |= Callback;
                   var effects = queue.effects;
                   if (effects === null) {
@@ -13295,8 +13295,8 @@ var require_react_dom_development = __commonJS({
                 }
               }
             } else if (node.tag === SuspenseListComponent && // revealOrder undefined can't be trusted because it don't
-            // keep track of whether it suspended or not.
-            node.memoizedProps.revealOrder !== void 0) {
+              // keep track of whether it suspended or not.
+              node.memoizedProps.revealOrder !== void 0) {
               var didSuspend = (node.flags & DidCapture) !== NoFlags;
               if (didSuspend) {
                 return node;
@@ -13514,11 +13514,11 @@ var require_react_dom_development = __commonJS({
             hookTypesDev = null;
             hookTypesUpdateIndexDev = -1;
             if (current2 !== null && (current2.flags & StaticMask) !== (workInProgress2.flags & StaticMask) && // Disable this warning in legacy mode, because legacy Suspense is weird
-            // and creates false positives. To make this work in legacy mode, we'd
-            // need to mark fibers that commit in an incomplete state, somehow. For
-            // now I'll disable the warning that most of the bugs that would trigger
-            // it are either exclusive to concurrent mode or exist in both.
-            (current2.mode & ConcurrentMode) !== NoMode) {
+              // and creates false positives. To make this work in legacy mode, we'd
+              // need to mark fibers that commit in an incomplete state, somehow. For
+              // now I'll disable the warning that most of the bugs that would trigger
+              // it are either exclusive to concurrent mode or exist in both.
+              (current2.mode & ConcurrentMode) !== NoMode) {
               error("Internal React error: Expected static flag was missing. Please notify the React team.");
             }
           }
@@ -13866,8 +13866,8 @@ var require_react_dom_development = __commonJS({
           var inst = hook.queue;
           updateEffect(subscribeToStore.bind(null, fiber, inst, subscribe), [subscribe]);
           if (inst.getSnapshot !== getSnapshot || snapshotChanged || // Check if the susbcribe function changed. We can save some memory by
-          // checking whether we scheduled a subscription effect above.
-          workInProgressHook !== null && workInProgressHook.memoizedState.tag & HasEffect) {
+            // checking whether we scheduled a subscription effect above.
+            workInProgressHook !== null && workInProgressHook.memoizedState.tag & HasEffect) {
             fiber.flags |= Passive;
             pushEffect(HasEffect | Passive$1, updateStoreInstance.bind(null, fiber, inst, nextSnapshot, getSnapshot), void 0, null);
             var root2 = getWorkInProgressRoot();
@@ -13908,7 +13908,7 @@ var require_react_dom_development = __commonJS({
           }
         }
         function subscribeToStore(fiber, inst, subscribe) {
-          var handleStoreChange = function() {
+          var handleStoreChange = function () {
             if (checkIfSnapshotChanged(inst)) {
               forceStoreRerender(fiber);
             }
@@ -14054,7 +14054,7 @@ var require_react_dom_development = __commonJS({
             var refCallback = ref;
             var _inst = create();
             refCallback(_inst);
-            return function() {
+            return function () {
               refCallback(null);
             };
           } else if (ref !== null && ref !== void 0) {
@@ -14066,7 +14066,7 @@ var require_react_dom_development = __commonJS({
             }
             var _inst2 = create();
             refObject.current = _inst2;
-            return function() {
+            return function () {
               refObject.current = null;
             };
           }
@@ -14395,52 +14395,52 @@ var require_react_dom_development = __commonJS({
         var InvalidNestedHooksDispatcherOnUpdateInDEV = null;
         var InvalidNestedHooksDispatcherOnRerenderInDEV = null;
         {
-          var warnInvalidContextAccess = function() {
+          var warnInvalidContextAccess = function () {
             error("Context can only be read while React is rendering. In classes, you can read it in the render method or getDerivedStateFromProps. In function components, you can read it directly in the function body, but not inside Hooks like useReducer() or useMemo().");
           };
-          var warnInvalidHookAccess = function() {
+          var warnInvalidHookAccess = function () {
             error("Do not call Hooks inside useEffect(...), useMemo(...), or other built-in Hooks. You can only call Hooks at the top level of your React function. For more information, see https://reactjs.org/link/rules-of-hooks");
           };
           HooksDispatcherOnMountInDEV = {
-            readContext: function(context) {
+            readContext: function (context) {
               return readContext(context);
             },
-            useCallback: function(callback, deps) {
+            useCallback: function (callback, deps) {
               currentHookNameInDev = "useCallback";
               mountHookTypesDev();
               checkDepsAreArrayDev(deps);
               return mountCallback(callback, deps);
             },
-            useContext: function(context) {
+            useContext: function (context) {
               currentHookNameInDev = "useContext";
               mountHookTypesDev();
               return readContext(context);
             },
-            useEffect: function(create, deps) {
+            useEffect: function (create, deps) {
               currentHookNameInDev = "useEffect";
               mountHookTypesDev();
               checkDepsAreArrayDev(deps);
               return mountEffect(create, deps);
             },
-            useImperativeHandle: function(ref, create, deps) {
+            useImperativeHandle: function (ref, create, deps) {
               currentHookNameInDev = "useImperativeHandle";
               mountHookTypesDev();
               checkDepsAreArrayDev(deps);
               return mountImperativeHandle(ref, create, deps);
             },
-            useInsertionEffect: function(create, deps) {
+            useInsertionEffect: function (create, deps) {
               currentHookNameInDev = "useInsertionEffect";
               mountHookTypesDev();
               checkDepsAreArrayDev(deps);
               return mountInsertionEffect(create, deps);
             },
-            useLayoutEffect: function(create, deps) {
+            useLayoutEffect: function (create, deps) {
               currentHookNameInDev = "useLayoutEffect";
               mountHookTypesDev();
               checkDepsAreArrayDev(deps);
               return mountLayoutEffect(create, deps);
             },
-            useMemo: function(create, deps) {
+            useMemo: function (create, deps) {
               currentHookNameInDev = "useMemo";
               mountHookTypesDev();
               checkDepsAreArrayDev(deps);
@@ -14452,7 +14452,7 @@ var require_react_dom_development = __commonJS({
                 ReactCurrentDispatcher$1.current = prevDispatcher;
               }
             },
-            useReducer: function(reducer, initialArg, init) {
+            useReducer: function (reducer, initialArg, init) {
               currentHookNameInDev = "useReducer";
               mountHookTypesDev();
               var prevDispatcher = ReactCurrentDispatcher$1.current;
@@ -14463,12 +14463,12 @@ var require_react_dom_development = __commonJS({
                 ReactCurrentDispatcher$1.current = prevDispatcher;
               }
             },
-            useRef: function(initialValue) {
+            useRef: function (initialValue) {
               currentHookNameInDev = "useRef";
               mountHookTypesDev();
               return mountRef(initialValue);
             },
-            useState: function(initialState) {
+            useState: function (initialState) {
               currentHookNameInDev = "useState";
               mountHookTypesDev();
               var prevDispatcher = ReactCurrentDispatcher$1.current;
@@ -14479,32 +14479,32 @@ var require_react_dom_development = __commonJS({
                 ReactCurrentDispatcher$1.current = prevDispatcher;
               }
             },
-            useDebugValue: function(value2, formatterFn) {
+            useDebugValue: function (value2, formatterFn) {
               currentHookNameInDev = "useDebugValue";
               mountHookTypesDev();
               return mountDebugValue();
             },
-            useDeferredValue: function(value2) {
+            useDeferredValue: function (value2) {
               currentHookNameInDev = "useDeferredValue";
               mountHookTypesDev();
               return mountDeferredValue(value2);
             },
-            useTransition: function() {
+            useTransition: function () {
               currentHookNameInDev = "useTransition";
               mountHookTypesDev();
               return mountTransition();
             },
-            useMutableSource: function(source, getSnapshot, subscribe) {
+            useMutableSource: function (source, getSnapshot, subscribe) {
               currentHookNameInDev = "useMutableSource";
               mountHookTypesDev();
               return mountMutableSource();
             },
-            useSyncExternalStore: function(subscribe, getSnapshot, getServerSnapshot) {
+            useSyncExternalStore: function (subscribe, getSnapshot, getServerSnapshot) {
               currentHookNameInDev = "useSyncExternalStore";
               mountHookTypesDev();
               return mountSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
             },
-            useId: function() {
+            useId: function () {
               currentHookNameInDev = "useId";
               mountHookTypesDev();
               return mountId();
@@ -14512,40 +14512,40 @@ var require_react_dom_development = __commonJS({
             unstable_isNewReconciler: enableNewReconciler
           };
           HooksDispatcherOnMountWithHookTypesInDEV = {
-            readContext: function(context) {
+            readContext: function (context) {
               return readContext(context);
             },
-            useCallback: function(callback, deps) {
+            useCallback: function (callback, deps) {
               currentHookNameInDev = "useCallback";
               updateHookTypesDev();
               return mountCallback(callback, deps);
             },
-            useContext: function(context) {
+            useContext: function (context) {
               currentHookNameInDev = "useContext";
               updateHookTypesDev();
               return readContext(context);
             },
-            useEffect: function(create, deps) {
+            useEffect: function (create, deps) {
               currentHookNameInDev = "useEffect";
               updateHookTypesDev();
               return mountEffect(create, deps);
             },
-            useImperativeHandle: function(ref, create, deps) {
+            useImperativeHandle: function (ref, create, deps) {
               currentHookNameInDev = "useImperativeHandle";
               updateHookTypesDev();
               return mountImperativeHandle(ref, create, deps);
             },
-            useInsertionEffect: function(create, deps) {
+            useInsertionEffect: function (create, deps) {
               currentHookNameInDev = "useInsertionEffect";
               updateHookTypesDev();
               return mountInsertionEffect(create, deps);
             },
-            useLayoutEffect: function(create, deps) {
+            useLayoutEffect: function (create, deps) {
               currentHookNameInDev = "useLayoutEffect";
               updateHookTypesDev();
               return mountLayoutEffect(create, deps);
             },
-            useMemo: function(create, deps) {
+            useMemo: function (create, deps) {
               currentHookNameInDev = "useMemo";
               updateHookTypesDev();
               var prevDispatcher = ReactCurrentDispatcher$1.current;
@@ -14556,7 +14556,7 @@ var require_react_dom_development = __commonJS({
                 ReactCurrentDispatcher$1.current = prevDispatcher;
               }
             },
-            useReducer: function(reducer, initialArg, init) {
+            useReducer: function (reducer, initialArg, init) {
               currentHookNameInDev = "useReducer";
               updateHookTypesDev();
               var prevDispatcher = ReactCurrentDispatcher$1.current;
@@ -14567,12 +14567,12 @@ var require_react_dom_development = __commonJS({
                 ReactCurrentDispatcher$1.current = prevDispatcher;
               }
             },
-            useRef: function(initialValue) {
+            useRef: function (initialValue) {
               currentHookNameInDev = "useRef";
               updateHookTypesDev();
               return mountRef(initialValue);
             },
-            useState: function(initialState) {
+            useState: function (initialState) {
               currentHookNameInDev = "useState";
               updateHookTypesDev();
               var prevDispatcher = ReactCurrentDispatcher$1.current;
@@ -14583,32 +14583,32 @@ var require_react_dom_development = __commonJS({
                 ReactCurrentDispatcher$1.current = prevDispatcher;
               }
             },
-            useDebugValue: function(value2, formatterFn) {
+            useDebugValue: function (value2, formatterFn) {
               currentHookNameInDev = "useDebugValue";
               updateHookTypesDev();
               return mountDebugValue();
             },
-            useDeferredValue: function(value2) {
+            useDeferredValue: function (value2) {
               currentHookNameInDev = "useDeferredValue";
               updateHookTypesDev();
               return mountDeferredValue(value2);
             },
-            useTransition: function() {
+            useTransition: function () {
               currentHookNameInDev = "useTransition";
               updateHookTypesDev();
               return mountTransition();
             },
-            useMutableSource: function(source, getSnapshot, subscribe) {
+            useMutableSource: function (source, getSnapshot, subscribe) {
               currentHookNameInDev = "useMutableSource";
               updateHookTypesDev();
               return mountMutableSource();
             },
-            useSyncExternalStore: function(subscribe, getSnapshot, getServerSnapshot) {
+            useSyncExternalStore: function (subscribe, getSnapshot, getServerSnapshot) {
               currentHookNameInDev = "useSyncExternalStore";
               updateHookTypesDev();
               return mountSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
             },
-            useId: function() {
+            useId: function () {
               currentHookNameInDev = "useId";
               updateHookTypesDev();
               return mountId();
@@ -14616,40 +14616,40 @@ var require_react_dom_development = __commonJS({
             unstable_isNewReconciler: enableNewReconciler
           };
           HooksDispatcherOnUpdateInDEV = {
-            readContext: function(context) {
+            readContext: function (context) {
               return readContext(context);
             },
-            useCallback: function(callback, deps) {
+            useCallback: function (callback, deps) {
               currentHookNameInDev = "useCallback";
               updateHookTypesDev();
               return updateCallback(callback, deps);
             },
-            useContext: function(context) {
+            useContext: function (context) {
               currentHookNameInDev = "useContext";
               updateHookTypesDev();
               return readContext(context);
             },
-            useEffect: function(create, deps) {
+            useEffect: function (create, deps) {
               currentHookNameInDev = "useEffect";
               updateHookTypesDev();
               return updateEffect(create, deps);
             },
-            useImperativeHandle: function(ref, create, deps) {
+            useImperativeHandle: function (ref, create, deps) {
               currentHookNameInDev = "useImperativeHandle";
               updateHookTypesDev();
               return updateImperativeHandle(ref, create, deps);
             },
-            useInsertionEffect: function(create, deps) {
+            useInsertionEffect: function (create, deps) {
               currentHookNameInDev = "useInsertionEffect";
               updateHookTypesDev();
               return updateInsertionEffect(create, deps);
             },
-            useLayoutEffect: function(create, deps) {
+            useLayoutEffect: function (create, deps) {
               currentHookNameInDev = "useLayoutEffect";
               updateHookTypesDev();
               return updateLayoutEffect(create, deps);
             },
-            useMemo: function(create, deps) {
+            useMemo: function (create, deps) {
               currentHookNameInDev = "useMemo";
               updateHookTypesDev();
               var prevDispatcher = ReactCurrentDispatcher$1.current;
@@ -14660,7 +14660,7 @@ var require_react_dom_development = __commonJS({
                 ReactCurrentDispatcher$1.current = prevDispatcher;
               }
             },
-            useReducer: function(reducer, initialArg, init) {
+            useReducer: function (reducer, initialArg, init) {
               currentHookNameInDev = "useReducer";
               updateHookTypesDev();
               var prevDispatcher = ReactCurrentDispatcher$1.current;
@@ -14671,12 +14671,12 @@ var require_react_dom_development = __commonJS({
                 ReactCurrentDispatcher$1.current = prevDispatcher;
               }
             },
-            useRef: function(initialValue) {
+            useRef: function (initialValue) {
               currentHookNameInDev = "useRef";
               updateHookTypesDev();
               return updateRef();
             },
-            useState: function(initialState) {
+            useState: function (initialState) {
               currentHookNameInDev = "useState";
               updateHookTypesDev();
               var prevDispatcher = ReactCurrentDispatcher$1.current;
@@ -14687,32 +14687,32 @@ var require_react_dom_development = __commonJS({
                 ReactCurrentDispatcher$1.current = prevDispatcher;
               }
             },
-            useDebugValue: function(value2, formatterFn) {
+            useDebugValue: function (value2, formatterFn) {
               currentHookNameInDev = "useDebugValue";
               updateHookTypesDev();
               return updateDebugValue();
             },
-            useDeferredValue: function(value2) {
+            useDeferredValue: function (value2) {
               currentHookNameInDev = "useDeferredValue";
               updateHookTypesDev();
               return updateDeferredValue(value2);
             },
-            useTransition: function() {
+            useTransition: function () {
               currentHookNameInDev = "useTransition";
               updateHookTypesDev();
               return updateTransition();
             },
-            useMutableSource: function(source, getSnapshot, subscribe) {
+            useMutableSource: function (source, getSnapshot, subscribe) {
               currentHookNameInDev = "useMutableSource";
               updateHookTypesDev();
               return updateMutableSource();
             },
-            useSyncExternalStore: function(subscribe, getSnapshot, getServerSnapshot) {
+            useSyncExternalStore: function (subscribe, getSnapshot, getServerSnapshot) {
               currentHookNameInDev = "useSyncExternalStore";
               updateHookTypesDev();
               return updateSyncExternalStore(subscribe, getSnapshot);
             },
-            useId: function() {
+            useId: function () {
               currentHookNameInDev = "useId";
               updateHookTypesDev();
               return updateId();
@@ -14720,40 +14720,40 @@ var require_react_dom_development = __commonJS({
             unstable_isNewReconciler: enableNewReconciler
           };
           HooksDispatcherOnRerenderInDEV = {
-            readContext: function(context) {
+            readContext: function (context) {
               return readContext(context);
             },
-            useCallback: function(callback, deps) {
+            useCallback: function (callback, deps) {
               currentHookNameInDev = "useCallback";
               updateHookTypesDev();
               return updateCallback(callback, deps);
             },
-            useContext: function(context) {
+            useContext: function (context) {
               currentHookNameInDev = "useContext";
               updateHookTypesDev();
               return readContext(context);
             },
-            useEffect: function(create, deps) {
+            useEffect: function (create, deps) {
               currentHookNameInDev = "useEffect";
               updateHookTypesDev();
               return updateEffect(create, deps);
             },
-            useImperativeHandle: function(ref, create, deps) {
+            useImperativeHandle: function (ref, create, deps) {
               currentHookNameInDev = "useImperativeHandle";
               updateHookTypesDev();
               return updateImperativeHandle(ref, create, deps);
             },
-            useInsertionEffect: function(create, deps) {
+            useInsertionEffect: function (create, deps) {
               currentHookNameInDev = "useInsertionEffect";
               updateHookTypesDev();
               return updateInsertionEffect(create, deps);
             },
-            useLayoutEffect: function(create, deps) {
+            useLayoutEffect: function (create, deps) {
               currentHookNameInDev = "useLayoutEffect";
               updateHookTypesDev();
               return updateLayoutEffect(create, deps);
             },
-            useMemo: function(create, deps) {
+            useMemo: function (create, deps) {
               currentHookNameInDev = "useMemo";
               updateHookTypesDev();
               var prevDispatcher = ReactCurrentDispatcher$1.current;
@@ -14764,7 +14764,7 @@ var require_react_dom_development = __commonJS({
                 ReactCurrentDispatcher$1.current = prevDispatcher;
               }
             },
-            useReducer: function(reducer, initialArg, init) {
+            useReducer: function (reducer, initialArg, init) {
               currentHookNameInDev = "useReducer";
               updateHookTypesDev();
               var prevDispatcher = ReactCurrentDispatcher$1.current;
@@ -14775,12 +14775,12 @@ var require_react_dom_development = __commonJS({
                 ReactCurrentDispatcher$1.current = prevDispatcher;
               }
             },
-            useRef: function(initialValue) {
+            useRef: function (initialValue) {
               currentHookNameInDev = "useRef";
               updateHookTypesDev();
               return updateRef();
             },
-            useState: function(initialState) {
+            useState: function (initialState) {
               currentHookNameInDev = "useState";
               updateHookTypesDev();
               var prevDispatcher = ReactCurrentDispatcher$1.current;
@@ -14791,32 +14791,32 @@ var require_react_dom_development = __commonJS({
                 ReactCurrentDispatcher$1.current = prevDispatcher;
               }
             },
-            useDebugValue: function(value2, formatterFn) {
+            useDebugValue: function (value2, formatterFn) {
               currentHookNameInDev = "useDebugValue";
               updateHookTypesDev();
               return updateDebugValue();
             },
-            useDeferredValue: function(value2) {
+            useDeferredValue: function (value2) {
               currentHookNameInDev = "useDeferredValue";
               updateHookTypesDev();
               return rerenderDeferredValue(value2);
             },
-            useTransition: function() {
+            useTransition: function () {
               currentHookNameInDev = "useTransition";
               updateHookTypesDev();
               return rerenderTransition();
             },
-            useMutableSource: function(source, getSnapshot, subscribe) {
+            useMutableSource: function (source, getSnapshot, subscribe) {
               currentHookNameInDev = "useMutableSource";
               updateHookTypesDev();
               return updateMutableSource();
             },
-            useSyncExternalStore: function(subscribe, getSnapshot, getServerSnapshot) {
+            useSyncExternalStore: function (subscribe, getSnapshot, getServerSnapshot) {
               currentHookNameInDev = "useSyncExternalStore";
               updateHookTypesDev();
               return updateSyncExternalStore(subscribe, getSnapshot);
             },
-            useId: function() {
+            useId: function () {
               currentHookNameInDev = "useId";
               updateHookTypesDev();
               return updateId();
@@ -14824,47 +14824,47 @@ var require_react_dom_development = __commonJS({
             unstable_isNewReconciler: enableNewReconciler
           };
           InvalidNestedHooksDispatcherOnMountInDEV = {
-            readContext: function(context) {
+            readContext: function (context) {
               warnInvalidContextAccess();
               return readContext(context);
             },
-            useCallback: function(callback, deps) {
+            useCallback: function (callback, deps) {
               currentHookNameInDev = "useCallback";
               warnInvalidHookAccess();
               mountHookTypesDev();
               return mountCallback(callback, deps);
             },
-            useContext: function(context) {
+            useContext: function (context) {
               currentHookNameInDev = "useContext";
               warnInvalidHookAccess();
               mountHookTypesDev();
               return readContext(context);
             },
-            useEffect: function(create, deps) {
+            useEffect: function (create, deps) {
               currentHookNameInDev = "useEffect";
               warnInvalidHookAccess();
               mountHookTypesDev();
               return mountEffect(create, deps);
             },
-            useImperativeHandle: function(ref, create, deps) {
+            useImperativeHandle: function (ref, create, deps) {
               currentHookNameInDev = "useImperativeHandle";
               warnInvalidHookAccess();
               mountHookTypesDev();
               return mountImperativeHandle(ref, create, deps);
             },
-            useInsertionEffect: function(create, deps) {
+            useInsertionEffect: function (create, deps) {
               currentHookNameInDev = "useInsertionEffect";
               warnInvalidHookAccess();
               mountHookTypesDev();
               return mountInsertionEffect(create, deps);
             },
-            useLayoutEffect: function(create, deps) {
+            useLayoutEffect: function (create, deps) {
               currentHookNameInDev = "useLayoutEffect";
               warnInvalidHookAccess();
               mountHookTypesDev();
               return mountLayoutEffect(create, deps);
             },
-            useMemo: function(create, deps) {
+            useMemo: function (create, deps) {
               currentHookNameInDev = "useMemo";
               warnInvalidHookAccess();
               mountHookTypesDev();
@@ -14876,7 +14876,7 @@ var require_react_dom_development = __commonJS({
                 ReactCurrentDispatcher$1.current = prevDispatcher;
               }
             },
-            useReducer: function(reducer, initialArg, init) {
+            useReducer: function (reducer, initialArg, init) {
               currentHookNameInDev = "useReducer";
               warnInvalidHookAccess();
               mountHookTypesDev();
@@ -14888,13 +14888,13 @@ var require_react_dom_development = __commonJS({
                 ReactCurrentDispatcher$1.current = prevDispatcher;
               }
             },
-            useRef: function(initialValue) {
+            useRef: function (initialValue) {
               currentHookNameInDev = "useRef";
               warnInvalidHookAccess();
               mountHookTypesDev();
               return mountRef(initialValue);
             },
-            useState: function(initialState) {
+            useState: function (initialState) {
               currentHookNameInDev = "useState";
               warnInvalidHookAccess();
               mountHookTypesDev();
@@ -14906,37 +14906,37 @@ var require_react_dom_development = __commonJS({
                 ReactCurrentDispatcher$1.current = prevDispatcher;
               }
             },
-            useDebugValue: function(value2, formatterFn) {
+            useDebugValue: function (value2, formatterFn) {
               currentHookNameInDev = "useDebugValue";
               warnInvalidHookAccess();
               mountHookTypesDev();
               return mountDebugValue();
             },
-            useDeferredValue: function(value2) {
+            useDeferredValue: function (value2) {
               currentHookNameInDev = "useDeferredValue";
               warnInvalidHookAccess();
               mountHookTypesDev();
               return mountDeferredValue(value2);
             },
-            useTransition: function() {
+            useTransition: function () {
               currentHookNameInDev = "useTransition";
               warnInvalidHookAccess();
               mountHookTypesDev();
               return mountTransition();
             },
-            useMutableSource: function(source, getSnapshot, subscribe) {
+            useMutableSource: function (source, getSnapshot, subscribe) {
               currentHookNameInDev = "useMutableSource";
               warnInvalidHookAccess();
               mountHookTypesDev();
               return mountMutableSource();
             },
-            useSyncExternalStore: function(subscribe, getSnapshot, getServerSnapshot) {
+            useSyncExternalStore: function (subscribe, getSnapshot, getServerSnapshot) {
               currentHookNameInDev = "useSyncExternalStore";
               warnInvalidHookAccess();
               mountHookTypesDev();
               return mountSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
             },
-            useId: function() {
+            useId: function () {
               currentHookNameInDev = "useId";
               warnInvalidHookAccess();
               mountHookTypesDev();
@@ -14945,47 +14945,47 @@ var require_react_dom_development = __commonJS({
             unstable_isNewReconciler: enableNewReconciler
           };
           InvalidNestedHooksDispatcherOnUpdateInDEV = {
-            readContext: function(context) {
+            readContext: function (context) {
               warnInvalidContextAccess();
               return readContext(context);
             },
-            useCallback: function(callback, deps) {
+            useCallback: function (callback, deps) {
               currentHookNameInDev = "useCallback";
               warnInvalidHookAccess();
               updateHookTypesDev();
               return updateCallback(callback, deps);
             },
-            useContext: function(context) {
+            useContext: function (context) {
               currentHookNameInDev = "useContext";
               warnInvalidHookAccess();
               updateHookTypesDev();
               return readContext(context);
             },
-            useEffect: function(create, deps) {
+            useEffect: function (create, deps) {
               currentHookNameInDev = "useEffect";
               warnInvalidHookAccess();
               updateHookTypesDev();
               return updateEffect(create, deps);
             },
-            useImperativeHandle: function(ref, create, deps) {
+            useImperativeHandle: function (ref, create, deps) {
               currentHookNameInDev = "useImperativeHandle";
               warnInvalidHookAccess();
               updateHookTypesDev();
               return updateImperativeHandle(ref, create, deps);
             },
-            useInsertionEffect: function(create, deps) {
+            useInsertionEffect: function (create, deps) {
               currentHookNameInDev = "useInsertionEffect";
               warnInvalidHookAccess();
               updateHookTypesDev();
               return updateInsertionEffect(create, deps);
             },
-            useLayoutEffect: function(create, deps) {
+            useLayoutEffect: function (create, deps) {
               currentHookNameInDev = "useLayoutEffect";
               warnInvalidHookAccess();
               updateHookTypesDev();
               return updateLayoutEffect(create, deps);
             },
-            useMemo: function(create, deps) {
+            useMemo: function (create, deps) {
               currentHookNameInDev = "useMemo";
               warnInvalidHookAccess();
               updateHookTypesDev();
@@ -14997,7 +14997,7 @@ var require_react_dom_development = __commonJS({
                 ReactCurrentDispatcher$1.current = prevDispatcher;
               }
             },
-            useReducer: function(reducer, initialArg, init) {
+            useReducer: function (reducer, initialArg, init) {
               currentHookNameInDev = "useReducer";
               warnInvalidHookAccess();
               updateHookTypesDev();
@@ -15009,13 +15009,13 @@ var require_react_dom_development = __commonJS({
                 ReactCurrentDispatcher$1.current = prevDispatcher;
               }
             },
-            useRef: function(initialValue) {
+            useRef: function (initialValue) {
               currentHookNameInDev = "useRef";
               warnInvalidHookAccess();
               updateHookTypesDev();
               return updateRef();
             },
-            useState: function(initialState) {
+            useState: function (initialState) {
               currentHookNameInDev = "useState";
               warnInvalidHookAccess();
               updateHookTypesDev();
@@ -15027,37 +15027,37 @@ var require_react_dom_development = __commonJS({
                 ReactCurrentDispatcher$1.current = prevDispatcher;
               }
             },
-            useDebugValue: function(value2, formatterFn) {
+            useDebugValue: function (value2, formatterFn) {
               currentHookNameInDev = "useDebugValue";
               warnInvalidHookAccess();
               updateHookTypesDev();
               return updateDebugValue();
             },
-            useDeferredValue: function(value2) {
+            useDeferredValue: function (value2) {
               currentHookNameInDev = "useDeferredValue";
               warnInvalidHookAccess();
               updateHookTypesDev();
               return updateDeferredValue(value2);
             },
-            useTransition: function() {
+            useTransition: function () {
               currentHookNameInDev = "useTransition";
               warnInvalidHookAccess();
               updateHookTypesDev();
               return updateTransition();
             },
-            useMutableSource: function(source, getSnapshot, subscribe) {
+            useMutableSource: function (source, getSnapshot, subscribe) {
               currentHookNameInDev = "useMutableSource";
               warnInvalidHookAccess();
               updateHookTypesDev();
               return updateMutableSource();
             },
-            useSyncExternalStore: function(subscribe, getSnapshot, getServerSnapshot) {
+            useSyncExternalStore: function (subscribe, getSnapshot, getServerSnapshot) {
               currentHookNameInDev = "useSyncExternalStore";
               warnInvalidHookAccess();
               updateHookTypesDev();
               return updateSyncExternalStore(subscribe, getSnapshot);
             },
-            useId: function() {
+            useId: function () {
               currentHookNameInDev = "useId";
               warnInvalidHookAccess();
               updateHookTypesDev();
@@ -15066,47 +15066,47 @@ var require_react_dom_development = __commonJS({
             unstable_isNewReconciler: enableNewReconciler
           };
           InvalidNestedHooksDispatcherOnRerenderInDEV = {
-            readContext: function(context) {
+            readContext: function (context) {
               warnInvalidContextAccess();
               return readContext(context);
             },
-            useCallback: function(callback, deps) {
+            useCallback: function (callback, deps) {
               currentHookNameInDev = "useCallback";
               warnInvalidHookAccess();
               updateHookTypesDev();
               return updateCallback(callback, deps);
             },
-            useContext: function(context) {
+            useContext: function (context) {
               currentHookNameInDev = "useContext";
               warnInvalidHookAccess();
               updateHookTypesDev();
               return readContext(context);
             },
-            useEffect: function(create, deps) {
+            useEffect: function (create, deps) {
               currentHookNameInDev = "useEffect";
               warnInvalidHookAccess();
               updateHookTypesDev();
               return updateEffect(create, deps);
             },
-            useImperativeHandle: function(ref, create, deps) {
+            useImperativeHandle: function (ref, create, deps) {
               currentHookNameInDev = "useImperativeHandle";
               warnInvalidHookAccess();
               updateHookTypesDev();
               return updateImperativeHandle(ref, create, deps);
             },
-            useInsertionEffect: function(create, deps) {
+            useInsertionEffect: function (create, deps) {
               currentHookNameInDev = "useInsertionEffect";
               warnInvalidHookAccess();
               updateHookTypesDev();
               return updateInsertionEffect(create, deps);
             },
-            useLayoutEffect: function(create, deps) {
+            useLayoutEffect: function (create, deps) {
               currentHookNameInDev = "useLayoutEffect";
               warnInvalidHookAccess();
               updateHookTypesDev();
               return updateLayoutEffect(create, deps);
             },
-            useMemo: function(create, deps) {
+            useMemo: function (create, deps) {
               currentHookNameInDev = "useMemo";
               warnInvalidHookAccess();
               updateHookTypesDev();
@@ -15118,7 +15118,7 @@ var require_react_dom_development = __commonJS({
                 ReactCurrentDispatcher$1.current = prevDispatcher;
               }
             },
-            useReducer: function(reducer, initialArg, init) {
+            useReducer: function (reducer, initialArg, init) {
               currentHookNameInDev = "useReducer";
               warnInvalidHookAccess();
               updateHookTypesDev();
@@ -15130,13 +15130,13 @@ var require_react_dom_development = __commonJS({
                 ReactCurrentDispatcher$1.current = prevDispatcher;
               }
             },
-            useRef: function(initialValue) {
+            useRef: function (initialValue) {
               currentHookNameInDev = "useRef";
               warnInvalidHookAccess();
               updateHookTypesDev();
               return updateRef();
             },
-            useState: function(initialState) {
+            useState: function (initialState) {
               currentHookNameInDev = "useState";
               warnInvalidHookAccess();
               updateHookTypesDev();
@@ -15148,37 +15148,37 @@ var require_react_dom_development = __commonJS({
                 ReactCurrentDispatcher$1.current = prevDispatcher;
               }
             },
-            useDebugValue: function(value2, formatterFn) {
+            useDebugValue: function (value2, formatterFn) {
               currentHookNameInDev = "useDebugValue";
               warnInvalidHookAccess();
               updateHookTypesDev();
               return updateDebugValue();
             },
-            useDeferredValue: function(value2) {
+            useDeferredValue: function (value2) {
               currentHookNameInDev = "useDeferredValue";
               warnInvalidHookAccess();
               updateHookTypesDev();
               return rerenderDeferredValue(value2);
             },
-            useTransition: function() {
+            useTransition: function () {
               currentHookNameInDev = "useTransition";
               warnInvalidHookAccess();
               updateHookTypesDev();
               return rerenderTransition();
             },
-            useMutableSource: function(source, getSnapshot, subscribe) {
+            useMutableSource: function (source, getSnapshot, subscribe) {
               currentHookNameInDev = "useMutableSource";
               warnInvalidHookAccess();
               updateHookTypesDev();
               return updateMutableSource();
             },
-            useSyncExternalStore: function(subscribe, getSnapshot, getServerSnapshot) {
+            useSyncExternalStore: function (subscribe, getSnapshot, getServerSnapshot) {
               currentHookNameInDev = "useSyncExternalStore";
               warnInvalidHookAccess();
               updateHookTypesDev();
               return updateSyncExternalStore(subscribe, getSnapshot);
             },
-            useId: function() {
+            useId: function () {
               currentHookNameInDev = "useId";
               warnInvalidHookAccess();
               updateHookTypesDev();
@@ -15332,7 +15332,7 @@ var require_react_dom_development = __commonJS({
           didWarnAboutInvalidateContextType = /* @__PURE__ */ new Set();
           didWarnAboutLegacyContext$1 = /* @__PURE__ */ new Set();
           var didWarnOnInvalidCallback = /* @__PURE__ */ new Set();
-          warnOnInvalidCallback = function(callback, callerName) {
+          warnOnInvalidCallback = function (callback, callerName) {
             if (callback === null || typeof callback === "function") {
               return;
             }
@@ -15342,7 +15342,7 @@ var require_react_dom_development = __commonJS({
               error("%s(...): Expected the last optional `callback` argument to be a function. Instead received: %s.", callerName, callback);
             }
           };
-          warnOnUndefinedDerivedState = function(type, partialState) {
+          warnOnUndefinedDerivedState = function (type, partialState) {
             if (partialState === void 0) {
               var componentName = getComponentNameFromType(type) || "Component";
               if (!didWarnAboutUndefinedDerivedState.has(componentName)) {
@@ -15353,7 +15353,7 @@ var require_react_dom_development = __commonJS({
           };
           Object.defineProperty(fakeInternalInstance, "_processChildContext", {
             enumerable: false,
-            value: function() {
+            value: function () {
               throw new Error("_processChildContext is not available in React 16+. This likely means you have multiple copies of React and are attempting to nest a React 15 tree inside a React 16 tree using unstable_renderSubtreeIntoContainer, which isn't supported. Try to make sure you have only one copy of React (and ideally, switch to ReactDOM.createPortal).");
             }
           });
@@ -15382,7 +15382,7 @@ var require_react_dom_development = __commonJS({
         }
         var classComponentUpdater = {
           isMounted,
-          enqueueSetState: function(inst, payload, callback) {
+          enqueueSetState: function (inst, payload, callback) {
             var fiber = get(inst);
             var eventTime = requestEventTime();
             var lane = requestUpdateLane(fiber);
@@ -15403,7 +15403,7 @@ var require_react_dom_development = __commonJS({
               markStateUpdateScheduled(fiber, lane);
             }
           },
-          enqueueReplaceState: function(inst, payload, callback) {
+          enqueueReplaceState: function (inst, payload, callback) {
             var fiber = get(inst);
             var eventTime = requestEventTime();
             var lane = requestUpdateLane(fiber);
@@ -15425,7 +15425,7 @@ var require_react_dom_development = __commonJS({
               markStateUpdateScheduled(fiber, lane);
             }
           },
-          enqueueForceUpdate: function(inst, callback) {
+          enqueueForceUpdate: function (inst, callback) {
             var fiber = get(inst);
             var eventTime = requestEventTime();
             var lane = requestUpdateLane(fiber);
@@ -15497,14 +15497,14 @@ var require_react_dom_development = __commonJS({
             }
             {
               if (ctor.childContextTypes && !didWarnAboutLegacyContext$1.has(ctor) && // Strict Mode has its own warning for legacy context, so we can skip
-              // this one.
-              (workInProgress2.mode & StrictLegacyMode) === NoMode) {
+                // this one.
+                (workInProgress2.mode & StrictLegacyMode) === NoMode) {
                 didWarnAboutLegacyContext$1.add(ctor);
                 error("%s uses the legacy childContextTypes API which is no longer supported and will be removed in the next major release. Use React.createContext() instead\n\n.Learn more about this warning here: https://reactjs.org/link/legacy-context", name);
               }
               if (ctor.contextTypes && !didWarnAboutLegacyContext$1.has(ctor) && // Strict Mode has its own warning for legacy context, so we can skip
-              // this one.
-              (workInProgress2.mode & StrictLegacyMode) === NoMode) {
+                // this one.
+                (workInProgress2.mode & StrictLegacyMode) === NoMode) {
                 didWarnAboutLegacyContext$1.add(ctor);
                 error("%s uses the legacy contextTypes API which is no longer supported and will be removed in the next major release. Use React.createContext() with static contextType instead.\n\nLearn more about this warning here: https://reactjs.org/link/legacy-context", name);
               }
@@ -15877,10 +15877,10 @@ var require_react_dom_development = __commonJS({
             newState = workInProgress2.memoizedState;
           }
           var shouldUpdate = checkHasForceUpdateAfterProcessing() || checkShouldComponentUpdate(workInProgress2, ctor, oldProps, newProps, oldState, newState, nextContext) || // TODO: In some cases, we'll end up checking if context has changed twice,
-          // both before and after `shouldComponentUpdate` has been called. Not ideal,
-          // but I'm loath to refactor this function. This only happens for memoized
-          // components so it's not that common.
-          enableLazyContextPropagation;
+            // both before and after `shouldComponentUpdate` has been called. Not ideal,
+            // but I'm loath to refactor this function. This only happens for memoized
+            // components so it's not that common.
+            enableLazyContextPropagation;
           if (shouldUpdate) {
             if (!hasNewLifecycles && (typeof instance.UNSAFE_componentWillUpdate === "function" || typeof instance.componentWillUpdate === "function")) {
               if (typeof instance.componentWillUpdate === "function") {
@@ -15966,7 +15966,7 @@ var require_react_dom_development = __commonJS({
               console["error"](error2);
             }
           } catch (e) {
-            setTimeout(function() {
+            setTimeout(function () {
               throw e;
             });
           }
@@ -15979,7 +15979,7 @@ var require_react_dom_development = __commonJS({
             element: null
           };
           var error2 = errorInfo.value;
-          update.callback = function() {
+          update.callback = function () {
             onUncaughtError(error2);
             logCapturedError(fiber, errorInfo);
           };
@@ -15991,10 +15991,10 @@ var require_react_dom_development = __commonJS({
           var getDerivedStateFromError = fiber.type.getDerivedStateFromError;
           if (typeof getDerivedStateFromError === "function") {
             var error$1 = errorInfo.value;
-            update.payload = function() {
+            update.payload = function () {
               return getDerivedStateFromError(error$1);
             };
-            update.callback = function() {
+            update.callback = function () {
               {
                 markFailedErrorBoundaryForHotReloading(fiber);
               }
@@ -16285,7 +16285,7 @@ var require_react_dom_development = __commonJS({
           if (current2 === null) {
             var type = Component.type;
             if (isSimpleFunctionComponent(type) && Component.compare === null && // SimpleMemoComponent codepath doesn't resolve outer props either.
-            Component.defaultProps === void 0) {
+              Component.defaultProps === void 0) {
               var resolvedType = type;
               {
                 resolvedType = resolveFunctionForHotReloading(type);
@@ -16381,7 +16381,7 @@ var require_react_dom_development = __commonJS({
           if (current2 !== null) {
             var prevProps = current2.memoizedProps;
             if (shallowEqual(prevProps, nextProps) && current2.ref === workInProgress2.ref && // Prevent bailout if the implementation changed due to hot reload.
-            workInProgress2.type === current2.type) {
+              workInProgress2.type === current2.type) {
               didReceiveUpdate = false;
               workInProgress2.pendingProps = nextProps = prevProps;
               if (!checkScheduledUpdateOrContext(current2, renderLanes2)) {
@@ -17816,13 +17816,13 @@ var require_react_dom_development = __commonJS({
             var oldProps = current2.memoizedProps;
             var newProps = workInProgress2.pendingProps;
             if (oldProps !== newProps || hasContextChanged() || // Force a re-render if the implementation changed due to hot reload:
-            workInProgress2.type !== current2.type) {
+              workInProgress2.type !== current2.type) {
               didReceiveUpdate = true;
             } else {
               var hasScheduledUpdateOrContext = checkScheduledUpdateOrContext(current2, renderLanes2);
               if (!hasScheduledUpdateOrContext && // If this is the second pass of an error or suspense boundary, there
-              // may not be work scheduled on `current`, so we check for this flag.
-              (workInProgress2.flags & DidCapture) === NoFlags) {
+                // may not be work scheduled on `current`, so we check for this flag.
+                (workInProgress2.flags & DidCapture) === NoFlags) {
                 didReceiveUpdate = false;
                 return attemptEarlyBailoutIfNoScheduledUpdate(current2, workInProgress2, renderLanes2);
               }
@@ -17943,7 +17943,7 @@ var require_react_dom_development = __commonJS({
         var updateHostComponent$1;
         var updateHostText$1;
         {
-          appendAllChildren = function(parent, workInProgress2, needsVisibilityToggle, isHidden) {
+          appendAllChildren = function (parent, workInProgress2, needsVisibilityToggle, isHidden) {
             var node = workInProgress2.child;
             while (node !== null) {
               if (node.tag === HostComponent || node.tag === HostText) {
@@ -17968,9 +17968,9 @@ var require_react_dom_development = __commonJS({
               node = node.sibling;
             }
           };
-          updateHostContainer = function(current2, workInProgress2) {
+          updateHostContainer = function (current2, workInProgress2) {
           };
-          updateHostComponent$1 = function(current2, workInProgress2, type, newProps, rootContainerInstance) {
+          updateHostComponent$1 = function (current2, workInProgress2, type, newProps, rootContainerInstance) {
             var oldProps = current2.memoizedProps;
             if (oldProps === newProps) {
               return;
@@ -17983,7 +17983,7 @@ var require_react_dom_development = __commonJS({
               markUpdate(workInProgress2);
             }
           };
-          updateHostText$1 = function(current2, workInProgress2, oldText, newText) {
+          updateHostText$1 = function (current2, workInProgress2, oldText, newText) {
             if (oldText !== newText) {
               markUpdate(workInProgress2);
             }
@@ -18446,7 +18446,7 @@ var require_react_dom_development = __commonJS({
                 var _prevState = current2.memoizedState;
                 var prevIsHidden = _prevState !== null;
                 if (prevIsHidden !== nextIsHidden && // LegacyHidden doesn't do any hiding — it only pre-renders.
-                !enableLegacyHidden) {
+                  !enableLegacyHidden) {
                   workInProgress2.flags |= Visibility;
                 }
               }
@@ -18599,13 +18599,13 @@ var require_react_dom_development = __commonJS({
         var inProgressRoot = null;
         function reportUncaughtErrorInDEV(error2) {
           {
-            invokeGuardedCallback(null, function() {
+            invokeGuardedCallback(null, function () {
               throw error2;
             });
             clearCaughtError();
           }
         }
-        var callComponentWillUnmountWithTimer = function(current2, instance) {
+        var callComponentWillUnmountWithTimer = function (current2, instance) {
           instance.props = current2.memoizedProps;
           instance.state = current2.memoizedState;
           if (current2.mode & ProfileMode) {
@@ -18904,19 +18904,19 @@ var require_react_dom_development = __commonJS({
                   }
                   var parentFiber = finishedWork.return;
                   outer:
-                    while (parentFiber !== null) {
-                      switch (parentFiber.tag) {
-                        case HostRoot:
-                          var root2 = parentFiber.stateNode;
-                          root2.passiveEffectDuration += passiveEffectDuration;
-                          break outer;
-                        case Profiler:
-                          var parentStateNode = parentFiber.stateNode;
-                          parentStateNode.passiveEffectDuration += passiveEffectDuration;
-                          break outer;
-                      }
-                      parentFiber = parentFiber.return;
+                  while (parentFiber !== null) {
+                    switch (parentFiber.tag) {
+                      case HostRoot:
+                        var root2 = parentFiber.stateNode;
+                        root2.passiveEffectDuration += passiveEffectDuration;
+                        break outer;
+                      case Profiler:
+                        var parentStateNode = parentFiber.stateNode;
+                        parentStateNode.passiveEffectDuration += passiveEffectDuration;
+                        break outer;
                     }
+                    parentFiber = parentFiber.return;
+                  }
                   break;
                 }
               }
@@ -19064,19 +19064,19 @@ var require_react_dom_development = __commonJS({
                     enqueuePendingPassiveProfilerEffect(finishedWork);
                     var parentFiber = finishedWork.return;
                     outer:
-                      while (parentFiber !== null) {
-                        switch (parentFiber.tag) {
-                          case HostRoot:
-                            var root2 = parentFiber.stateNode;
-                            root2.effectDuration += effectDuration;
-                            break outer;
-                          case Profiler:
-                            var parentStateNode = parentFiber.stateNode;
-                            parentStateNode.effectDuration += effectDuration;
-                            break outer;
-                        }
-                        parentFiber = parentFiber.return;
+                    while (parentFiber !== null) {
+                      switch (parentFiber.tag) {
+                        case HostRoot:
+                          var root2 = parentFiber.stateNode;
+                          root2.effectDuration += effectDuration;
+                          break outer;
+                        case Profiler:
+                          var parentStateNode = parentFiber.stateNode;
+                          parentStateNode.effectDuration += effectDuration;
+                          break outer;
                       }
+                      parentFiber = parentFiber.return;
+                    }
                   }
                 }
                 break;
@@ -19288,30 +19288,30 @@ var require_react_dom_development = __commonJS({
         function getHostSibling(fiber) {
           var node = fiber;
           siblings:
-            while (true) {
-              while (node.sibling === null) {
-                if (node.return === null || isHostParent(node.return)) {
-                  return null;
-                }
-                node = node.return;
+          while (true) {
+            while (node.sibling === null) {
+              if (node.return === null || isHostParent(node.return)) {
+                return null;
               }
-              node.sibling.return = node.return;
-              node = node.sibling;
-              while (node.tag !== HostComponent && node.tag !== HostText && node.tag !== DehydratedFragment) {
-                if (node.flags & Placement) {
-                  continue siblings;
-                }
-                if (node.child === null || node.tag === HostPortal) {
-                  continue siblings;
-                } else {
-                  node.child.return = node;
-                  node = node.child;
-                }
+              node = node.return;
+            }
+            node.sibling.return = node.return;
+            node = node.sibling;
+            while (node.tag !== HostComponent && node.tag !== HostText && node.tag !== DehydratedFragment) {
+              if (node.flags & Placement) {
+                continue siblings;
               }
-              if (!(node.flags & Placement)) {
-                return node.stateNode;
+              if (node.child === null || node.tag === HostPortal) {
+                continue siblings;
+              } else {
+                node.child.return = node;
+                node = node.child;
               }
             }
+            if (!(node.flags & Placement)) {
+              return node.stateNode;
+            }
+          }
         }
         function commitPlacement(finishedWork) {
           var parentFiber = getHostParentFiber(finishedWork);
@@ -19391,26 +19391,26 @@ var require_react_dom_development = __commonJS({
           {
             var parent = returnFiber;
             findParent:
-              while (parent !== null) {
-                switch (parent.tag) {
-                  case HostComponent: {
-                    hostParent = parent.stateNode;
-                    hostParentIsContainer = false;
-                    break findParent;
-                  }
-                  case HostRoot: {
-                    hostParent = parent.stateNode.containerInfo;
-                    hostParentIsContainer = true;
-                    break findParent;
-                  }
-                  case HostPortal: {
-                    hostParent = parent.stateNode.containerInfo;
-                    hostParentIsContainer = true;
-                    break findParent;
-                  }
+            while (parent !== null) {
+              switch (parent.tag) {
+                case HostComponent: {
+                  hostParent = parent.stateNode;
+                  hostParentIsContainer = false;
+                  break findParent;
                 }
-                parent = parent.return;
+                case HostRoot: {
+                  hostParent = parent.stateNode.containerInfo;
+                  hostParentIsContainer = true;
+                  break findParent;
+                }
+                case HostPortal: {
+                  hostParent = parent.stateNode.containerInfo;
+                  hostParentIsContainer = true;
+                  break findParent;
+                }
               }
+              parent = parent.return;
+            }
             if (hostParent === null) {
               throw new Error("Expected to find a host parent. This error is likely caused by a bug in React. Please file an issue.");
             }
@@ -19578,7 +19578,7 @@ var require_react_dom_development = __commonJS({
             if (retryCache === null) {
               retryCache = finishedWork.stateNode = new PossiblyWeakSet();
             }
-            wakeables.forEach(function(wakeable) {
+            wakeables.forEach(function (wakeable) {
               var retry = resolveRetryWakeable.bind(null, finishedWork, wakeable);
               if (!retryCache.has(wakeable)) {
                 retryCache.add(wakeable);
@@ -20324,7 +20324,7 @@ var require_react_dom_development = __commonJS({
         var commitHooks = [];
         function onCommitRoot$1() {
           {
-            commitHooks.forEach(function(commitHook) {
+            commitHooks.forEach(function (commitHook) {
               return commitHook();
             });
           }
@@ -20501,7 +20501,7 @@ var require_react_dom_development = __commonJS({
             }
             ensureRootIsScheduled(root2, eventTime);
             if (lane === SyncLane && executionContext === NoContext && (fiber.mode & ConcurrentMode) === NoMode && // Treat `act` as if it's inside `batchedUpdates`, even in legacy mode.
-            !ReactCurrentActQueue$1.isBatchingLegacy) {
+              !ReactCurrentActQueue$1.isBatchingLegacy) {
               resetRenderTimer();
               flushSyncCallbacksOnlyInLegacyMode();
             }
@@ -20535,9 +20535,9 @@ var require_react_dom_development = __commonJS({
           var newCallbackPriority = getHighestPriorityLane(nextLanes);
           var existingCallbackPriority = root2.callbackPriority;
           if (existingCallbackPriority === newCallbackPriority && // Special case related to `act`. If the currently scheduled task is a
-          // Scheduler task, rather than an `act` task, cancel it and re-scheduled
-          // on the `act` queue.
-          !(ReactCurrentActQueue$1.current !== null && existingCallbackNode !== fakeActCallbackNode)) {
+            // Scheduler task, rather than an `act` task, cancel it and re-scheduled
+            // on the `act` queue.
+            !(ReactCurrentActQueue$1.current !== null && existingCallbackNode !== fakeActCallbackNode)) {
             {
               if (existingCallbackNode == null && existingCallbackPriority !== SyncLane) {
                 error("Expected scheduled callback to exist. This error is likely caused by a bug in React. Please file an issue.");
@@ -20562,7 +20562,7 @@ var require_react_dom_development = __commonJS({
               if (ReactCurrentActQueue$1.current !== null) {
                 ReactCurrentActQueue$1.current.push(flushSyncCallbacks);
               } else {
-                scheduleMicrotask(function() {
+                scheduleMicrotask(function () {
                   if ((executionContext & (RenderContext | CommitContext)) === NoContext) {
                     flushSyncCallbacks();
                   }
@@ -20703,7 +20703,7 @@ var require_react_dom_development = __commonJS({
             case RootSuspended: {
               markRootSuspended$1(root2, lanes);
               if (includesOnlyRetries(lanes) && // do not delay if we're inside an act() scope
-              !shouldForceFlushFallbacksInDEV()) {
+                !shouldForceFlushFallbacksInDEV()) {
                 var msUntilTimeout = globalMostRecentFallbackTime + FALLBACK_THROTTLE_MS - now();
                 if (msUntilTimeout > 10) {
                   var nextLanes = getNextLanes(root2, NoLanes);
@@ -20854,7 +20854,7 @@ var require_react_dom_development = __commonJS({
           } finally {
             executionContext = prevExecutionContext;
             if (executionContext === NoContext && // Treat `act` as if it's inside `batchedUpdates`, even in legacy mode.
-            !ReactCurrentActQueue$1.isBatchingLegacy) {
+              !ReactCurrentActQueue$1.isBatchingLegacy) {
               resetRenderTimer();
               flushSyncCallbacksOnlyInLegacyMode();
             }
@@ -21264,7 +21264,7 @@ var require_react_dom_development = __commonJS({
             if (!rootDoesHavePassiveEffects) {
               rootDoesHavePassiveEffects = true;
               pendingPassiveTransitions = transitions;
-              scheduleCallback$1(NormalPriority, function() {
+              scheduleCallback$1(NormalPriority, function () {
                 flushPassiveEffects();
                 return null;
               });
@@ -21397,7 +21397,7 @@ var require_react_dom_development = __commonJS({
             pendingPassiveProfilerEffects.push(fiber);
             if (!rootDoesHavePassiveEffects) {
               rootDoesHavePassiveEffects = true;
-              scheduleCallback$1(NormalPriority, function() {
+              scheduleCallback$1(NormalPriority, function () {
                 flushPassiveEffects();
                 return null;
               });
@@ -21687,7 +21687,7 @@ var require_react_dom_development = __commonJS({
         var beginWork$1;
         {
           var dummyFiber = null;
-          beginWork$1 = function(current2, unitOfWork, lanes) {
+          beginWork$1 = function (current2, unitOfWork, lanes) {
             var originalWorkInProgressCopy = assignFiberPropertiesInDEV(dummyFiber, unitOfWork);
             try {
               return beginWork(current2, unitOfWork, lanes);
@@ -21749,7 +21749,7 @@ var require_react_dom_development = __commonJS({
           {
             if (isDevToolsPresent) {
               var memoizedUpdaters = root2.memoizedUpdaters;
-              memoizedUpdaters.forEach(function(schedulingFiber) {
+              memoizedUpdaters.forEach(function (schedulingFiber) {
                 addFiberToLanesMap(root2, schedulingFiber, lanes);
               });
             }
@@ -21822,7 +21822,7 @@ var require_react_dom_development = __commonJS({
         }
         var resolveFamily = null;
         var failedBoundaries = null;
-        var setRefreshHandler = function(handler) {
+        var setRefreshHandler = function (handler) {
           {
             resolveFamily = handler;
           }
@@ -21934,25 +21934,25 @@ var require_react_dom_development = __commonJS({
             failedBoundaries.add(fiber);
           }
         }
-        var scheduleRefresh = function(root2, update) {
+        var scheduleRefresh = function (root2, update) {
           {
             if (resolveFamily === null) {
               return;
             }
             var staleFamilies = update.staleFamilies, updatedFamilies = update.updatedFamilies;
             flushPassiveEffects();
-            flushSync(function() {
+            flushSync(function () {
               scheduleFibersWithFamiliesRecursively(root2.current, updatedFamilies, staleFamilies);
             });
           }
         };
-        var scheduleRoot = function(root2, element) {
+        var scheduleRoot = function (root2, element) {
           {
             if (root2.context !== emptyContextObject) {
               return;
             }
             flushPassiveEffects();
-            flushSync(function() {
+            flushSync(function () {
               updateContainer(element, root2, null, null);
             });
           }
@@ -22012,10 +22012,10 @@ var require_react_dom_development = __commonJS({
             }
           }
         }
-        var findHostInstancesForRefresh = function(root2, families) {
+        var findHostInstancesForRefresh = function (root2, families) {
           {
             var hostInstances = /* @__PURE__ */ new Set();
-            var types = new Set(families.map(function(family) {
+            var types = new Set(families.map(function (family) {
               return family.current;
             }));
             findHostInstancesForMatchingFibersRecursively(root2.current, types, hostInstances);
@@ -22162,7 +22162,7 @@ var require_react_dom_development = __commonJS({
             }
           }
         }
-        var createFiber = function(tag2, pendingProps, key2, mode) {
+        var createFiber = function (tag2, pendingProps, key2, mode) {
           return new FiberNode(tag2, pendingProps, key2, mode);
         };
         function shouldConstruct$1(Component) {
@@ -22323,66 +22323,66 @@ var require_react_dom_development = __commonJS({
             fiberTag = HostComponent;
           } else {
             getTag:
-              switch (type) {
-                case REACT_FRAGMENT_TYPE:
-                  return createFiberFromFragment(pendingProps.children, mode, lanes, key2);
-                case REACT_STRICT_MODE_TYPE:
-                  fiberTag = Mode;
-                  mode |= StrictLegacyMode;
-                  if ((mode & ConcurrentMode) !== NoMode) {
-                    mode |= StrictEffectsMode;
-                  }
-                  break;
-                case REACT_PROFILER_TYPE:
-                  return createFiberFromProfiler(pendingProps, mode, lanes, key2);
-                case REACT_SUSPENSE_TYPE:
-                  return createFiberFromSuspense(pendingProps, mode, lanes, key2);
-                case REACT_SUSPENSE_LIST_TYPE:
-                  return createFiberFromSuspenseList(pendingProps, mode, lanes, key2);
-                case REACT_OFFSCREEN_TYPE:
-                  return createFiberFromOffscreen(pendingProps, mode, lanes, key2);
-                case REACT_LEGACY_HIDDEN_TYPE:
-                case REACT_SCOPE_TYPE:
-                case REACT_CACHE_TYPE:
-                case REACT_TRACING_MARKER_TYPE:
-                case REACT_DEBUG_TRACING_MODE_TYPE:
-                default: {
-                  if (typeof type === "object" && type !== null) {
-                    switch (type.$$typeof) {
-                      case REACT_PROVIDER_TYPE:
-                        fiberTag = ContextProvider;
-                        break getTag;
-                      case REACT_CONTEXT_TYPE:
-                        fiberTag = ContextConsumer;
-                        break getTag;
-                      case REACT_FORWARD_REF_TYPE:
-                        fiberTag = ForwardRef;
-                        {
-                          resolvedType = resolveForwardRefForHotReloading(resolvedType);
-                        }
-                        break getTag;
-                      case REACT_MEMO_TYPE:
-                        fiberTag = MemoComponent;
-                        break getTag;
-                      case REACT_LAZY_TYPE:
-                        fiberTag = LazyComponent;
-                        resolvedType = null;
-                        break getTag;
-                    }
-                  }
-                  var info = "";
-                  {
-                    if (type === void 0 || typeof type === "object" && type !== null && Object.keys(type).length === 0) {
-                      info += " You likely forgot to export your component from the file it's defined in, or you might have mixed up default and named imports.";
-                    }
-                    var ownerName = owner ? getComponentNameFromFiber(owner) : null;
-                    if (ownerName) {
-                      info += "\n\nCheck the render method of `" + ownerName + "`.";
-                    }
-                  }
-                  throw new Error("Element type is invalid: expected a string (for built-in components) or a class/function (for composite components) " + ("but got: " + (type == null ? type : typeof type) + "." + info));
+            switch (type) {
+              case REACT_FRAGMENT_TYPE:
+                return createFiberFromFragment(pendingProps.children, mode, lanes, key2);
+              case REACT_STRICT_MODE_TYPE:
+                fiberTag = Mode;
+                mode |= StrictLegacyMode;
+                if ((mode & ConcurrentMode) !== NoMode) {
+                  mode |= StrictEffectsMode;
                 }
+                break;
+              case REACT_PROFILER_TYPE:
+                return createFiberFromProfiler(pendingProps, mode, lanes, key2);
+              case REACT_SUSPENSE_TYPE:
+                return createFiberFromSuspense(pendingProps, mode, lanes, key2);
+              case REACT_SUSPENSE_LIST_TYPE:
+                return createFiberFromSuspenseList(pendingProps, mode, lanes, key2);
+              case REACT_OFFSCREEN_TYPE:
+                return createFiberFromOffscreen(pendingProps, mode, lanes, key2);
+              case REACT_LEGACY_HIDDEN_TYPE:
+              case REACT_SCOPE_TYPE:
+              case REACT_CACHE_TYPE:
+              case REACT_TRACING_MARKER_TYPE:
+              case REACT_DEBUG_TRACING_MODE_TYPE:
+              default: {
+                if (typeof type === "object" && type !== null) {
+                  switch (type.$$typeof) {
+                    case REACT_PROVIDER_TYPE:
+                      fiberTag = ContextProvider;
+                      break getTag;
+                    case REACT_CONTEXT_TYPE:
+                      fiberTag = ContextConsumer;
+                      break getTag;
+                    case REACT_FORWARD_REF_TYPE:
+                      fiberTag = ForwardRef;
+                      {
+                        resolvedType = resolveForwardRefForHotReloading(resolvedType);
+                      }
+                      break getTag;
+                    case REACT_MEMO_TYPE:
+                      fiberTag = MemoComponent;
+                      break getTag;
+                    case REACT_LAZY_TYPE:
+                      fiberTag = LazyComponent;
+                      resolvedType = null;
+                      break getTag;
+                  }
+                }
+                var info = "";
+                {
+                  if (type === void 0 || typeof type === "object" && type !== null && Object.keys(type).length === 0) {
+                    info += " You likely forgot to export your component from the file it's defined in, or you might have mixed up default and named imports.";
+                  }
+                  var ownerName = owner ? getComponentNameFromFiber(owner) : null;
+                  if (ownerName) {
+                    info += "\n\nCheck the render method of `" + ownerName + "`.";
+                  }
+                }
+                throw new Error("Element type is invalid: expected a string (for built-in components) or a class/function (for composite components) " + ("but got: " + (type == null ? type : typeof type) + "." + info));
               }
+            }
           }
           var fiber = createFiber(fiberTag, pendingProps, key2, mode);
           fiber.elementType = type;
@@ -22742,7 +22742,7 @@ var require_react_dom_development = __commonJS({
               break;
             }
             case SuspenseComponent: {
-              flushSync(function() {
+              flushSync(function () {
                 var root3 = enqueueConcurrentRenderForLane(fiber, SyncLane);
                 if (root3 !== null) {
                   var eventTime = requestEventTime();
@@ -22799,13 +22799,13 @@ var require_react_dom_development = __commonJS({
           }
           return hostFiber.stateNode;
         }
-        var shouldErrorImpl = function(fiber) {
+        var shouldErrorImpl = function (fiber) {
           return null;
         };
         function shouldError(fiber) {
           return shouldErrorImpl(fiber);
         }
-        var shouldSuspendImpl = function(fiber) {
+        var shouldSuspendImpl = function (fiber) {
           return false;
         };
         function shouldSuspend(fiber) {
@@ -22821,7 +22821,7 @@ var require_react_dom_development = __commonJS({
         var setErrorHandler = null;
         var setSuspenseHandler = null;
         {
-          var copyWithDeleteImpl = function(obj, path2, index2) {
+          var copyWithDeleteImpl = function (obj, path2, index2) {
             var key2 = path2[index2];
             var updated = isArray(obj) ? obj.slice() : assign({}, obj);
             if (index2 + 1 === path2.length) {
@@ -22835,10 +22835,10 @@ var require_react_dom_development = __commonJS({
             updated[key2] = copyWithDeleteImpl(obj[key2], path2, index2 + 1);
             return updated;
           };
-          var copyWithDelete = function(obj, path2) {
+          var copyWithDelete = function (obj, path2) {
             return copyWithDeleteImpl(obj, path2, 0);
           };
-          var copyWithRenameImpl = function(obj, oldPath, newPath, index2) {
+          var copyWithRenameImpl = function (obj, oldPath, newPath, index2) {
             var oldKey = oldPath[index2];
             var updated = isArray(obj) ? obj.slice() : assign({}, obj);
             if (index2 + 1 === oldPath.length) {
@@ -22860,7 +22860,7 @@ var require_react_dom_development = __commonJS({
             }
             return updated;
           };
-          var copyWithRename = function(obj, oldPath, newPath) {
+          var copyWithRename = function (obj, oldPath, newPath) {
             if (oldPath.length !== newPath.length) {
               warn2("copyWithRename() expects paths of the same length");
               return;
@@ -22874,7 +22874,7 @@ var require_react_dom_development = __commonJS({
             }
             return copyWithRenameImpl(obj, oldPath, newPath, 0);
           };
-          var copyWithSetImpl = function(obj, path2, index2, value2) {
+          var copyWithSetImpl = function (obj, path2, index2, value2) {
             if (index2 >= path2.length) {
               return value2;
             }
@@ -22883,10 +22883,10 @@ var require_react_dom_development = __commonJS({
             updated[key2] = copyWithSetImpl(obj[key2], path2, index2 + 1, value2);
             return updated;
           };
-          var copyWithSet = function(obj, path2, value2) {
+          var copyWithSet = function (obj, path2, value2) {
             return copyWithSetImpl(obj, path2, 0, value2);
           };
-          var findHook = function(fiber, id) {
+          var findHook = function (fiber, id) {
             var currentHook2 = fiber.memoizedState;
             while (currentHook2 !== null && id > 0) {
               currentHook2 = currentHook2.next;
@@ -22894,7 +22894,7 @@ var require_react_dom_development = __commonJS({
             }
             return currentHook2;
           };
-          overrideHookState = function(fiber, id, path2, value2) {
+          overrideHookState = function (fiber, id, path2, value2) {
             var hook = findHook(fiber, id);
             if (hook !== null) {
               var newState = copyWithSet(hook.memoizedState, path2, value2);
@@ -22907,7 +22907,7 @@ var require_react_dom_development = __commonJS({
               }
             }
           };
-          overrideHookStateDeletePath = function(fiber, id, path2) {
+          overrideHookStateDeletePath = function (fiber, id, path2) {
             var hook = findHook(fiber, id);
             if (hook !== null) {
               var newState = copyWithDelete(hook.memoizedState, path2);
@@ -22920,7 +22920,7 @@ var require_react_dom_development = __commonJS({
               }
             }
           };
-          overrideHookStateRenamePath = function(fiber, id, oldPath, newPath) {
+          overrideHookStateRenamePath = function (fiber, id, oldPath, newPath) {
             var hook = findHook(fiber, id);
             if (hook !== null) {
               var newState = copyWithRename(hook.memoizedState, oldPath, newPath);
@@ -22933,7 +22933,7 @@ var require_react_dom_development = __commonJS({
               }
             }
           };
-          overrideProps = function(fiber, path2, value2) {
+          overrideProps = function (fiber, path2, value2) {
             fiber.pendingProps = copyWithSet(fiber.memoizedProps, path2, value2);
             if (fiber.alternate) {
               fiber.alternate.pendingProps = fiber.pendingProps;
@@ -22943,7 +22943,7 @@ var require_react_dom_development = __commonJS({
               scheduleUpdateOnFiber(root2, fiber, SyncLane, NoTimestamp);
             }
           };
-          overridePropsDeletePath = function(fiber, path2) {
+          overridePropsDeletePath = function (fiber, path2) {
             fiber.pendingProps = copyWithDelete(fiber.memoizedProps, path2);
             if (fiber.alternate) {
               fiber.alternate.pendingProps = fiber.pendingProps;
@@ -22953,7 +22953,7 @@ var require_react_dom_development = __commonJS({
               scheduleUpdateOnFiber(root2, fiber, SyncLane, NoTimestamp);
             }
           };
-          overridePropsRenamePath = function(fiber, oldPath, newPath) {
+          overridePropsRenamePath = function (fiber, oldPath, newPath) {
             fiber.pendingProps = copyWithRename(fiber.memoizedProps, oldPath, newPath);
             if (fiber.alternate) {
               fiber.alternate.pendingProps = fiber.pendingProps;
@@ -22963,16 +22963,16 @@ var require_react_dom_development = __commonJS({
               scheduleUpdateOnFiber(root2, fiber, SyncLane, NoTimestamp);
             }
           };
-          scheduleUpdate = function(fiber) {
+          scheduleUpdate = function (fiber) {
             var root2 = enqueueConcurrentRenderForLane(fiber, SyncLane);
             if (root2 !== null) {
               scheduleUpdateOnFiber(root2, fiber, SyncLane, NoTimestamp);
             }
           };
-          setErrorHandler = function(newShouldErrorImpl) {
+          setErrorHandler = function (newShouldErrorImpl) {
             shouldErrorImpl = newShouldErrorImpl;
           };
-          setSuspenseHandler = function(newShouldSuspendImpl) {
+          setSuspenseHandler = function (newShouldSuspendImpl) {
             shouldSuspendImpl = newShouldSuspendImpl;
           };
         }
@@ -23025,13 +23025,13 @@ var require_react_dom_development = __commonJS({
           // In modern browsers, reportError will dispatch an error event,
           // emulating an uncaught JavaScript error.
           reportError
-        ) : function(error2) {
+        ) : function (error2) {
           console["error"](error2);
         };
         function ReactDOMRoot(internalRoot) {
           this._internalRoot = internalRoot;
         }
-        ReactDOMHydrationRoot.prototype.render = ReactDOMRoot.prototype.render = function(children) {
+        ReactDOMHydrationRoot.prototype.render = ReactDOMRoot.prototype.render = function (children) {
           var root2 = this._internalRoot;
           if (root2 === null) {
             throw new Error("Cannot update an unmounted root.");
@@ -23056,7 +23056,7 @@ var require_react_dom_development = __commonJS({
           }
           updateContainer(children, root2, null, null);
         };
-        ReactDOMHydrationRoot.prototype.unmount = ReactDOMRoot.prototype.unmount = function() {
+        ReactDOMHydrationRoot.prototype.unmount = ReactDOMRoot.prototype.unmount = function () {
           {
             if (typeof arguments[0] === "function") {
               error("unmount(...): does not support a callback argument. To execute a side effect after rendering, declare it in a component body with useEffect().");
@@ -23071,7 +23071,7 @@ var require_react_dom_development = __commonJS({
                 error("Attempted to synchronously unmount a root while React was already rendering. React cannot finish unmounting the root until the current render has completed, which may lead to a race condition.");
               }
             }
-            flushSync(function() {
+            flushSync(function () {
               updateContainer(null, root2, null, null);
             });
             unmarkContainerAsRoot(container);
@@ -23186,7 +23186,7 @@ var require_react_dom_development = __commonJS({
         var ReactCurrentOwner$3 = ReactSharedInternals.ReactCurrentOwner;
         var topLevelUpdateWarnings;
         {
-          topLevelUpdateWarnings = function(container) {
+          topLevelUpdateWarnings = function (container) {
             if (container._reactRootContainer && container.nodeType !== COMMENT_NODE) {
               var hostInstance = findHostInstanceWithNoPortals(container._reactRootContainer.current);
               if (hostInstance) {
@@ -23222,7 +23222,7 @@ var require_react_dom_development = __commonJS({
           if (isHydrationContainer) {
             if (typeof callback === "function") {
               var originalCallback = callback;
-              callback = function() {
+              callback = function () {
                 var instance = getPublicRootInstance(root2);
                 originalCallback.call(instance);
               };
@@ -23255,7 +23255,7 @@ var require_react_dom_development = __commonJS({
             }
             if (typeof callback === "function") {
               var _originalCallback = callback;
-              callback = function() {
+              callback = function () {
                 var instance = getPublicRootInstance(_root);
                 _originalCallback.call(instance);
               };
@@ -23277,7 +23277,7 @@ var require_react_dom_development = __commonJS({
             markContainerAsRoot(_root.current, container);
             var _rootContainerElement = container.nodeType === COMMENT_NODE ? container.parentNode : container;
             listenToAllSupportedEvents(_rootContainerElement);
-            flushSync(function() {
+            flushSync(function () {
               updateContainer(initialChildren, _root, parentComponent, callback);
             });
             return _root;
@@ -23303,7 +23303,7 @@ var require_react_dom_development = __commonJS({
             root2 = maybeRoot;
             if (typeof callback === "function") {
               var originalCallback = callback;
-              callback = function() {
+              callback = function () {
                 var instance = getPublicRootInstance(root2);
                 originalCallback.call(instance);
               };
@@ -23405,8 +23405,8 @@ var require_react_dom_development = __commonJS({
                 error("unmountComponentAtNode(): The node you're attempting to unmount was rendered by another copy of React.");
               }
             }
-            flushSync(function() {
-              legacyRenderSubtreeIntoContainer(null, null, container, false, function() {
+            flushSync(function () {
+              legacyRenderSubtreeIntoContainer(null, null, container, false, function () {
                 container._reactRootContainer = null;
                 unmarkContainerAsRoot(container);
               });
@@ -23431,8 +23431,8 @@ var require_react_dom_development = __commonJS({
         setAttemptHydrationAtPriority(runWithPriority);
         {
           if (typeof Map !== "function" || // $FlowIssue Flow incorrectly thinks Map has no prototype
-          Map.prototype == null || typeof Map.prototype.forEach !== "function" || typeof Set !== "function" || // $FlowIssue Flow incorrectly thinks Set has no prototype
-          Set.prototype == null || typeof Set.prototype.clear !== "function" || typeof Set.prototype.forEach !== "function") {
+            Map.prototype == null || typeof Map.prototype.forEach !== "function" || typeof Set !== "function" || // $FlowIssue Flow incorrectly thinks Set has no prototype
+            Set.prototype == null || typeof Set.prototype.clear !== "function" || typeof Set.prototype.forEach !== "function") {
             error("React depends on Map and Set built-in types. Make sure that you load a polyfill in older browsers. https://reactjs.org/link/react-polyfills");
           }
         }
@@ -23537,7 +23537,7 @@ var require_client = __commonJS({
       exports.hydrateRoot = m.hydrateRoot;
     } else {
       i = m.__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED;
-      exports.createRoot = function(c, o2) {
+      exports.createRoot = function (c, o2) {
         i.usingClientEntryPoint = true;
         try {
           return m.createRoot(c, o2);
@@ -23545,7 +23545,7 @@ var require_client = __commonJS({
           i.usingClientEntryPoint = false;
         }
       };
-      exports.hydrateRoot = function(c, h, o2) {
+      exports.hydrateRoot = function (c, h, o2) {
         i.usingClientEntryPoint = true;
         try {
           return m.hydrateRoot(c, h, o2);
@@ -23563,7 +23563,7 @@ var require_react_jsx_runtime_development = __commonJS({
   "node_modules/react/cjs/react-jsx-runtime.development.js"(exports) {
     "use strict";
     if (true) {
-      (function() {
+      (function () {
         "use strict";
         var React5 = require_react();
         var REACT_ELEMENT_TYPE = Symbol.for("react.element");
@@ -23610,7 +23610,7 @@ var require_react_jsx_runtime_development = __commonJS({
               format += "%s";
               args = args.concat([stack]);
             }
-            var argsWithFormat = args.map(function(item) {
+            var argsWithFormat = args.map(function (item) {
               return String(item);
             });
             argsWithFormat.unshift("Warning: " + format);
@@ -23635,10 +23635,10 @@ var require_react_jsx_runtime_development = __commonJS({
           }
           if (typeof type === "object" && type !== null) {
             if (type.$$typeof === REACT_LAZY_TYPE || type.$$typeof === REACT_MEMO_TYPE || type.$$typeof === REACT_PROVIDER_TYPE || type.$$typeof === REACT_CONTEXT_TYPE || type.$$typeof === REACT_FORWARD_REF_TYPE || // This needs to include all possible module reference object
-            // types supported by any Flight configuration anywhere since
-            // we don't know which Flight build this will end up being used
-            // with.
-            type.$$typeof === REACT_MODULE_REFERENCE || type.getModuleId !== void 0) {
+              // types supported by any Flight configuration anywhere since
+              // we don't know which Flight build this will end up being used
+              // with.
+              type.$$typeof === REACT_MODULE_REFERENCE || type.getModuleId !== void 0) {
               return true;
             }
           }
@@ -23836,11 +23836,11 @@ var require_react_jsx_runtime_development = __commonJS({
           }
           try {
             if (construct) {
-              var Fake = function() {
+              var Fake = function () {
                 throw Error();
               };
               Object.defineProperty(Fake.prototype, "props", {
-                set: function() {
+                set: function () {
                   throw Error();
                 }
               });
@@ -24088,7 +24088,7 @@ var require_react_jsx_runtime_development = __commonJS({
         }
         function defineKeyPropWarningGetter(props, displayName) {
           {
-            var warnAboutAccessingKey = function() {
+            var warnAboutAccessingKey = function () {
               if (!specialPropKeyWarningShown) {
                 specialPropKeyWarningShown = true;
                 error("%s: `key` is not a prop. Trying to access it will result in `undefined` being returned. If you need to access the same value within the child component, you should pass it as a different prop. (https://reactjs.org/link/special-props)", displayName);
@@ -24103,7 +24103,7 @@ var require_react_jsx_runtime_development = __commonJS({
         }
         function defineRefPropWarningGetter(props, displayName) {
           {
-            var warnAboutAccessingRef = function() {
+            var warnAboutAccessingRef = function () {
               if (!specialPropRefWarningShown) {
                 specialPropRefWarningShown = true;
                 error("%s: `ref` is not a prop. Trying to access it will result in `undefined` being returned. If you need to access the same value within the child component, you should pass it as a different prop. (https://reactjs.org/link/special-props)", displayName);
@@ -24116,7 +24116,7 @@ var require_react_jsx_runtime_development = __commonJS({
             });
           }
         }
-        var ReactElement = function(type, key2, ref, self, source, owner, props) {
+        var ReactElement = function (type, key2, ref, self, source, owner, props) {
           var element = {
             // This tag allows us to uniquely identify this as a React Element
             $$typeof: REACT_ELEMENT_TYPE,
@@ -24320,8 +24320,8 @@ var require_react_jsx_runtime_development = __commonJS({
             if (typeof type === "function") {
               propTypes = type.propTypes;
             } else if (typeof type === "object" && (type.$$typeof === REACT_FORWARD_REF_TYPE || // Note: Memo only checks outer props here.
-            // Inner props are checked in the reconciler.
-            type.$$typeof === REACT_MEMO_TYPE)) {
+              // Inner props are checked in the reconciler.
+              type.$$typeof === REACT_MEMO_TYPE)) {
               propTypes = type.propTypes;
             } else {
               return;
@@ -24412,7 +24412,7 @@ var require_react_jsx_runtime_development = __commonJS({
             {
               if (hasOwnProperty.call(props, "key")) {
                 var componentName = getComponentNameFromType(type);
-                var keys = Object.keys(props).filter(function(k) {
+                var keys = Object.keys(props).filter(function (k) {
                   return k !== "key";
                 });
                 var beforeExample = keys.length > 0 ? "{key: someKey, " + keys.join(": ..., ") + ": ...}" : "{key: someKey}";
@@ -24460,309 +24460,6 @@ var require_jsx_runtime = __commonJS({
     } else {
       module.exports = require_react_jsx_runtime_development();
     }
-  }
-});
-
-// ../../dist/wasm/relay_hook_transpiler.js
-var relay_hook_transpiler_exports = {};
-__export(relay_hook_transpiler_exports, {
-  default: () => relay_hook_transpiler_default,
-  get_version: () => get_version,
-  initSync: () => initSync,
-  run_self_test: () => run_self_test,
-  transpile_jsx: () => transpile_jsx,
-  transpile_jsx_with_metadata: () => transpile_jsx_with_metadata
-});
-function debugString(val) {
-  const type = typeof val;
-  if (type == "number" || type == "boolean" || val == null) {
-    return `${val}`;
-  }
-  if (type == "string") {
-    return `"${val}"`;
-  }
-  if (type == "symbol") {
-    const description = val.description;
-    if (description == null) {
-      return "Symbol";
-    } else {
-      return `Symbol(${description})`;
-    }
-  }
-  if (type == "function") {
-    const name = val.name;
-    if (typeof name == "string" && name.length > 0) {
-      return `Function(${name})`;
-    } else {
-      return "Function";
-    }
-  }
-  if (Array.isArray(val)) {
-    const length = val.length;
-    let debug = "[";
-    if (length > 0) {
-      debug += debugString(val[0]);
-    }
-    for (let i = 1; i < length; i++) {
-      debug += ", " + debugString(val[i]);
-    }
-    debug += "]";
-    return debug;
-  }
-  const builtInMatches = /\[object ([^\]]+)\]/.exec(toString.call(val));
-  let className;
-  if (builtInMatches && builtInMatches.length > 1) {
-    className = builtInMatches[1];
-  } else {
-    return toString.call(val);
-  }
-  if (className == "Object") {
-    try {
-      return "Object(" + JSON.stringify(val) + ")";
-    } catch (_) {
-      return "Object";
-    }
-  }
-  if (val instanceof Error) {
-    return `${val.name}: ${val.message}
-${val.stack}`;
-  }
-  return className;
-}
-function getDataViewMemory0() {
-  if (cachedDataViewMemory0 === null || cachedDataViewMemory0.buffer.detached === true || cachedDataViewMemory0.buffer.detached === void 0 && cachedDataViewMemory0.buffer !== wasm.memory.buffer) {
-    cachedDataViewMemory0 = new DataView(wasm.memory.buffer);
-  }
-  return cachedDataViewMemory0;
-}
-function getStringFromWasm0(ptr, len) {
-  ptr = ptr >>> 0;
-  return decodeText(ptr, len);
-}
-function getUint8ArrayMemory0() {
-  if (cachedUint8ArrayMemory0 === null || cachedUint8ArrayMemory0.byteLength === 0) {
-    cachedUint8ArrayMemory0 = new Uint8Array(wasm.memory.buffer);
-  }
-  return cachedUint8ArrayMemory0;
-}
-function isLikeNone(x) {
-  return x === void 0 || x === null;
-}
-function passStringToWasm0(arg, malloc, realloc) {
-  if (realloc === void 0) {
-    const buf = cachedTextEncoder.encode(arg);
-    const ptr2 = malloc(buf.length, 1) >>> 0;
-    getUint8ArrayMemory0().subarray(ptr2, ptr2 + buf.length).set(buf);
-    WASM_VECTOR_LEN = buf.length;
-    return ptr2;
-  }
-  let len = arg.length;
-  let ptr = malloc(len, 1) >>> 0;
-  const mem = getUint8ArrayMemory0();
-  let offset = 0;
-  for (; offset < len; offset++) {
-    const code = arg.charCodeAt(offset);
-    if (code > 127)
-      break;
-    mem[ptr + offset] = code;
-  }
-  if (offset !== len) {
-    if (offset !== 0) {
-      arg = arg.slice(offset);
-    }
-    ptr = realloc(ptr, len, len = offset + arg.length * 3, 1) >>> 0;
-    const view = getUint8ArrayMemory0().subarray(ptr + offset, ptr + len);
-    const ret = cachedTextEncoder.encodeInto(arg, view);
-    offset += ret.written;
-    ptr = realloc(ptr, len, offset, 1) >>> 0;
-  }
-  WASM_VECTOR_LEN = offset;
-  return ptr;
-}
-function decodeText(ptr, len) {
-  numBytesDecoded += len;
-  if (numBytesDecoded >= MAX_SAFARI_DECODE_BYTES) {
-    cachedTextDecoder = new TextDecoder("utf-8", { ignoreBOM: true, fatal: true });
-    cachedTextDecoder.decode();
-    numBytesDecoded = len;
-  }
-  return cachedTextDecoder.decode(getUint8ArrayMemory0().subarray(ptr, ptr + len));
-}
-function get_version() {
-  let deferred1_0;
-  let deferred1_1;
-  try {
-    const ret = wasm.get_version();
-    deferred1_0 = ret[0];
-    deferred1_1 = ret[1];
-    return getStringFromWasm0(ret[0], ret[1]);
-  } finally {
-    wasm.__wbindgen_free(deferred1_0, deferred1_1, 1);
-  }
-}
-function run_self_test() {
-  const ret = wasm.run_self_test();
-  return ret;
-}
-function transpile_jsx(source, filename, is_typescript) {
-  const ptr0 = passStringToWasm0(source, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
-  const len0 = WASM_VECTOR_LEN;
-  const ptr1 = passStringToWasm0(filename, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
-  const len1 = WASM_VECTOR_LEN;
-  const ret = wasm.transpile_jsx(ptr0, len0, ptr1, len1, isLikeNone(is_typescript) ? 16777215 : is_typescript ? 1 : 0);
-  return ret;
-}
-function transpile_jsx_with_metadata(source, filename, is_typescript) {
-  const ptr0 = passStringToWasm0(source, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
-  const len0 = WASM_VECTOR_LEN;
-  const ptr1 = passStringToWasm0(filename, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
-  const len1 = WASM_VECTOR_LEN;
-  const ret = wasm.transpile_jsx_with_metadata(ptr0, len0, ptr1, len1, isLikeNone(is_typescript) ? 16777215 : is_typescript ? 1 : 0);
-  return ret;
-}
-async function __wbg_load(module, imports) {
-  if (typeof Response === "function" && module instanceof Response) {
-    if (typeof WebAssembly.instantiateStreaming === "function") {
-      try {
-        return await WebAssembly.instantiateStreaming(module, imports);
-      } catch (e) {
-        const validResponse = module.ok && EXPECTED_RESPONSE_TYPES.has(module.type);
-        if (validResponse && module.headers.get("Content-Type") !== "application/wasm") {
-          console.warn("`WebAssembly.instantiateStreaming` failed because your server does not serve Wasm with `application/wasm` MIME type. Falling back to `WebAssembly.instantiate` which is slower. Original error:\n", e);
-        } else {
-          throw e;
-        }
-      }
-    }
-    const bytes = await module.arrayBuffer();
-    return await WebAssembly.instantiate(bytes, imports);
-  } else {
-    const instance = await WebAssembly.instantiate(module, imports);
-    if (instance instanceof WebAssembly.Instance) {
-      return { instance, module };
-    } else {
-      return instance;
-    }
-  }
-}
-function __wbg_get_imports() {
-  const imports = {};
-  imports.wbg = {};
-  imports.wbg.__wbg_String_8f0eb39a4a4c2f66 = function(arg0, arg1) {
-    const ret = String(arg1);
-    const ptr1 = passStringToWasm0(ret, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
-    const len1 = WASM_VECTOR_LEN;
-    getDataViewMemory0().setInt32(arg0 + 4 * 1, len1, true);
-    getDataViewMemory0().setInt32(arg0 + 4 * 0, ptr1, true);
-  };
-  imports.wbg.__wbg___wbindgen_debug_string_adfb662ae34724b6 = function(arg0, arg1) {
-    const ret = debugString(arg1);
-    const ptr1 = passStringToWasm0(ret, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
-    const len1 = WASM_VECTOR_LEN;
-    getDataViewMemory0().setInt32(arg0 + 4 * 1, len1, true);
-    getDataViewMemory0().setInt32(arg0 + 4 * 0, ptr1, true);
-  };
-  imports.wbg.__wbg___wbindgen_throw_dd24417ed36fc46e = function(arg0, arg1) {
-    throw new Error(getStringFromWasm0(arg0, arg1));
-  };
-  imports.wbg.__wbg_new_1ba21ce319a06297 = function() {
-    const ret = new Object();
-    return ret;
-  };
-  imports.wbg.__wbg_new_25f239778d6112b9 = function() {
-    const ret = new Array();
-    return ret;
-  };
-  imports.wbg.__wbg_set_3f1d0b984ed272ed = function(arg0, arg1, arg2) {
-    arg0[arg1] = arg2;
-  };
-  imports.wbg.__wbg_set_7df433eea03a5c14 = function(arg0, arg1, arg2) {
-    arg0[arg1 >>> 0] = arg2;
-  };
-  imports.wbg.__wbindgen_cast_2241b6af4c4b2941 = function(arg0, arg1) {
-    const ret = getStringFromWasm0(arg0, arg1);
-    return ret;
-  };
-  imports.wbg.__wbindgen_init_externref_table = function() {
-    const table = wasm.__wbindgen_externrefs;
-    const offset = table.grow(4);
-    table.set(0, void 0);
-    table.set(offset + 0, void 0);
-    table.set(offset + 1, null);
-    table.set(offset + 2, true);
-    table.set(offset + 3, false);
-  };
-  return imports;
-}
-function __wbg_finalize_init(instance, module) {
-  wasm = instance.exports;
-  __wbg_init.__wbindgen_wasm_module = module;
-  cachedDataViewMemory0 = null;
-  cachedUint8ArrayMemory0 = null;
-  wasm.__wbindgen_start();
-  return wasm;
-}
-function initSync(module) {
-  if (wasm !== void 0)
-    return wasm;
-  if (typeof module !== "undefined") {
-    if (Object.getPrototypeOf(module) === Object.prototype) {
-      ({ module } = module);
-    } else {
-      console.warn("using deprecated parameters for `initSync()`; pass a single object instead");
-    }
-  }
-  const imports = __wbg_get_imports();
-  if (!(module instanceof WebAssembly.Module)) {
-    module = new WebAssembly.Module(module);
-  }
-  const instance = new WebAssembly.Instance(module, imports);
-  return __wbg_finalize_init(instance, module);
-}
-async function __wbg_init(module_or_path) {
-  if (wasm !== void 0)
-    return wasm;
-  if (typeof module_or_path !== "undefined") {
-    if (Object.getPrototypeOf(module_or_path) === Object.prototype) {
-      ({ module_or_path } = module_or_path);
-    } else {
-      console.warn("using deprecated parameters for the initialization function; pass a single object instead");
-    }
-  }
-  if (typeof module_or_path === "undefined") {
-    module_or_path = new URL("relay_hook_transpiler_bg.wasm", import.meta.url);
-  }
-  const imports = __wbg_get_imports();
-  if (typeof module_or_path === "string" || typeof Request === "function" && module_or_path instanceof Request || typeof URL === "function" && module_or_path instanceof URL) {
-    module_or_path = fetch(module_or_path);
-  }
-  const { instance, module } = await __wbg_load(await module_or_path, imports);
-  return __wbg_finalize_init(instance, module);
-}
-var wasm, cachedDataViewMemory0, cachedUint8ArrayMemory0, cachedTextDecoder, MAX_SAFARI_DECODE_BYTES, numBytesDecoded, cachedTextEncoder, WASM_VECTOR_LEN, EXPECTED_RESPONSE_TYPES, relay_hook_transpiler_default;
-var init_relay_hook_transpiler = __esm({
-  "../../dist/wasm/relay_hook_transpiler.js"() {
-    "use strict";
-    cachedDataViewMemory0 = null;
-    cachedUint8ArrayMemory0 = null;
-    cachedTextDecoder = new TextDecoder("utf-8", { ignoreBOM: true, fatal: true });
-    cachedTextDecoder.decode();
-    MAX_SAFARI_DECODE_BYTES = 2146435072;
-    numBytesDecoded = 0;
-    cachedTextEncoder = new TextEncoder();
-    if (!("encodeInto" in cachedTextEncoder)) {
-      cachedTextEncoder.encodeInto = function(arg, view) {
-        const buf = cachedTextEncoder.encode(arg);
-        view.set(buf);
-        return {
-          read: arg.length,
-          written: buf.length
-        };
-      };
-    }
-    WASM_VECTOR_LEN = 0;
-    EXPECTED_RESPONSE_TYPES = /* @__PURE__ */ new Set(["basic", "cors", "default"]);
-    relay_hook_transpiler_default = __wbg_init;
   }
 });
 
@@ -25712,7 +25409,7 @@ function foldFlowLines(text, indent, mode = "flow", { indentAtStart, lineWidth =
     if (i !== -1)
       end = i + endStep;
   }
-  for (let ch; ch = text[i += 1]; ) {
+  for (let ch; ch = text[i += 1];) {
     if (mode === FOLD_QUOTED && ch === "\\") {
       escStart = i;
       switch (text[i + 1]) {
@@ -28092,7 +27789,7 @@ var init_Document = __esm({
         if (!node.anchor) {
           const prev = anchorNames(this);
           node.anchor = // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
-          !name || prev.has(name) ? findNewAnchor(name || "a", prev) : name;
+            !name || prev.has(name) ? findNewAnchor(name || "a", prev) : name;
         }
         return new Alias(node.anchor);
       }
@@ -28816,18 +28513,18 @@ function resolveFlowCollection({ composeNode: composeNode2, composeEmptyNode: co
       if (props.comment) {
         let prevItemComment = "";
         loop:
-          for (const st of start) {
-            switch (st.type) {
-              case "comma":
-              case "space":
-                break;
-              case "comment":
-                prevItemComment = st.source.substring(1);
-                break loop;
-              default:
-                break loop;
-            }
+        for (const st of start) {
+          switch (st.type) {
+            case "comma":
+            case "space":
+              break;
+            case "comment":
+              prevItemComment = st.source.substring(1);
+              break loop;
+            default:
+              break loop;
           }
+        }
         if (prevItemComment) {
           let prev = coll.items[coll.items.length - 1];
           if (isPair(prev))
@@ -30382,26 +30079,26 @@ var init_lexer = __esm({
         let indent = 0;
         let ch;
         loop:
-          for (let i2 = this.pos; ch = this.buffer[i2]; ++i2) {
-            switch (ch) {
-              case " ":
-                indent += 1;
+        for (let i2 = this.pos; ch = this.buffer[i2]; ++i2) {
+          switch (ch) {
+            case " ":
+              indent += 1;
+              break;
+            case "\n":
+              nl = i2;
+              indent = 0;
+              break;
+            case "\r": {
+              const next = this.buffer[i2 + 1];
+              if (!next && !this.atEnd)
+                return this.setNext("block-scalar");
+              if (next === "\n")
                 break;
-              case "\n":
-                nl = i2;
-                indent = 0;
-                break;
-              case "\r": {
-                const next = this.buffer[i2 + 1];
-                if (!next && !this.atEnd)
-                  return this.setNext("block-scalar");
-                if (next === "\n")
-                  break;
-              }
-              default:
-                break loop;
             }
+            default:
+              break loop;
           }
+        }
         if (!ch && !this.atEnd)
           return this.setNext("block-scalar");
         if (indent >= this.indentNext) {
@@ -30665,16 +30362,16 @@ function getFirstKeyStartProps(prev) {
     return [];
   let i = prev.length;
   loop:
-    while (--i >= 0) {
-      switch (prev[i].type) {
-        case "doc-start":
-        case "explicit-key-ind":
-        case "map-value-ind":
-        case "seq-item-ind":
-        case "newline":
-          break loop;
-      }
+  while (--i >= 0) {
+    switch (prev[i].type) {
+      case "doc-start":
+      case "explicit-key-ind":
+      case "map-value-ind":
+      case "seq-item-ind":
+      case "newline":
+        break loop;
     }
+  }
   while (prev[++i]?.type === "space") {
   }
   return prev.splice(i, prev.length);
@@ -32012,16 +31709,16 @@ tags=${JSON.stringify(snap.tags)}
 tagClasses=${JSON.stringify(snap.tagClasses)}
 */`;
 }
-function getRnStyles(selector, classes = []) {
+function getAndroidStyles(selector, classes = []) {
   const g2 = typeof globalThis !== "undefined" ? globalThis : {};
   if (typeof g2.__themedStylerGetRn !== "function") {
-    throw new Error("[themedStylerBridge.getRnStyles] Native hook __themedStylerGetRn not available. Ensure initThemedStyler() completed successfully.");
+    throw new Error("[themedStylerBridge.getAndroidStyles] Native hook __themedStylerGetRn not available. Ensure initThemedStyler() completed successfully.");
   }
   const themesState = getThemes();
   try {
     return g2.__themedStylerGetRn(selector, classes, themesState);
   } catch (e) {
-    throw new Error(`[themedStylerBridge.getRnStyles] Failed to compute styles: ${e}`);
+    throw new Error(`[themedStylerBridge.getAndroidStyles] Failed to compute styles: ${e}`);
   }
 }
 var usage, themes, currentTheme, _defaults_loaded, themedStylerBridge_default;
@@ -32048,7 +31745,7 @@ var init_themedStylerBridge = __esm({
       getThemes,
       getThemeList,
       getCssForWeb,
-      getRnStyles,
+      getAndroidStyles,
       loadThemesFromYamlText,
       loadThemesFromYamlUrl
     };
@@ -32084,7 +31781,7 @@ var init_unifiedBridge = __esm({
       getThemes: themedStylerBridge_default.getThemes,
       getThemeList: themedStylerBridge_default.getThemeList,
       getCssForWeb: themedStylerBridge_default.getCssForWeb,
-      getRnStyles: themedStylerBridge_default.getRnStyles,
+      getAndroidStyles: themedStylerBridge_default.getAndroidStyles,
       // Theme YAML helpers
       loadThemesFromYamlUrl,
       loadThemesFromYamlText
@@ -32869,8 +32566,10 @@ var CJ = { blockQuote: 0, breakLine: 1, breakThematic: 2, codeBlock: 3, codeInli
 var b = CJ;
 var BZ = {};
 kJ(BZ, { startsWith: () => r, slugify: () => iq, skipWhitespace: () => yq, shouldFilterTag: () => aG, sanitizer: () => C1, parseFrontmatterBounds: () => wZ, isVoidElement: () => QG, isUnicodeWhitespace: () => t1, isUnicodePunctuation: () => iG, isAlnumCode: () => uG, isASCIIWhitespace: () => fG, isASCIIPunctuation: () => dJ, inlineCharTypeTable: () => TG, includes: () => hJ, htmlAttrsToJSXProps: () => lG, hasKeys: () => cG, getTag: () => aJ, getOverrideProps: () => rJ, get: () => yZ, findLineEnd: () => E, extractPlainText: () => XJ, endsWith: () => dG, decodeEntityReferences: () => vG, charClassTable: () => zG, applyTagFilterToText: () => rG, VOID_ELEMENTS: () => bZ, SHOULD_RENDER_AS_BLOCK_R: () => WZ, SANITIZE_R: () => UG, NAMED_CODES_TO_UNICODE: () => FZ, HTML_TO_JSX_MAP: () => VJ, HTML_CHAR_CODE_R: () => $J, ATTRIBUTES_TO_SANITIZE: () => MZ });
-var JJ = { af: "\u2061", applyfunction: "\u2061", ic: "\u2063", invisiblecomma: "\u2063", invisibletimes: "\u2062", it: "\u2062", lrm: "\u200E", negativemediumspace: "\u200B", negativethickspace: "\u200B", negativethinspace: "\u200B", negativeverythinspace: "\u200B", nobreak: "\u2060", rlm: "\u200F", shy: "\xAD", zerowidthspace: "\u200B", zwj: "\u200D", zwnj: "\u200C", downbreve: "\u0311", tdot: "\u20DB", tripledot: "\u20DB", dotdot: "\u20DC", tab: "	", newline: `
-`, emsp: "\u2003", emsp13: "\u2004", emsp14: "\u2005", ensp: "\u2002", hairsp: "\u200A", mediumspace: "\u205F", puncsp: "\u2008", thinsp: "\u2009", thinspace: "\u2009", verythinspace: "\u200A", nbsp: "\xA0", nonbreakingspace: "\xA0", numsp: "\u2007", thickspace: "\u205F\u200A", oline: "\u203E", overbar: "\u203E", lowbar: "_", underbar: "_", dash: "\u2010", hyphen: "\u2010", ndash: "\u2013", mdash: "\u2014", horbar: "\u2015", comma: ",", semi: ";", bsemi: "\u204F", colon: ":", Colone: "\u2A74", excl: "!", iexcl: "\xA1", quest: "?", iquest: "\xBF", period: ".", nldr: "\u2025", hellip: "\u2026", mldr: "\u2026", centerdot: "\xB7", middot: "\xB7", apos: "'", lsquo: "\u2018", opencurlyquote: "\u2018", closecurlyquote: "\u2019", rsquo: "\u2019", rsquor: "\u2019", lsquor: "\u201A", sbquo: "\u201A", lsaquo: "\u2039", rsaquo: "\u203A", quot: '"', ldquo: "\u201C", opencurlydoublequote: "\u201C", closecurlydoublequote: "\u201D", rdquo: "\u201D", rdquor: "\u201D", bdquo: "\u201E", ldquor: "\u201E", laquo: "\xAB", raquo: "\xBB", lpar: "(", rpar: ")", lbrack: "[", lsqb: "[", rbrack: "]", rsqb: "]", lbrace: "{", lcub: "{", rbrace: "}", rcub: "}", lceil: "\u2308", leftceiling: "\u2308", rceil: "\u2309", rightceiling: "\u2309", leftfloor: "\u230A", lfloor: "\u230A", rfloor: "\u230B", rightfloor: "\u230B", lopar: "\u2985", ropar: "\u2986", lbrke: "\u298B", rbrke: "\u298C", lbrkslu: "\u298D", rbrksld: "\u298E", lbrksld: "\u298F", rbrkslu: "\u2990", langd: "\u2991", rangd: "\u2992", lparlt: "\u2993", rpargt: "\u2994", gtlpar: "\u2995", ltrpar: "\u2996", leftdoublebracket: "\u27E6", lobrk: "\u27E6", rightdoublebracket: "\u27E7", robrk: "\u27E7", lang: "\u27E8", langle: "\u27E8", leftanglebracket: "\u27E8", rang: "\u27E9", rangle: "\u27E9", rightanglebracket: "\u27E9", Lang: "\u27EA", Rang: "\u27EB", loang: "\u27EC", roang: "\u27ED", lbbrk: "\u2772", rbbrk: "\u2773", Verbar: "\u2016", Vert: "\u2016", sect: "\xA7", para: "\xB6", commat: "@", ast: "*", midast: "*", sol: "/", bsol: "\\", amp: "&", num: "#", percnt: "%", permil: "\u2030", pertenk: "\u2031", dagger: "\u2020", Dagger: "\u2021", ddagger: "\u2021", bull: "\u2022", bullet: "\u2022", hybull: "\u2043", prime: "\u2032", Prime: "\u2033", tprime: "\u2034", qprime: "\u2057", backprime: "\u2035", bprime: "\u2035", caret: "\u2041", diacriticalgrave: "`", grave: "`", acute: "\xB4", diacriticalacute: "\xB4", diacriticaltilde: "\u02DC", tilde: "\u02DC", hat: "^", macr: "\xAF", strns: "\xAF", breve: "\u02D8", diacriticaldot: "\u02D9", dot: "\u02D9", die: "\xA8", Dot: "\xA8", doubledot: "\xA8", uml: "\xA8", ring: "\u02DA", dblac: "\u02DD", diacriticaldoubleacute: "\u02DD", cedil: "\xB8", cedilla: "\xB8", ogon: "\u02DB", circ: "\u02C6", caron: "\u02C7", hacek: "\u02C7", deg: "\xB0", copy: "\xA9", circledr: "\xAE", reg: "\xAE", copysr: "\u2117", weierp: "\u2118", wp: "\u2118", rx: "\u211E", mho: "\u2127", iiota: "\u2129", larr: "\u2190", leftarrow: "\u2190", shortleftarrow: "\u2190", slarr: "\u2190", nlarr: "\u219A", nleftarrow: "\u219A", rarr: "\u2192", rightarrow: "\u2192", shortrightarrow: "\u2192", srarr: "\u2192", nrarr: "\u219B", nrightarrow: "\u219B", shortuparrow: "\u2191", uarr: "\u2191", uparrow: "\u2191", darr: "\u2193", downarrow: "\u2193", shortdownarrow: "\u2193", harr: "\u2194", leftrightarrow: "\u2194", nharr: "\u21AE", nleftrightarrow: "\u21AE", updownarrow: "\u2195", varr: "\u2195", nwarr: "\u2196", nwarrow: "\u2196", upperleftarrow: "\u2196", nearr: "\u2197", nearrow: "\u2197", upperrightarrow: "\u2197", lowerrightarrow: "\u2198", searr: "\u2198", searrow: "\u2198", lowerleftarrow: "\u2199", swarr: "\u2199", swarrow: "\u2199", rarrw: "\u219D", rightsquigarrow: "\u219D", nrarrw: "\u219D\u0338", Larr: "\u219E", twoheadleftarrow: "\u219E", Uarr: "\u219F", Rarr: "\u21A0", twoheadrightarrow: "\u21A0", Darr: "\u21A1", larrtl: "\u21A2", leftarrowtail: "\u21A2", rarrtl: "\u21A3", rightarrowtail: "\u21A3", leftteearrow: "\u21A4", mapstoleft: "\u21A4", mapstoup: "\u21A5", upteearrow: "\u21A5", map: "\u21A6", mapsto: "\u21A6", rightteearrow: "\u21A6", downteearrow: "\u21A7", mapstodown: "\u21A7", hookleftarrow: "\u21A9", larrhk: "\u21A9", hookrightarrow: "\u21AA", rarrhk: "\u21AA", larrlp: "\u21AB", looparrowleft: "\u21AB", looparrowright: "\u21AC", rarrlp: "\u21AC", harrw: "\u21AD", leftrightsquigarrow: "\u21AD", lsh: "\u21B0", rsh: "\u21B1", ldsh: "\u21B2", rdsh: "\u21B3", crarr: "\u21B5", cularr: "\u21B6", curvearrowleft: "\u21B6", curarr: "\u21B7", curvearrowright: "\u21B7", circlearrowleft: "\u21BA", olarr: "\u21BA", circlearrowright: "\u21BB", orarr: "\u21BB", leftharpoonup: "\u21BC", leftvector: "\u21BC", lharu: "\u21BC", downleftvector: "\u21BD", leftharpoondown: "\u21BD", lhard: "\u21BD", rightupvector: "\u21BE", uharr: "\u21BE", upharpoonright: "\u21BE", leftupvector: "\u21BF", uharl: "\u21BF", upharpoonleft: "\u21BF", rharu: "\u21C0", rightharpoonup: "\u21C0", rightvector: "\u21C0", downrightvector: "\u21C1", rhard: "\u21C1", rightharpoondown: "\u21C1", dharr: "\u21C2", downharpoonright: "\u21C2", rightdownvector: "\u21C2", dharl: "\u21C3", downharpoonleft: "\u21C3", leftdownvector: "\u21C3", rightarrowleftarrow: "\u21C4", rightleftarrows: "\u21C4", rlarr: "\u21C4", udarr: "\u21C5", uparrowdownarrow: "\u21C5", leftarrowrightarrow: "\u21C6", leftrightarrows: "\u21C6", lrarr: "\u21C6", leftleftarrows: "\u21C7", llarr: "\u21C7", upuparrows: "\u21C8", uuarr: "\u21C8", rightrightarrows: "\u21C9", rrarr: "\u21C9", ddarr: "\u21CA", downdownarrows: "\u21CA", leftrightharpoons: "\u21CB", lrhar: "\u21CB", reverseequilibrium: "\u21CB", equilibrium: "\u21CC", rightleftharpoons: "\u21CC", rlhar: "\u21CC", doubleleftarrow: "\u21D0", lArr: "\u21D0", Leftarrow: "\u21D0", nlArr: "\u21CD", nLeftarrow: "\u21CD", doubleuparrow: "\u21D1", uArr: "\u21D1", Uparrow: "\u21D1", doublerightarrow: "\u21D2", implies: "\u21D2", rArr: "\u21D2", Rightarrow: "\u21D2", nrArr: "\u21CF", nRightarrow: "\u21CF", dArr: "\u21D3", doubledownarrow: "\u21D3", Downarrow: "\u21D3", doubleleftrightarrow: "\u21D4", hArr: "\u21D4", iff: "\u21D4", Leftrightarrow: "\u21D4", nhArr: "\u21CE", nLeftrightarrow: "\u21CE", doubleupdownarrow: "\u21D5", Updownarrow: "\u21D5", vArr: "\u21D5", nwArr: "\u21D6", neArr: "\u21D7", seArr: "\u21D8", swArr: "\u21D9", laarr: "\u21DA", lleftarrow: "\u21DA", raarr: "\u21DB", rrightarrow: "\u21DB", zigrarr: "\u21DD", larrb: "\u21E4", leftarrowbar: "\u21E4", rarrb: "\u21E5", rightarrowbar: "\u21E5", downarrowuparrow: "\u21F5", duarr: "\u21F5", loarr: "\u21FD", roarr: "\u21FE", hoarr: "\u21FF", forall: "\u2200", comp: "\u2201", complement: "\u2201", part: "\u2202", partiald: "\u2202", npart: "\u2202\u0338", exist: "\u2203", exists: "\u2203", nexist: "\u2204", nexists: "\u2204", notexists: "\u2204", empty: "\u2205", emptyset: "\u2205", emptyv: "\u2205", varnothing: "\u2205", del: "\u2207", nabla: "\u2207", element: "\u2208", in: "\u2208", isin: "\u2208", isinv: "\u2208", notelement: "\u2209", notin: "\u2209", notinva: "\u2209", ni: "\u220B", niv: "\u220B", reverseelement: "\u220B", suchthat: "\u220B", notni: "\u220C", notniva: "\u220C", notreverseelement: "\u220C", backepsilon: "\u03F6", bepsi: "\u03F6", prod: "\u220F", product: "\u220F", coprod: "\u2210", coproduct: "\u2210", sum: "\u2211", plus: "+", plusminus: "\xB1", plusmn: "\xB1", pm: "\xB1", div: "\xF7", divide: "\xF7", times: "\xD7", lt: "<", nless: "\u226E", nlt: "\u226E", notless: "\u226E", nvlt: "<\u20D2", equals: "=", ne: "\u2260", notequal: "\u2260", bne: "=\u20E5", equal: "\u2A75", gt: ">", ngt: "\u226F", ngtr: "\u226F", notgreater: "\u226F", nvgt: ">\u20D2", not: "\xAC", verbar: "|", vert: "|", verticalline: "|", brvbar: "\xA6", minus: "\u2212", minusplus: "\u2213", mnplus: "\u2213", mp: "\u2213", dotplus: "\u2214", plusdo: "\u2214", frasl: "\u2044", backslash: "\u2216", setminus: "\u2216", setmn: "\u2216", smallsetminus: "\u2216", ssetmn: "\u2216", lowast: "\u2217", compfn: "\u2218", smallcircle: "\u2218", radic: "\u221A", sqrt: "\u221A", prop: "\u221D", proportional: "\u221D", propto: "\u221D", varpropto: "\u221D", vprop: "\u221D", infin: "\u221E", angrt: "\u221F", ang: "\u2220", angle: "\u2220", nang: "\u2220\u20D2", angmsd: "\u2221", measuredangle: "\u2221", angsph: "\u2222", mid: "\u2223", shortmid: "\u2223", smid: "\u2223", verticalbar: "\u2223", nmid: "\u2224", notverticalbar: "\u2224", nshortmid: "\u2224", nsmid: "\u2224", doubleverticalbar: "\u2225", par: "\u2225", parallel: "\u2225", shortparallel: "\u2225", spar: "\u2225", notdoubleverticalbar: "\u2226", npar: "\u2226", nparallel: "\u2226", nshortparallel: "\u2226", nspar: "\u2226", and: "\u2227", wedge: "\u2227", or: "\u2228", vee: "\u2228", cap: "\u2229", caps: "\u2229\uFE00", cup: "\u222A", cups: "\u222A\uFE00", int: "\u222B", integral: "\u222B", Int: "\u222C", iiint: "\u222D", tint: "\u222D", iiiint: "\u2A0C", qint: "\u2A0C", conint: "\u222E", contourintegral: "\u222E", oint: "\u222E", Conint: "\u222F", doublecontourintegral: "\u222F", cconint: "\u2230", cwint: "\u2231", clockwisecontourintegral: "\u2232", cwconint: "\u2232", awconint: "\u2233", counterclockwisecontourintegral: "\u2233", there4: "\u2234", therefore: "\u2234", becaus: "\u2235", because: "\u2235", ratio: "\u2236", Colon: "\u2237", proportion: "\u2237", dotminus: "\u2238", minusd: "\u2238", mddot: "\u223A", homtht: "\u223B", sim: "\u223C", thicksim: "\u223C", thksim: "\u223C", Tilde: "\u223C", nottilde: "\u2241", nsim: "\u2241", nvsim: "\u223C\u20D2", backsim: "\u223D", bsim: "\u223D", race: "\u223D\u0331", ac: "\u223E", mstpos: "\u223E", ace: "\u223E\u0333", acd: "\u223F", verticaltilde: "\u2240", wr: "\u2240", wreath: "\u2240", eqsim: "\u2242", equaltilde: "\u2242", esim: "\u2242", nesim: "\u2242\u0338", notequaltilde: "\u2242\u0338", sime: "\u2243", simeq: "\u2243", tildeequal: "\u2243", nottildeequal: "\u2244", nsime: "\u2244", nsimeq: "\u2244", cong: "\u2245", tildefullequal: "\u2245", ncong: "\u2247", nottildefullequal: "\u2247", simne: "\u2246", ap: "\u2248", approx: "\u2248", asymp: "\u2248", thickapprox: "\u2248", thkap: "\u2248", tildetilde: "\u2248", nap: "\u2249", napprox: "\u2249", nottildetilde: "\u2249", ape: "\u224A", approxeq: "\u224A", apid: "\u224B", napid: "\u224B\u0338", backcong: "\u224C", bcong: "\u224C", asympeq: "\u224D", CupCap: "\u224D", notcupcap: "\u226D", nvap: "\u224D\u20D2", bump: "\u224E", Bumpeq: "\u224E", humpdownhump: "\u224E", nbump: "\u224E\u0338", nothumpdownhump: "\u224E\u0338", bumpe: "\u224F", bumpeq: "\u224F", humpequal: "\u224F", nbumpe: "\u224F\u0338", nothumpequal: "\u224F\u0338", doteq: "\u2250", dotequal: "\u2250", esdot: "\u2250", nedot: "\u2250\u0338", doteqdot: "\u2251", eDot: "\u2251", efdot: "\u2252", fallingdotseq: "\u2252", erdot: "\u2253", risingdotseq: "\u2253", assign: "\u2254", colone: "\u2254", coloneq: "\u2254", ecolon: "\u2255", eqcolon: "\u2255", ecir: "\u2256", eqcirc: "\u2256", circeq: "\u2257", cire: "\u2257", wedgeq: "\u2259", veeeq: "\u225A", triangleq: "\u225C", trie: "\u225C", equest: "\u225F", questeq: "\u225F", congruent: "\u2261", equiv: "\u2261", nequiv: "\u2262", notcongruent: "\u2262", bnequiv: "\u2261\u20E5", le: "\u2264", leq: "\u2264", nle: "\u2270", nleq: "\u2270", notlessequal: "\u2270", nvle: "\u2264\u20D2", ge: "\u2265", geq: "\u2265", greaterequal: "\u2265", nge: "\u2271", ngeq: "\u2271", notgreaterequal: "\u2271", nvge: "\u2265\u20D2", lE: "\u2266", leqq: "\u2266", lessfullequal: "\u2266", nlE: "\u2266\u0338", nleqq: "\u2266\u0338", gE: "\u2267", geqq: "\u2267", greaterfullequal: "\u2267", ngE: "\u2267\u0338", ngeqq: "\u2267\u0338", notgreaterfullequal: "\u2267\u0338", lnE: "\u2268", lneqq: "\u2268", lvertneqq: "\u2268\uFE00", lvne: "\u2268\uFE00", gnE: "\u2269", gneqq: "\u2269", gvertneqq: "\u2269\uFE00", gvne: "\u2269\uFE00", ll: "\u226A", Lt: "\u226A", nestedlessless: "\u226A", nltv: "\u226A\u0338", notlessless: "\u226A\u0338", nLt: "\u226A\u20D2", gg: "\u226B", Gt: "\u226B", nestedgreatergreater: "\u226B", ngtv: "\u226B\u0338", notgreatergreater: "\u226B\u0338", nGt: "\u226B\u20D2", between: "\u226C", twixt: "\u226C", lesssim: "\u2272", lesstilde: "\u2272", lsim: "\u2272", nlsim: "\u2274", notlesstilde: "\u2274", greatertilde: "\u2273", gsim: "\u2273", gtrsim: "\u2273", ngsim: "\u2275", notgreatertilde: "\u2275", lessgreater: "\u2276", lessgtr: "\u2276", lg: "\u2276", notlessgreater: "\u2278", ntlg: "\u2278", gl: "\u2277", greaterless: "\u2277", gtrless: "\u2277", notgreaterless: "\u2279", ntgl: "\u2279", pr: "\u227A", prec: "\u227A", precedes: "\u227A", notprecedes: "\u2280", npr: "\u2280", nprec: "\u2280", sc: "\u227B", succ: "\u227B", succeeds: "\u227B", notsucceeds: "\u2281", nsc: "\u2281", nsucc: "\u2281", prcue: "\u227C", preccurlyeq: "\u227C", precedesslantequal: "\u227C", notprecedesslantequal: "\u22E0", nprcue: "\u22E0", sccue: "\u227D", succcurlyeq: "\u227D", succeedsslantequal: "\u227D", notsucceedsslantequal: "\u22E1", nsccue: "\u22E1", precedestilde: "\u227E", precsim: "\u227E", prsim: "\u227E", scsim: "\u227F", succeedstilde: "\u227F", succsim: "\u227F", notsucceedstilde: "\u227F\u0338", sub: "\u2282", subset: "\u2282", nsub: "\u2284", notsubset: "\u2282\u20D2", nsubset: "\u2282\u20D2", vnsub: "\u2282\u20D2", sup: "\u2283", superset: "\u2283", supset: "\u2283", nsup: "\u2285", notsuperset: "\u2283\u20D2", nsupset: "\u2283\u20D2", vnsup: "\u2283\u20D2", sube: "\u2286", subseteq: "\u2286", subsetequal: "\u2286", notsubsetequal: "\u2288", nsube: "\u2288", nsubseteq: "\u2288", supe: "\u2287", supersetequal: "\u2287", supseteq: "\u2287", notsupersetequal: "\u2289", nsupe: "\u2289", nsupseteq: "\u2289", subne: "\u228A", subsetneq: "\u228A", varsubsetneq: "\u228A\uFE00", vsubne: "\u228A\uFE00", supne: "\u228B", supsetneq: "\u228B", varsupsetneq: "\u228B\uFE00", vsupne: "\u228B\uFE00", cupdot: "\u228D", unionplus: "\u228E", uplus: "\u228E", sqsub: "\u228F", sqsubset: "\u228F", squaresubset: "\u228F", notsquaresubset: "\u228F\u0338", sqsup: "\u2290", sqsupset: "\u2290", squaresuperset: "\u2290", notsquaresuperset: "\u2290\u0338", sqsube: "\u2291", sqsubseteq: "\u2291", squaresubsetequal: "\u2291", notsquaresubsetequal: "\u22E2", nsqsube: "\u22E2", sqsupe: "\u2292", sqsupseteq: "\u2292", squaresupersetequal: "\u2292", notsquaresupersetequal: "\u22E3", nsqsupe: "\u22E3", sqcap: "\u2293", sqcaps: "\u2293\uFE00", squareintersection: "\u2293", sqcup: "\u2294", sqcups: "\u2294\uFE00", squareunion: "\u2294", circleplus: "\u2295", oplus: "\u2295", circleminus: "\u2296", ominus: "\u2296", circletimes: "\u2297", otimes: "\u2297", osol: "\u2298", circledot: "\u2299", odot: "\u2299", circledcirc: "\u229A", ocir: "\u229A", circledast: "\u229B", oast: "\u229B", circleddash: "\u229D", odash: "\u229D", boxplus: "\u229E", plusb: "\u229E", boxminus: "\u229F", minusb: "\u229F", boxtimes: "\u22A0", timesb: "\u22A0", dotsquare: "\u22A1", sdotb: "\u22A1", righttee: "\u22A2", vdash: "\u22A2", nvdash: "\u22AC", dashv: "\u22A3", lefttee: "\u22A3", downtee: "\u22A4", top: "\u22A4", bot: "\u22A5", bottom: "\u22A5", perp: "\u22A5", uptee: "\u22A5", models: "\u22A7", doublerighttee: "\u22A8", vDash: "\u22A8", nvDash: "\u22AD", Vdash: "\u22A9", nVdash: "\u22AE", vvdash: "\u22AA", VDash: "\u22AB", nVDash: "\u22AF", prurel: "\u22B0", lefttriangle: "\u22B2", vartriangleleft: "\u22B2", vltri: "\u22B2", nltri: "\u22EA", notlefttriangle: "\u22EA", ntriangleleft: "\u22EA", righttriangle: "\u22B3", vartriangleright: "\u22B3", vrtri: "\u22B3", notrighttriangle: "\u22EB", nrtri: "\u22EB", ntriangleright: "\u22EB", lefttriangleequal: "\u22B4", ltrie: "\u22B4", trianglelefteq: "\u22B4", nltrie: "\u22EC", notlefttriangleequal: "\u22EC", ntrianglelefteq: "\u22EC", nvltrie: "\u22B4\u20D2", righttriangleequal: "\u22B5", rtrie: "\u22B5", trianglerighteq: "\u22B5", notrighttriangleequal: "\u22ED", nrtrie: "\u22ED", ntrianglerighteq: "\u22ED", nvrtrie: "\u22B5\u20D2", origof: "\u22B6", imof: "\u22B7", multimap: "\u22B8", mumap: "\u22B8", hercon: "\u22B9", intcal: "\u22BA", intercal: "\u22BA", veebar: "\u22BB", barvee: "\u22BD", angrtvb: "\u22BE", lrtri: "\u22BF", bigwedge: "\u22C0", Wedge: "\u22C0", xwedge: "\u22C0", bigvee: "\u22C1", Vee: "\u22C1", xvee: "\u22C1", bigcap: "\u22C2", intersection: "\u22C2", xcap: "\u22C2", bigcup: "\u22C3", union: "\u22C3", xcup: "\u22C3", diam: "\u22C4", diamond: "\u22C4", sdot: "\u22C5", sstarf: "\u22C6", Star: "\u22C6", divideontimes: "\u22C7", divonx: "\u22C7", bowtie: "\u22C8", ltimes: "\u22C9", rtimes: "\u22CA", leftthreetimes: "\u22CB", lthree: "\u22CB", rightthreetimes: "\u22CC", rthree: "\u22CC", backsimeq: "\u22CD", bsime: "\u22CD", curlyvee: "\u22CE", cuvee: "\u22CE", curlywedge: "\u22CF", cuwed: "\u22CF", Sub: "\u22D0", Subset: "\u22D0", Sup: "\u22D1", Supset: "\u22D1", Cap: "\u22D2", Cup: "\u22D3", fork: "\u22D4", pitchfork: "\u22D4", epar: "\u22D5", lessdot: "\u22D6", ltdot: "\u22D6", gtdot: "\u22D7", gtrdot: "\u22D7", Ll: "\u22D8", nll: "\u22D8\u0338", Gg: "\u22D9", ggg: "\u22D9", ngg: "\u22D9\u0338", leg: "\u22DA", lesg: "\u22DA\uFE00", lesseqgtr: "\u22DA", lessequalgreater: "\u22DA", gel: "\u22DB", gesl: "\u22DB\uFE00", greaterequalless: "\u22DB", gtreqless: "\u22DB", cuepr: "\u22DE", curlyeqprec: "\u22DE", cuesc: "\u22DF", curlyeqsucc: "\u22DF", lnsim: "\u22E6", gnsim: "\u22E7", precnsim: "\u22E8", prnsim: "\u22E8", scnsim: "\u22E9", succnsim: "\u22E9", vellip: "\u22EE", ctdot: "\u22EF", utdot: "\u22F0", dtdot: "\u22F1", disin: "\u22F2", isinsv: "\u22F3", isins: "\u22F4", isindot: "\u22F5", notindot: "\u22F5\u0338", notinvc: "\u22F6", notinvb: "\u22F7", isine: "\u22F9", notine: "\u22F9\u0338", nisd: "\u22FA", xnis: "\u22FB", nis: "\u22FC", notnivc: "\u22FD", notnivb: "\u22FE", barwed: "\u2305", barwedge: "\u2305", Barwed: "\u2306", doublebarwedge: "\u2306", drcrop: "\u230C", dlcrop: "\u230D", urcrop: "\u230E", ulcrop: "\u230F", bnot: "\u2310", profline: "\u2312", profsurf: "\u2313", telrec: "\u2315", target: "\u2316", ulcorn: "\u231C", ulcorner: "\u231C", urcorn: "\u231D", urcorner: "\u231D", dlcorn: "\u231E", llcorner: "\u231E", drcorn: "\u231F", lrcorner: "\u231F", frown: "\u2322", sfrown: "\u2322", smile: "\u2323", ssmile: "\u2323", cylcty: "\u232D", profalar: "\u232E", topbot: "\u2336", ovbar: "\u233D", solbar: "\u233F", angzarr: "\u237C", lmoust: "\u23B0", lmoustache: "\u23B0", rmoust: "\u23B1", rmoustache: "\u23B1", overbracket: "\u23B4", tbrk: "\u23B4", bbrk: "\u23B5", underbracket: "\u23B5", bbrktbrk: "\u23B6", overparenthesis: "\u23DC", underparenthesis: "\u23DD", overbrace: "\u23DE", underbrace: "\u23DF", trpezium: "\u23E2", elinters: "\u23E7", blank: "\u2423", boxh: "\u2500", horizontalline: "\u2500", boxv: "\u2502", boxdr: "\u250C", boxdl: "\u2510", boxur: "\u2514", boxul: "\u2518", boxvr: "\u251C", boxvl: "\u2524", boxhd: "\u252C", boxhu: "\u2534", boxvh: "\u253C", boxH: "\u2550", boxV: "\u2551", boxdR: "\u2552", boxDr: "\u2553", boxDR: "\u2554", boxdL: "\u2555", boxDl: "\u2556", boxDL: "\u2557", boxuR: "\u2558", boxUr: "\u2559", boxUR: "\u255A", boxuL: "\u255B", boxUl: "\u255C", boxUL: "\u255D", boxvR: "\u255E", boxVr: "\u255F", boxVR: "\u2560", boxvL: "\u2561", boxVl: "\u2562", boxVL: "\u2563", boxHd: "\u2564", boxhD: "\u2565", boxHD: "\u2566", boxHu: "\u2567", boxhU: "\u2568", boxHU: "\u2569", boxvH: "\u256A", boxVh: "\u256B", boxVH: "\u256C", uhblk: "\u2580", lhblk: "\u2584", block: "\u2588", blk14: "\u2591", blk12: "\u2592", blk34: "\u2593", squ: "\u25A1", square: "\u25A1", blacksquare: "\u25AA", filledverysmallsquare: "\u25AA", squarf: "\u25AA", squf: "\u25AA", emptyverysmallsquare: "\u25AB", rect: "\u25AD", marker: "\u25AE", fltns: "\u25B1", bigtriangleup: "\u25B3", xutri: "\u25B3", blacktriangle: "\u25B4", utrif: "\u25B4", triangle: "\u25B5", utri: "\u25B5", blacktriangleright: "\u25B8", rtrif: "\u25B8", rtri: "\u25B9", triangleright: "\u25B9", bigtriangledown: "\u25BD", xdtri: "\u25BD", blacktriangledown: "\u25BE", dtrif: "\u25BE", dtri: "\u25BF", triangledown: "\u25BF", blacktriangleleft: "\u25C2", ltrif: "\u25C2", ltri: "\u25C3", triangleleft: "\u25C3", loz: "\u25CA", lozenge: "\u25CA", cir: "\u25CB", tridot: "\u25EC", bigcirc: "\u25EF", xcirc: "\u25EF", ultri: "\u25F8", urtri: "\u25F9", lltri: "\u25FA", emptysmallsquare: "\u25FB", filledsmallsquare: "\u25FC", bigstar: "\u2605", starf: "\u2605", star: "\u2606", phone: "\u260E", female: "\u2640", male: "\u2642", spades: "\u2660", spadesuit: "\u2660", clubs: "\u2663", clubsuit: "\u2663", hearts: "\u2665", heartsuit: "\u2665", diamondsuit: "\u2666", diams: "\u2666", sung: "\u266A", check: "\u2713", checkmark: "\u2713", cross: "\u2717", malt: "\u2720", maltese: "\u2720", sext: "\u2736", verticalseparator: "\u2758", bsolhsub: "\u27C8", suphsol: "\u27C9", longleftarrow: "\u27F5", xlarr: "\u27F5", longrightarrow: "\u27F6", xrarr: "\u27F6", longleftrightarrow: "\u27F7", xharr: "\u27F7", doublelongleftarrow: "\u27F8", Longleftarrow: "\u27F8", xlArr: "\u27F8", doublelongrightarrow: "\u27F9", Longrightarrow: "\u27F9", xrArr: "\u27F9", doublelongleftrightarrow: "\u27FA", Longleftrightarrow: "\u27FA", xhArr: "\u27FA", longmapsto: "\u27FC", xmap: "\u27FC", dzigrarr: "\u27FF", nvlarr: "\u2902", nvrarr: "\u2903", nvharr: "\u2904", Map: "\u2905", lbarr: "\u290C", bkarow: "\u290D", lBarr: "\u290E", dbkarow: "\u290F", rBarr: "\u290F", drbkarow: "\u2910", rbarr: "\u2910", RBarr: "\u2910", ddotrahd: "\u2911", uparrowbar: "\u2912", downarrowbar: "\u2913", Rarrtl: "\u2916", latail: "\u2919", ratail: "\u291A", lAtail: "\u291B", rAtail: "\u291C", larrfs: "\u291D", rarrfs: "\u291E", larrbfs: "\u291F", rarrbfs: "\u2920", nwarhk: "\u2923", nearhk: "\u2924", hksearow: "\u2925", searhk: "\u2925", hkswarow: "\u2926", swarhk: "\u2926", nwnear: "\u2927", nesear: "\u2928", toea: "\u2928", seswar: "\u2929", tosa: "\u2929", swnwar: "\u292A", rarrc: "\u2933", nrarrc: "\u2933\u0338", cudarrr: "\u2935", ldca: "\u2936", rdca: "\u2937", cudarrl: "\u2938", larrpl: "\u2939", curarrm: "\u293C", cularrp: "\u293D", rarrpl: "\u2945", harrcir: "\u2948", uarrocir: "\u2949", lurdshar: "\u294A", ldrushar: "\u294B", leftrightvector: "\u294E", rightupdownvector: "\u294F", downleftrightvector: "\u2950", leftupdownvector: "\u2951", leftvectorbar: "\u2952", rightvectorbar: "\u2953", rightupvectorbar: "\u2954", rightdownvectorbar: "\u2955", downleftvectorbar: "\u2956", downrightvectorbar: "\u2957", leftupvectorbar: "\u2958", leftdownvectorbar: "\u2959", leftteevector: "\u295A", rightteevector: "\u295B", rightupteevector: "\u295C", rightdownteevector: "\u295D", downleftteevector: "\u295E", downrightteevector: "\u295F", leftupteevector: "\u2960", leftdownteevector: "\u2961", lhar: "\u2962", uhar: "\u2963", rhar: "\u2964", dhar: "\u2965", luruhar: "\u2966", ldrdhar: "\u2967", ruluhar: "\u2968", rdldhar: "\u2969", lharul: "\u296A", llhard: "\u296B", rharul: "\u296C", lrhard: "\u296D", udhar: "\u296E", upequilibrium: "\u296E", duhar: "\u296F", reverseupequilibrium: "\u296F", roundimplies: "\u2970", erarr: "\u2971", simrarr: "\u2972", larrsim: "\u2973", rarrsim: "\u2974", rarrap: "\u2975", ltlarr: "\u2976", gtrarr: "\u2978", subrarr: "\u2979", suplarr: "\u297B", lfisht: "\u297C", rfisht: "\u297D", ufisht: "\u297E", dfisht: "\u297F", vzigzag: "\u299A", vangrt: "\u299C", angrtvbd: "\u299D", ange: "\u29A4", range: "\u29A5", dwangle: "\u29A6", uwangle: "\u29A7", angmsdaa: "\u29A8", angmsdab: "\u29A9", angmsdac: "\u29AA", angmsdad: "\u29AB", angmsdae: "\u29AC", angmsdaf: "\u29AD", angmsdag: "\u29AE", angmsdah: "\u29AF", bemptyv: "\u29B0", demptyv: "\u29B1", cemptyv: "\u29B2", raemptyv: "\u29B3", laemptyv: "\u29B4", ohbar: "\u29B5", omid: "\u29B6", opar: "\u29B7", operp: "\u29B9", olcross: "\u29BB", odsold: "\u29BC", olcir: "\u29BE", ofcir: "\u29BF", olt: "\u29C0", ogt: "\u29C1", cirscir: "\u29C2", cirE: "\u29C3", solb: "\u29C4", bsolb: "\u29C5", boxbox: "\u29C9", trisb: "\u29CD", rtriltri: "\u29CE", lefttrianglebar: "\u29CF", notlefttrianglebar: "\u29CF\u0338", righttrianglebar: "\u29D0", notrighttrianglebar: "\u29D0\u0338", iinfin: "\u29DC", infintie: "\u29DD", nvinfin: "\u29DE", eparsl: "\u29E3", smeparsl: "\u29E4", eqvparsl: "\u29E5", blacklozenge: "\u29EB", lozf: "\u29EB", ruledelayed: "\u29F4", dsol: "\u29F6", bigodot: "\u2A00", xodot: "\u2A00", bigoplus: "\u2A01", xoplus: "\u2A01", bigotimes: "\u2A02", xotime: "\u2A02", biguplus: "\u2A04", xuplus: "\u2A04", bigsqcup: "\u2A06", xsqcup: "\u2A06", fpartint: "\u2A0D", cirfnint: "\u2A10", awint: "\u2A11", rppolint: "\u2A12", scpolint: "\u2A13", npolint: "\u2A14", pointint: "\u2A15", quatint: "\u2A16", intlarhk: "\u2A17", pluscir: "\u2A22", plusacir: "\u2A23", simplus: "\u2A24", plusdu: "\u2A25", plussim: "\u2A26", plustwo: "\u2A27", mcomma: "\u2A29", minusdu: "\u2A2A", loplus: "\u2A2D", roplus: "\u2A2E", Cross: "\u2A2F", timesd: "\u2A30", timesbar: "\u2A31", smashp: "\u2A33", lotimes: "\u2A34", rotimes: "\u2A35", otimesas: "\u2A36", Otimes: "\u2A37", odiv: "\u2A38", triplus: "\u2A39", triminus: "\u2A3A", tritime: "\u2A3B", intprod: "\u2A3C", iprod: "\u2A3C", amalg: "\u2A3F", capdot: "\u2A40", ncup: "\u2A42", ncap: "\u2A43", capand: "\u2A44", cupor: "\u2A45", cupcap: "\u2A46", capcup: "\u2A47", cupbrcap: "\u2A48", capbrcup: "\u2A49", cupcup: "\u2A4A", capcap: "\u2A4B", ccups: "\u2A4C", ccaps: "\u2A4D", ccupssm: "\u2A50", And: "\u2A53", Or: "\u2A54", andand: "\u2A55", oror: "\u2A56", orslope: "\u2A57", andslope: "\u2A58", andv: "\u2A5A", orv: "\u2A5B", andd: "\u2A5C", ord: "\u2A5D", wedbar: "\u2A5F", sdote: "\u2A66", simdot: "\u2A6A", congdot: "\u2A6D", ncongdot: "\u2A6D\u0338", easter: "\u2A6E", apacir: "\u2A6F", apE: "\u2A70", nape: "\u2A70\u0338", eplus: "\u2A71", pluse: "\u2A72", Esim: "\u2A73", ddotseq: "\u2A77", eddot: "\u2A77", equivdd: "\u2A78", ltcir: "\u2A79", gtcir: "\u2A7A", ltquest: "\u2A7B", gtquest: "\u2A7C", leqslant: "\u2A7D", les: "\u2A7D", lessslantequal: "\u2A7D", nleqslant: "\u2A7D\u0338", nles: "\u2A7D\u0338", notlessslantequal: "\u2A7D\u0338", geqslant: "\u2A7E", ges: "\u2A7E", greaterslantequal: "\u2A7E", ngeqslant: "\u2A7E\u0338", nges: "\u2A7E\u0338", notgreaterslantequal: "\u2A7E\u0338", lesdot: "\u2A7F", gesdot: "\u2A80", lesdoto: "\u2A81", gesdoto: "\u2A82", lesdotor: "\u2A83", gesdotol: "\u2A84", lap: "\u2A85", lessapprox: "\u2A85", gap: "\u2A86", gtrapprox: "\u2A86", lne: "\u2A87", lneq: "\u2A87", gne: "\u2A88", gneq: "\u2A88", lnap: "\u2A89", lnapprox: "\u2A89", gnap: "\u2A8A", gnapprox: "\u2A8A", lEg: "\u2A8B", lesseqqgtr: "\u2A8B", gEl: "\u2A8C", gtreqqless: "\u2A8C", lsime: "\u2A8D", gsime: "\u2A8E", lsimg: "\u2A8F", gsiml: "\u2A90", lge: "\u2A91", gle: "\u2A92", lesges: "\u2A93", gesles: "\u2A94", els: "\u2A95", eqslantless: "\u2A95", egs: "\u2A96", eqslantgtr: "\u2A96", elsdot: "\u2A97", egsdot: "\u2A98", el: "\u2A99", eg: "\u2A9A", siml: "\u2A9D", simg: "\u2A9E", simle: "\u2A9F", simge: "\u2AA0", lessless: "\u2AA1", notnestedlessless: "\u2AA1\u0338", greatergreater: "\u2AA2", notnestedgreatergreater: "\u2AA2\u0338", glj: "\u2AA4", gla: "\u2AA5", ltcc: "\u2AA6", gtcc: "\u2AA7", lescc: "\u2AA8", gescc: "\u2AA9", smt: "\u2AAA", lat: "\u2AAB", smte: "\u2AAC", smtes: "\u2AAC\uFE00", late: "\u2AAD", lates: "\u2AAD\uFE00", bumpE: "\u2AAE", pre: "\u2AAF", precedesequal: "\u2AAF", preceq: "\u2AAF", notprecedesequal: "\u2AAF\u0338", npre: "\u2AAF\u0338", npreceq: "\u2AAF\u0338", sce: "\u2AB0", succeedsequal: "\u2AB0", succeq: "\u2AB0", notsucceedsequal: "\u2AB0\u0338", nsce: "\u2AB0\u0338", nsucceq: "\u2AB0\u0338", prE: "\u2AB3", scE: "\u2AB4", precneqq: "\u2AB5", prne: "\u2AB5", scne: "\u2AB6", succneqq: "\u2AB6", prap: "\u2AB7", precapprox: "\u2AB7", scap: "\u2AB8", succapprox: "\u2AB8", precnapprox: "\u2AB9", prnap: "\u2AB9", scnap: "\u2ABA", succnapprox: "\u2ABA", Pr: "\u2ABB", Sc: "\u2ABC", subdot: "\u2ABD", supdot: "\u2ABE", subplus: "\u2ABF", supplus: "\u2AC0", submult: "\u2AC1", supmult: "\u2AC2", subedot: "\u2AC3", supedot: "\u2AC4", subE: "\u2AC5", subseteqq: "\u2AC5", nsubE: "\u2AC5\u0338", nsubseteqq: "\u2AC5\u0338", supE: "\u2AC6", supseteqq: "\u2AC6", nsupE: "\u2AC6\u0338", nsupseteqq: "\u2AC6\u0338", subsim: "\u2AC7", supsim: "\u2AC8", subnE: "\u2ACB", subsetneqq: "\u2ACB", varsubsetneqq: "\u2ACB\uFE00", vsubnE: "\u2ACB\uFE00", supnE: "\u2ACC", supsetneqq: "\u2ACC", varsupsetneqq: "\u2ACC\uFE00", vsupnE: "\u2ACC\uFE00", csub: "\u2ACF", csup: "\u2AD0", csube: "\u2AD1", csupe: "\u2AD2", subsup: "\u2AD3", supsub: "\u2AD4", subsub: "\u2AD5", supsup: "\u2AD6", suphsub: "\u2AD7", supdsub: "\u2AD8", forkv: "\u2AD9", topfork: "\u2ADA", mlcp: "\u2ADB", Dashv: "\u2AE4", doublelefttee: "\u2AE4", vdashl: "\u2AE6", barv: "\u2AE7", vbar: "\u2AE8", vbarv: "\u2AE9", Vbar: "\u2AEB", Not: "\u2AEC", bNot: "\u2AED", rnmid: "\u2AEE", cirmid: "\u2AEF", midcir: "\u2AF0", topcir: "\u2AF1", nhpar: "\u2AF2", parsim: "\u2AF3", parsl: "\u2AFD", nparsl: "\u2AFD\u20E5", flat: "\u266D", natur: "\u266E", natural: "\u266E", sharp: "\u266F", curren: "\xA4", cent: "\xA2", dollar: "$", pound: "\xA3", yen: "\xA5", euro: "\u20AC", sup1: "\xB9", frac12: "\xBD", half: "\xBD", frac13: "\u2153", frac14: "\xBC", frac15: "\u2155", frac16: "\u2159", frac18: "\u215B", sup2: "\xB2", frac23: "\u2154", frac25: "\u2156", sup3: "\xB3", frac34: "\xBE", frac35: "\u2157", frac38: "\u215C", frac45: "\u2158", frac56: "\u215A", frac58: "\u215D", frac78: "\u215E", afr: "\u{1D51E}", aopf: "\u{1D552}", ascr: "\u{1D4B6}", Afr: "\u{1D504}", Aopf: "\u{1D538}", Ascr: "\u{1D49C}", ordf: "\xAA", aacute: "\xE1", Aacute: "\xC1", agrave: "\xE0", Agrave: "\xC0", abreve: "\u0103", Abreve: "\u0102", acirc: "\xE2", Acirc: "\xC2", aring: "\xE5", angst: "\xC5", Aring: "\xC5", auml: "\xE4", Auml: "\xC4", atilde: "\xE3", Atilde: "\xC3", aogon: "\u0105", Aogon: "\u0104", amacr: "\u0101", Amacr: "\u0100", aelig: "\xC6", AElig: "\xC6", bfr: "\u{1D51F}", bopf: "\u{1D553}", bscr: "\u{1D4B7}", bernou: "\u212C", bernoullis: "\u212C", Bfr: "\u{1D505}", Bopf: "\u{1D539}", Bscr: "\u212C", cfr: "\u{1D520}", copf: "\u{1D554}", cscr: "\u{1D4B8}", cayleys: "\u212D", Cfr: "\u212D", complexes: "\u2102", Copf: "\u2102", Cscr: "\u{1D49E}", cacute: "\u0107", Cacute: "\u0106", ccirc: "\u0109", Ccirc: "\u0108", ccaron: "\u010D", Ccaron: "\u010C", cdot: "\u010B", Cdot: "\u010A", ccedil: "\xE7", Ccedil: "\xC7", incare: "\u2105", dfr: "\u{1D521}", differentiald: "\u2146", dopf: "\u{1D555}", dscr: "\u{1D4B9}", capitaldifferentiald: "\u2145", dd: "\u2145", DD: "\u2145", Dfr: "\u{1D507}", Dopf: "\u{1D53B}", Dscr: "\u{1D49F}", dcaron: "\u010F", Dcaron: "\u010E", dstrok: "\u0111", Dstrok: "\u0110", eth: "\xF0", ETH: "\xD0", ee: "\u2147", efr: "\u{1D522}", eopf: "\u{1D556}", escr: "\u212F", exponentiale: "\u2147", Efr: "\u{1D508}", Eopf: "\u{1D53C}", Escr: "\u2130", expectation: "\u2130", eacute: "\xE9", Eacute: "\xC9", egrave: "\xE8", Egrave: "\xC8", ecirc: "\xEA", Ecirc: "\xCA", ecaron: "\u011B", Ecaron: "\u011A", euml: "\xEB", Euml: "\xCB", edot: "\u0117", Edot: "\u0116", eogon: "\u0119", Eogon: "\u0118", emacr: "\u0113", Emacr: "\u0112", ffr: "\u{1D523}", fopf: "\u{1D557}", fscr: "\u{1D4BB}", Ffr: "\u{1D509}", Fopf: "\u{1D53D}", fouriertrf: "\u2131", Fscr: "\u2131", fflig: "\uFB00", ffilig: "\uFB03", ffllig: "\uFB04", filig: "\uFB01", fjlig: "fj", fllig: "\uFB02", fnof: "\u0192", gfr: "\u{1D524}", gopf: "\u{1D558}", gscr: "\u210A", Gfr: "\u{1D50A}", Gopf: "\u{1D53E}", Gscr: "\u{1D4A2}", gacute: "\u01F5", gbreve: "\u011F", Gbreve: "\u011E", gcirc: "\u011D", Gcirc: "\u011C", gdot: "\u0121", Gdot: "\u0120", gcedil: "\u0122", hfr: "\u{1D525}", hopf: "\u{1D559}", hscr: "\u{1D4BD}", planckh: "\u210E", hamilt: "\u210B", Hfr: "\u210C", hilbertspace: "\u210B", Hopf: "\u210D", Hscr: "\u210B", poincareplane: "\u210C", quaternions: "\u210D", hcirc: "\u0125", Hcirc: "\u0124", hbar: "\u210F", hslash: "\u210F", hstrok: "\u0127", planck: "\u210F", plankv: "\u210F", Hstrok: "\u0126", ifr: "\u{1D526}", ii: "\u2148", imaginaryi: "\u2148", iopf: "\u{1D55A}", iscr: "\u{1D4BE}", Ifr: "\u2111", im: "\u2111", image: "\u2111", imagline: "\u2110", imagpart: "\u2111", Iopf: "\u{1D540}", Iscr: "\u2110", iacute: "\xED", Iacute: "\xCD", igrave: "\xEC", Igrave: "\xCC", icirc: "\xEE", Icirc: "\xCE", iuml: "\xEF", Iuml: "\xCF", itilde: "\u0129", Itilde: "\u0128", idot: "\u0130", iogon: "\u012F", Iogon: "\u012E", imacr: "\u012B", Imacr: "\u012A", ijlig: "\u0132", IJlig: "\u0132", imath: "\u0131", inodot: "\u0131", jfr: "\u{1D527}", jopf: "\u{1D55B}", jscr: "\u{1D4BF}", Jfr: "\u{1D50D}", Jopf: "\u{1D541}", Jscr: "\u{1D4A5}", jcirc: "\u0135", Jcirc: "\u0134", jmath: "\u0237", kfr: "\u{1D528}", kopf: "\u{1D55C}", kscr: "\u{1D4C0}", Kfr: "\u{1D50E}", Kopf: "\u{1D542}", Kscr: "\u{1D4A6}", kcedil: "\u0137", Kcedil: "\u0136", ell: "\u2113", lfr: "\u{1D529}", lopf: "\u{1D55D}", lscr: "\u{1D4C1}", lagran: "\u2112", laplacetrf: "\u2112", Lfr: "\u{1D50F}", Lopf: "\u{1D543}", Lscr: "\u2112", lacute: "\u013A", Lacute: "\u0139", lcaron: "\u013E", Lcaron: "\u013D", lcedil: "\u013C", Lcedil: "\u013B", lstrok: "\u0142", Lstrok: "\u0141", lmidot: "\u0140", Lmidot: "\u013F", mfr: "\u{1D52A}", mopf: "\u{1D55E}", mscr: "\u{1D4C2}", mellintrf: "\u2133", Mfr: "\u{1D510}", Mopf: "\u{1D544}", Mscr: "\u2133", phmmat: "\u2133", nfr: "\u{1D52B}", nopf: "\u{1D55F}", nscr: "\u{1D4C3}", naturals: "\u2115", Nfr: "\u{1D511}", Nopf: "\u2115", Nscr: "\u{1D4A9}", nacute: "\u0144", Nacute: "\u0143", ncaron: "\u0148", Ncaron: "\u0147", ntilde: "\xF1", Ntilde: "\xD1", ncedil: "\u0146", Ncedil: "\u0145", numero: "\u2116", eng: "\u014B", ENG: "\u014A", ofr: "\u{1D52C}", oopf: "\u{1D560}", order: "\u2134", orderof: "\u2134", oscr: "\u2134", Ofr: "\u{1D512}", Oopf: "\u{1D546}", Oscr: "\u{1D4AA}", ordm: "\xBA", oacute: "\xF3", Oacute: "\xD3", ograve: "\xF2", Ograve: "\xD2", ocirc: "\xF4", Ocirc: "\xD4", ouml: "\xF6", Ouml: "\xD6", odblac: "\u0151", Odblac: "\u0150", otilde: "\xF5", Otilde: "\xD5", oslash: "\xF8", Oslash: "\xD8", omacr: "\u014D", Omacr: "\u014C", oelig: "\u0152", OElig: "\u0152", pfr: "\u{1D52D}", popf: "\u{1D561}", pscr: "\u{1D4C5}", Pfr: "\u{1D513}", Popf: "\u2119", primes: "\u2119", Pscr: "\u{1D4AB}", qfr: "\u{1D52E}", qopf: "\u{1D562}", qscr: "\u{1D4C6}", Qfr: "\u{1D514}", Qopf: "\u211A", Qscr: "\u{1D4AC}", rationals: "\u211A", kgreen: "\u0138", rfr: "\u{1D52F}", ropf: "\u{1D563}", rscr: "\u{1D4C7}", re: "\u211C", real: "\u211C", realine: "\u211B", realpart: "\u211C", reals: "\u211D", Rfr: "\u211C", Ropf: "\u211D", Rscr: "\u211B", racute: "\u0155", Racute: "\u0154", rcaron: "\u0159", Rcaron: "\u0158", rcedil: "\u0157", Rcedil: "\u0156", sfr: "\u{1D530}", sopf: "\u{1D564}", sscr: "\u{1D4C8}", Sfr: "\u{1D516}", Sopf: "\u{1D54A}", Sscr: "\u{1D4AE}", circleds: "\u24C8", os: "\u24C8", sacute: "\u015B", Sacute: "\u015A", scirc: "\u015D", Scirc: "\u015C", scaron: "\u0161", Scaron: "\u0160", scedil: "\u015F", Scedil: "\u015E", szlig: "\xDF", tfr: "\u{1D531}", topf: "\u{1D565}", tscr: "\u{1D4C9}", Tfr: "\u{1D517}", Topf: "\u{1D54B}", Tscr: "\u{1D4AF}", tcaron: "\u0165", Tcaron: "\u0164", tcedil: "\u0163", Tcedil: "\u0162", trade: "\u2122", tstrok: "\u0167", Tstrok: "\u0166", ufr: "\u{1D532}", uopf: "\u{1D566}", uscr: "\u{1D4CA}", Ufr: "\u{1D518}", Uopf: "\u{1D54C}", Uscr: "\u{1D4B0}", uacute: "\xFA", Uacute: "\xDA", ugrave: "\xF9", Ugrave: "\xD9", ubreve: "\u016D", Ubreve: "\u016C", ucirc: "\xFB", Ucirc: "\xDB", uring: "\u016F", Uring: "\u016E", uuml: "\xFC", Uuml: "\xDC", udblac: "\u0171", Udblac: "\u0170", utilde: "\u0169", Utilde: "\u0168", uogon: "\u0173", Uogon: "\u0172", umacr: "\u016B", Umacr: "\u016A", vfr: "\u{1D533}", vopf: "\u{1D567}", vscr: "\u{1D4CB}", Vfr: "\u{1D519}", Vopf: "\u{1D54D}", Vscr: "\u{1D4B1}", wfr: "\u{1D534}", wopf: "\u{1D568}", wscr: "\u{1D4CC}", Wfr: "\u{1D51A}", Wopf: "\u{1D54E}", Wscr: "\u{1D4B2}", wcirc: "\u0175", Wcirc: "\u0174", xfr: "\u{1D535}", xopf: "\u{1D569}", xscr: "\u{1D4CD}", Xfr: "\u{1D51B}", Xopf: "\u{1D54F}", Xscr: "\u{1D4B3}", yfr: "\u{1D536}", yopf: "\u{1D56A}", yscr: "\u{1D4CE}", Yfr: "\u{1D51C}", Yopf: "\u{1D550}", Yscr: "\u{1D4B4}", yacute: "\xFD", Yacute: "\xDD", ycirc: "\u0177", Ycirc: "\u0176", yuml: "\xFF", Yuml: "\u0178", zfr: "\u{1D537}", zopf: "\u{1D56B}", zscr: "\u{1D4CF}", integers: "\u2124", zeetrf: "\u2128", Zfr: "\u2128", Zopf: "\u2124", Zscr: "\u{1D4B5}", zacute: "\u017A", Zacute: "\u0179", zcaron: "\u017E", Zcaron: "\u017D", zdot: "\u017C", Zdot: "\u017B", imped: "\u01B5", thorn: "\xFE", THORN: "\xDE", napos: "\u0149", alpha: "\u03B1", Alpha: "\u0391", beta: "\u03B2", Beta: "\u0392", gamma: "\u03B3", Gamma: "\u0393", delta: "\u03B4", Delta: "\u0394", epsi: "\u03B5", epsilon: "\u03B5", epsiv: "\u03F5", straightepsilon: "\u03F5", varepsilon: "\u03F5", Epsilon: "\u0395", digamma: "\u03DD", gammad: "\u03DD", Gammad: "\u03DC", zeta: "\u03B6", Zeta: "\u0396", eta: "\u03B7", Eta: "\u0397", theta: "\u03B8", thetasym: "\u03D1", thetav: "\u03D1", vartheta: "\u03D1", Theta: "\u0398", iota: "\u03B9", Iota: "\u0399", kappa: "\u03BA", kappav: "\u03F0", varkappa: "\u03F0", Kappa: "\u039A", lambda: "\u03BB", Lambda: "\u039B", mu: "\u03BC", micro: "\xB5", Mu: "\u039C", nu: "\u03BD", Nu: "\u039D", xi: "\u03BE", Xi: "\u039E", omicron: "\u03BF", Omicron: "\u039F", pi: "\u03C0", piv: "\u03D6", varpi: "\u03D6", Pi: "\u03A0", rho: "\u03C1", rhov: "\u03F1", varrho: "\u03F1", Rho: "\u03A1", sigma: "\u03C3", Sigma: "\u03A3", sigmaf: "\u03C2", sigmav: "\u03C2", varsigma: "\u03C2", tau: "\u03C4", Tau: "\u03A4", upsi: "\u03C5", upsilon: "\u03C5", Upsilon: "\u03A5", Upsi: "\u03D2", upsih: "\u03D2", phi: "\u03C6", phiv: "\u03D5", straightphi: "\u03D5", varphi: "\u03D5", Phi: "\u03A6", chi: "\u03C7", Chi: "\u03A7", psi: "\u03C8", Psi: "\u03A8", omega: "\u03C9", ohm: "\u03A9", Omega: "\u03A9", acy: "\u0430", Acy: "\u0410", bcy: "\u0431", Bcy: "\u0411", vcy: "\u0432", Vcy: "\u0412", gcy: "\u0433", Gcy: "\u0413", gjcy: "\u0403", GJcy: "\u0403", dcy: "\u0434", Dcy: "\u0414", djcy: "\u0402", DJcy: "\u0402", iecy: "\u0415", IEcy: "\u0415", iocy: "\u0401", IOcy: "\u0401", jukcy: "\u0454", Jukcy: "\u0404", zhcy: "\u0416", ZHcy: "\u0416", zcy: "\u0437", Zcy: "\u0417", dscy: "\u0405", DScy: "\u0405", icy: "\u0438", Icy: "\u0418", iukcy: "\u0456", Iukcy: "\u0406", yicy: "\u0407", YIcy: "\u0407", jcy: "\u0439", Jcy: "\u0419", jsercy: "\u0458", Jsercy: "\u0408", kcy: "\u043A", Kcy: "\u041A", kjcy: "\u040C", KJcy: "\u040C", lcy: "\u043B", Lcy: "\u041B", ljcy: "\u0409", LJcy: "\u0409", mcy: "\u043C", Mcy: "\u041C", ncy: "\u043D", Ncy: "\u041D", njcy: "\u040A", NJcy: "\u040A", ocy: "\u043E", Ocy: "\u041E", pcy: "\u043F", Pcy: "\u041F", rcy: "\u0440", Rcy: "\u0420", scy: "\u0441", Scy: "\u0421", tcy: "\u0442", Tcy: "\u0422", tshcy: "\u045B", TSHcy: "\u040B", ucy: "\u0443", Ucy: "\u0423", ubrcy: "\u045E", Ubrcy: "\u040E", fcy: "\u0444", Fcy: "\u0424", khcy: "\u0425", KHcy: "\u0425", tscy: "\u0426", TScy: "\u0426", chcy: "\u0427", CHcy: "\u0427", dzcy: "\u040F", DZcy: "\u040F", shcy: "\u0428", SHcy: "\u0428", shchcy: "\u0449", SHCHcy: "\u0429", hardcy: "\u044A", HARDcy: "\u042A", ycy: "\u044B", Ycy: "\u042B", softcy: "\u044C", SOFTcy: "\u042C", ecy: "\u044D", Ecy: "\u042D", yucy: "\u042E", YUcy: "\u042E", yacy: "\u042F", YAcy: "\u042F", alefsym: "\u2135", aleph: "\u2135", beth: "\u2136", gimel: "\u2137", daleth: "\u2138" };
+var JJ = {
+  af: "\u2061", applyfunction: "\u2061", ic: "\u2063", invisiblecomma: "\u2063", invisibletimes: "\u2062", it: "\u2062", lrm: "\u200E", negativemediumspace: "\u200B", negativethickspace: "\u200B", negativethinspace: "\u200B", negativeverythinspace: "\u200B", nobreak: "\u2060", rlm: "\u200F", shy: "\xAD", zerowidthspace: "\u200B", zwj: "\u200D", zwnj: "\u200C", downbreve: "\u0311", tdot: "\u20DB", tripledot: "\u20DB", dotdot: "\u20DC", tab: "	", newline: `
+`, emsp: "\u2003", emsp13: "\u2004", emsp14: "\u2005", ensp: "\u2002", hairsp: "\u200A", mediumspace: "\u205F", puncsp: "\u2008", thinsp: "\u2009", thinspace: "\u2009", verythinspace: "\u200A", nbsp: "\xA0", nonbreakingspace: "\xA0", numsp: "\u2007", thickspace: "\u205F\u200A", oline: "\u203E", overbar: "\u203E", lowbar: "_", underbar: "_", dash: "\u2010", hyphen: "\u2010", ndash: "\u2013", mdash: "\u2014", horbar: "\u2015", comma: ",", semi: ";", bsemi: "\u204F", colon: ":", Colone: "\u2A74", excl: "!", iexcl: "\xA1", quest: "?", iquest: "\xBF", period: ".", nldr: "\u2025", hellip: "\u2026", mldr: "\u2026", centerdot: "\xB7", middot: "\xB7", apos: "'", lsquo: "\u2018", opencurlyquote: "\u2018", closecurlyquote: "\u2019", rsquo: "\u2019", rsquor: "\u2019", lsquor: "\u201A", sbquo: "\u201A", lsaquo: "\u2039", rsaquo: "\u203A", quot: '"', ldquo: "\u201C", opencurlydoublequote: "\u201C", closecurlydoublequote: "\u201D", rdquo: "\u201D", rdquor: "\u201D", bdquo: "\u201E", ldquor: "\u201E", laquo: "\xAB", raquo: "\xBB", lpar: "(", rpar: ")", lbrack: "[", lsqb: "[", rbrack: "]", rsqb: "]", lbrace: "{", lcub: "{", rbrace: "}", rcub: "}", lceil: "\u2308", leftceiling: "\u2308", rceil: "\u2309", rightceiling: "\u2309", leftfloor: "\u230A", lfloor: "\u230A", rfloor: "\u230B", rightfloor: "\u230B", lopar: "\u2985", ropar: "\u2986", lbrke: "\u298B", rbrke: "\u298C", lbrkslu: "\u298D", rbrksld: "\u298E", lbrksld: "\u298F", rbrkslu: "\u2990", langd: "\u2991", rangd: "\u2992", lparlt: "\u2993", rpargt: "\u2994", gtlpar: "\u2995", ltrpar: "\u2996", leftdoublebracket: "\u27E6", lobrk: "\u27E6", rightdoublebracket: "\u27E7", robrk: "\u27E7", lang: "\u27E8", langle: "\u27E8", leftanglebracket: "\u27E8", rang: "\u27E9", rangle: "\u27E9", rightanglebracket: "\u27E9", Lang: "\u27EA", Rang: "\u27EB", loang: "\u27EC", roang: "\u27ED", lbbrk: "\u2772", rbbrk: "\u2773", Verbar: "\u2016", Vert: "\u2016", sect: "\xA7", para: "\xB6", commat: "@", ast: "*", midast: "*", sol: "/", bsol: "\\", amp: "&", num: "#", percnt: "%", permil: "\u2030", pertenk: "\u2031", dagger: "\u2020", Dagger: "\u2021", ddagger: "\u2021", bull: "\u2022", bullet: "\u2022", hybull: "\u2043", prime: "\u2032", Prime: "\u2033", tprime: "\u2034", qprime: "\u2057", backprime: "\u2035", bprime: "\u2035", caret: "\u2041", diacriticalgrave: "`", grave: "`", acute: "\xB4", diacriticalacute: "\xB4", diacriticaltilde: "\u02DC", tilde: "\u02DC", hat: "^", macr: "\xAF", strns: "\xAF", breve: "\u02D8", diacriticaldot: "\u02D9", dot: "\u02D9", die: "\xA8", Dot: "\xA8", doubledot: "\xA8", uml: "\xA8", ring: "\u02DA", dblac: "\u02DD", diacriticaldoubleacute: "\u02DD", cedil: "\xB8", cedilla: "\xB8", ogon: "\u02DB", circ: "\u02C6", caron: "\u02C7", hacek: "\u02C7", deg: "\xB0", copy: "\xA9", circledr: "\xAE", reg: "\xAE", copysr: "\u2117", weierp: "\u2118", wp: "\u2118", rx: "\u211E", mho: "\u2127", iiota: "\u2129", larr: "\u2190", leftarrow: "\u2190", shortleftarrow: "\u2190", slarr: "\u2190", nlarr: "\u219A", nleftarrow: "\u219A", rarr: "\u2192", rightarrow: "\u2192", shortrightarrow: "\u2192", srarr: "\u2192", nrarr: "\u219B", nrightarrow: "\u219B", shortuparrow: "\u2191", uarr: "\u2191", uparrow: "\u2191", darr: "\u2193", downarrow: "\u2193", shortdownarrow: "\u2193", harr: "\u2194", leftrightarrow: "\u2194", nharr: "\u21AE", nleftrightarrow: "\u21AE", updownarrow: "\u2195", varr: "\u2195", nwarr: "\u2196", nwarrow: "\u2196", upperleftarrow: "\u2196", nearr: "\u2197", nearrow: "\u2197", upperrightarrow: "\u2197", lowerrightarrow: "\u2198", searr: "\u2198", searrow: "\u2198", lowerleftarrow: "\u2199", swarr: "\u2199", swarrow: "\u2199", rarrw: "\u219D", rightsquigarrow: "\u219D", nrarrw: "\u219D\u0338", Larr: "\u219E", twoheadleftarrow: "\u219E", Uarr: "\u219F", Rarr: "\u21A0", twoheadrightarrow: "\u21A0", Darr: "\u21A1", larrtl: "\u21A2", leftarrowtail: "\u21A2", rarrtl: "\u21A3", rightarrowtail: "\u21A3", leftteearrow: "\u21A4", mapstoleft: "\u21A4", mapstoup: "\u21A5", upteearrow: "\u21A5", map: "\u21A6", mapsto: "\u21A6", rightteearrow: "\u21A6", downteearrow: "\u21A7", mapstodown: "\u21A7", hookleftarrow: "\u21A9", larrhk: "\u21A9", hookrightarrow: "\u21AA", rarrhk: "\u21AA", larrlp: "\u21AB", looparrowleft: "\u21AB", looparrowright: "\u21AC", rarrlp: "\u21AC", harrw: "\u21AD", leftrightsquigarrow: "\u21AD", lsh: "\u21B0", rsh: "\u21B1", ldsh: "\u21B2", rdsh: "\u21B3", crarr: "\u21B5", cularr: "\u21B6", curvearrowleft: "\u21B6", curarr: "\u21B7", curvearrowright: "\u21B7", circlearrowleft: "\u21BA", olarr: "\u21BA", circlearrowright: "\u21BB", orarr: "\u21BB", leftharpoonup: "\u21BC", leftvector: "\u21BC", lharu: "\u21BC", downleftvector: "\u21BD", leftharpoondown: "\u21BD", lhard: "\u21BD", rightupvector: "\u21BE", uharr: "\u21BE", upharpoonright: "\u21BE", leftupvector: "\u21BF", uharl: "\u21BF", upharpoonleft: "\u21BF", rharu: "\u21C0", rightharpoonup: "\u21C0", rightvector: "\u21C0", downrightvector: "\u21C1", rhard: "\u21C1", rightharpoondown: "\u21C1", dharr: "\u21C2", downharpoonright: "\u21C2", rightdownvector: "\u21C2", dharl: "\u21C3", downharpoonleft: "\u21C3", leftdownvector: "\u21C3", rightarrowleftarrow: "\u21C4", rightleftarrows: "\u21C4", rlarr: "\u21C4", udarr: "\u21C5", uparrowdownarrow: "\u21C5", leftarrowrightarrow: "\u21C6", leftrightarrows: "\u21C6", lrarr: "\u21C6", leftleftarrows: "\u21C7", llarr: "\u21C7", upuparrows: "\u21C8", uuarr: "\u21C8", rightrightarrows: "\u21C9", rrarr: "\u21C9", ddarr: "\u21CA", downdownarrows: "\u21CA", leftrightharpoons: "\u21CB", lrhar: "\u21CB", reverseequilibrium: "\u21CB", equilibrium: "\u21CC", rightleftharpoons: "\u21CC", rlhar: "\u21CC", doubleleftarrow: "\u21D0", lArr: "\u21D0", Leftarrow: "\u21D0", nlArr: "\u21CD", nLeftarrow: "\u21CD", doubleuparrow: "\u21D1", uArr: "\u21D1", Uparrow: "\u21D1", doublerightarrow: "\u21D2", implies: "\u21D2", rArr: "\u21D2", Rightarrow: "\u21D2", nrArr: "\u21CF", nRightarrow: "\u21CF", dArr: "\u21D3", doubledownarrow: "\u21D3", Downarrow: "\u21D3", doubleleftrightarrow: "\u21D4", hArr: "\u21D4", iff: "\u21D4", Leftrightarrow: "\u21D4", nhArr: "\u21CE", nLeftrightarrow: "\u21CE", doubleupdownarrow: "\u21D5", Updownarrow: "\u21D5", vArr: "\u21D5", nwArr: "\u21D6", neArr: "\u21D7", seArr: "\u21D8", swArr: "\u21D9", laarr: "\u21DA", lleftarrow: "\u21DA", raarr: "\u21DB", rrightarrow: "\u21DB", zigrarr: "\u21DD", larrb: "\u21E4", leftarrowbar: "\u21E4", rarrb: "\u21E5", rightarrowbar: "\u21E5", downarrowuparrow: "\u21F5", duarr: "\u21F5", loarr: "\u21FD", roarr: "\u21FE", hoarr: "\u21FF", forall: "\u2200", comp: "\u2201", complement: "\u2201", part: "\u2202", partiald: "\u2202", npart: "\u2202\u0338", exist: "\u2203", exists: "\u2203", nexist: "\u2204", nexists: "\u2204", notexists: "\u2204", empty: "\u2205", emptyset: "\u2205", emptyv: "\u2205", varnothing: "\u2205", del: "\u2207", nabla: "\u2207", element: "\u2208", in: "\u2208", isin: "\u2208", isinv: "\u2208", notelement: "\u2209", notin: "\u2209", notinva: "\u2209", ni: "\u220B", niv: "\u220B", reverseelement: "\u220B", suchthat: "\u220B", notni: "\u220C", notniva: "\u220C", notreverseelement: "\u220C", backepsilon: "\u03F6", bepsi: "\u03F6", prod: "\u220F", product: "\u220F", coprod: "\u2210", coproduct: "\u2210", sum: "\u2211", plus: "+", plusminus: "\xB1", plusmn: "\xB1", pm: "\xB1", div: "\xF7", divide: "\xF7", times: "\xD7", lt: "<", nless: "\u226E", nlt: "\u226E", notless: "\u226E", nvlt: "<\u20D2", equals: "=", ne: "\u2260", notequal: "\u2260", bne: "=\u20E5", equal: "\u2A75", gt: ">", ngt: "\u226F", ngtr: "\u226F", notgreater: "\u226F", nvgt: ">\u20D2", not: "\xAC", verbar: "|", vert: "|", verticalline: "|", brvbar: "\xA6", minus: "\u2212", minusplus: "\u2213", mnplus: "\u2213", mp: "\u2213", dotplus: "\u2214", plusdo: "\u2214", frasl: "\u2044", backslash: "\u2216", setminus: "\u2216", setmn: "\u2216", smallsetminus: "\u2216", ssetmn: "\u2216", lowast: "\u2217", compfn: "\u2218", smallcircle: "\u2218", radic: "\u221A", sqrt: "\u221A", prop: "\u221D", proportional: "\u221D", propto: "\u221D", varpropto: "\u221D", vprop: "\u221D", infin: "\u221E", angrt: "\u221F", ang: "\u2220", angle: "\u2220", nang: "\u2220\u20D2", angmsd: "\u2221", measuredangle: "\u2221", angsph: "\u2222", mid: "\u2223", shortmid: "\u2223", smid: "\u2223", verticalbar: "\u2223", nmid: "\u2224", notverticalbar: "\u2224", nshortmid: "\u2224", nsmid: "\u2224", doubleverticalbar: "\u2225", par: "\u2225", parallel: "\u2225", shortparallel: "\u2225", spar: "\u2225", notdoubleverticalbar: "\u2226", npar: "\u2226", nparallel: "\u2226", nshortparallel: "\u2226", nspar: "\u2226", and: "\u2227", wedge: "\u2227", or: "\u2228", vee: "\u2228", cap: "\u2229", caps: "\u2229\uFE00", cup: "\u222A", cups: "\u222A\uFE00", int: "\u222B", integral: "\u222B", Int: "\u222C", iiint: "\u222D", tint: "\u222D", iiiint: "\u2A0C", qint: "\u2A0C", conint: "\u222E", contourintegral: "\u222E", oint: "\u222E", Conint: "\u222F", doublecontourintegral: "\u222F", cconint: "\u2230", cwint: "\u2231", clockwisecontourintegral: "\u2232", cwconint: "\u2232", awconint: "\u2233", counterclockwisecontourintegral: "\u2233", there4: "\u2234", therefore: "\u2234", becaus: "\u2235", because: "\u2235", ratio: "\u2236", Colon: "\u2237", proportion: "\u2237", dotminus: "\u2238", minusd: "\u2238", mddot: "\u223A", homtht: "\u223B", sim: "\u223C", thicksim: "\u223C", thksim: "\u223C", Tilde: "\u223C", nottilde: "\u2241", nsim: "\u2241", nvsim: "\u223C\u20D2", backsim: "\u223D", bsim: "\u223D", race: "\u223D\u0331", ac: "\u223E", mstpos: "\u223E", ace: "\u223E\u0333", acd: "\u223F", verticaltilde: "\u2240", wr: "\u2240", wreath: "\u2240", eqsim: "\u2242", equaltilde: "\u2242", esim: "\u2242", nesim: "\u2242\u0338", notequaltilde: "\u2242\u0338", sime: "\u2243", simeq: "\u2243", tildeequal: "\u2243", nottildeequal: "\u2244", nsime: "\u2244", nsimeq: "\u2244", cong: "\u2245", tildefullequal: "\u2245", ncong: "\u2247", nottildefullequal: "\u2247", simne: "\u2246", ap: "\u2248", approx: "\u2248", asymp: "\u2248", thickapprox: "\u2248", thkap: "\u2248", tildetilde: "\u2248", nap: "\u2249", napprox: "\u2249", nottildetilde: "\u2249", ape: "\u224A", approxeq: "\u224A", apid: "\u224B", napid: "\u224B\u0338", backcong: "\u224C", bcong: "\u224C", asympeq: "\u224D", CupCap: "\u224D", notcupcap: "\u226D", nvap: "\u224D\u20D2", bump: "\u224E", Bumpeq: "\u224E", humpdownhump: "\u224E", nbump: "\u224E\u0338", nothumpdownhump: "\u224E\u0338", bumpe: "\u224F", bumpeq: "\u224F", humpequal: "\u224F", nbumpe: "\u224F\u0338", nothumpequal: "\u224F\u0338", doteq: "\u2250", dotequal: "\u2250", esdot: "\u2250", nedot: "\u2250\u0338", doteqdot: "\u2251", eDot: "\u2251", efdot: "\u2252", fallingdotseq: "\u2252", erdot: "\u2253", risingdotseq: "\u2253", assign: "\u2254", colone: "\u2254", coloneq: "\u2254", ecolon: "\u2255", eqcolon: "\u2255", ecir: "\u2256", eqcirc: "\u2256", circeq: "\u2257", cire: "\u2257", wedgeq: "\u2259", veeeq: "\u225A", triangleq: "\u225C", trie: "\u225C", equest: "\u225F", questeq: "\u225F", congruent: "\u2261", equiv: "\u2261", nequiv: "\u2262", notcongruent: "\u2262", bnequiv: "\u2261\u20E5", le: "\u2264", leq: "\u2264", nle: "\u2270", nleq: "\u2270", notlessequal: "\u2270", nvle: "\u2264\u20D2", ge: "\u2265", geq: "\u2265", greaterequal: "\u2265", nge: "\u2271", ngeq: "\u2271", notgreaterequal: "\u2271", nvge: "\u2265\u20D2", lE: "\u2266", leqq: "\u2266", lessfullequal: "\u2266", nlE: "\u2266\u0338", nleqq: "\u2266\u0338", gE: "\u2267", geqq: "\u2267", greaterfullequal: "\u2267", ngE: "\u2267\u0338", ngeqq: "\u2267\u0338", notgreaterfullequal: "\u2267\u0338", lnE: "\u2268", lneqq: "\u2268", lvertneqq: "\u2268\uFE00", lvne: "\u2268\uFE00", gnE: "\u2269", gneqq: "\u2269", gvertneqq: "\u2269\uFE00", gvne: "\u2269\uFE00", ll: "\u226A", Lt: "\u226A", nestedlessless: "\u226A", nltv: "\u226A\u0338", notlessless: "\u226A\u0338", nLt: "\u226A\u20D2", gg: "\u226B", Gt: "\u226B", nestedgreatergreater: "\u226B", ngtv: "\u226B\u0338", notgreatergreater: "\u226B\u0338", nGt: "\u226B\u20D2", between: "\u226C", twixt: "\u226C", lesssim: "\u2272", lesstilde: "\u2272", lsim: "\u2272", nlsim: "\u2274", notlesstilde: "\u2274", greatertilde: "\u2273", gsim: "\u2273", gtrsim: "\u2273", ngsim: "\u2275", notgreatertilde: "\u2275", lessgreater: "\u2276", lessgtr: "\u2276", lg: "\u2276", notlessgreater: "\u2278", ntlg: "\u2278", gl: "\u2277", greaterless: "\u2277", gtrless: "\u2277", notgreaterless: "\u2279", ntgl: "\u2279", pr: "\u227A", prec: "\u227A", precedes: "\u227A", notprecedes: "\u2280", npr: "\u2280", nprec: "\u2280", sc: "\u227B", succ: "\u227B", succeeds: "\u227B", notsucceeds: "\u2281", nsc: "\u2281", nsucc: "\u2281", prcue: "\u227C", preccurlyeq: "\u227C", precedesslantequal: "\u227C", notprecedesslantequal: "\u22E0", nprcue: "\u22E0", sccue: "\u227D", succcurlyeq: "\u227D", succeedsslantequal: "\u227D", notsucceedsslantequal: "\u22E1", nsccue: "\u22E1", precedestilde: "\u227E", precsim: "\u227E", prsim: "\u227E", scsim: "\u227F", succeedstilde: "\u227F", succsim: "\u227F", notsucceedstilde: "\u227F\u0338", sub: "\u2282", subset: "\u2282", nsub: "\u2284", notsubset: "\u2282\u20D2", nsubset: "\u2282\u20D2", vnsub: "\u2282\u20D2", sup: "\u2283", superset: "\u2283", supset: "\u2283", nsup: "\u2285", notsuperset: "\u2283\u20D2", nsupset: "\u2283\u20D2", vnsup: "\u2283\u20D2", sube: "\u2286", subseteq: "\u2286", subsetequal: "\u2286", notsubsetequal: "\u2288", nsube: "\u2288", nsubseteq: "\u2288", supe: "\u2287", supersetequal: "\u2287", supseteq: "\u2287", notsupersetequal: "\u2289", nsupe: "\u2289", nsupseteq: "\u2289", subne: "\u228A", subsetneq: "\u228A", varsubsetneq: "\u228A\uFE00", vsubne: "\u228A\uFE00", supne: "\u228B", supsetneq: "\u228B", varsupsetneq: "\u228B\uFE00", vsupne: "\u228B\uFE00", cupdot: "\u228D", unionplus: "\u228E", uplus: "\u228E", sqsub: "\u228F", sqsubset: "\u228F", squaresubset: "\u228F", notsquaresubset: "\u228F\u0338", sqsup: "\u2290", sqsupset: "\u2290", squaresuperset: "\u2290", notsquaresuperset: "\u2290\u0338", sqsube: "\u2291", sqsubseteq: "\u2291", squaresubsetequal: "\u2291", notsquaresubsetequal: "\u22E2", nsqsube: "\u22E2", sqsupe: "\u2292", sqsupseteq: "\u2292", squaresupersetequal: "\u2292", notsquaresupersetequal: "\u22E3", nsqsupe: "\u22E3", sqcap: "\u2293", sqcaps: "\u2293\uFE00", squareintersection: "\u2293", sqcup: "\u2294", sqcups: "\u2294\uFE00", squareunion: "\u2294", circleplus: "\u2295", oplus: "\u2295", circleminus: "\u2296", ominus: "\u2296", circletimes: "\u2297", otimes: "\u2297", osol: "\u2298", circledot: "\u2299", odot: "\u2299", circledcirc: "\u229A", ocir: "\u229A", circledast: "\u229B", oast: "\u229B", circleddash: "\u229D", odash: "\u229D", boxplus: "\u229E", plusb: "\u229E", boxminus: "\u229F", minusb: "\u229F", boxtimes: "\u22A0", timesb: "\u22A0", dotsquare: "\u22A1", sdotb: "\u22A1", righttee: "\u22A2", vdash: "\u22A2", nvdash: "\u22AC", dashv: "\u22A3", lefttee: "\u22A3", downtee: "\u22A4", top: "\u22A4", bot: "\u22A5", bottom: "\u22A5", perp: "\u22A5", uptee: "\u22A5", models: "\u22A7", doublerighttee: "\u22A8", vDash: "\u22A8", nvDash: "\u22AD", Vdash: "\u22A9", nVdash: "\u22AE", vvdash: "\u22AA", VDash: "\u22AB", nVDash: "\u22AF", prurel: "\u22B0", lefttriangle: "\u22B2", vartriangleleft: "\u22B2", vltri: "\u22B2", nltri: "\u22EA", notlefttriangle: "\u22EA", ntriangleleft: "\u22EA", righttriangle: "\u22B3", vartriangleright: "\u22B3", vrtri: "\u22B3", notrighttriangle: "\u22EB", nrtri: "\u22EB", ntriangleright: "\u22EB", lefttriangleequal: "\u22B4", ltrie: "\u22B4", trianglelefteq: "\u22B4", nltrie: "\u22EC", notlefttriangleequal: "\u22EC", ntrianglelefteq: "\u22EC", nvltrie: "\u22B4\u20D2", righttriangleequal: "\u22B5", rtrie: "\u22B5", trianglerighteq: "\u22B5", notrighttriangleequal: "\u22ED", nrtrie: "\u22ED", ntrianglerighteq: "\u22ED", nvrtrie: "\u22B5\u20D2", origof: "\u22B6", imof: "\u22B7", multimap: "\u22B8", mumap: "\u22B8", hercon: "\u22B9", intcal: "\u22BA", intercal: "\u22BA", veebar: "\u22BB", barvee: "\u22BD", angrtvb: "\u22BE", lrtri: "\u22BF", bigwedge: "\u22C0", Wedge: "\u22C0", xwedge: "\u22C0", bigvee: "\u22C1", Vee: "\u22C1", xvee: "\u22C1", bigcap: "\u22C2", intersection: "\u22C2", xcap: "\u22C2", bigcup: "\u22C3", union: "\u22C3", xcup: "\u22C3", diam: "\u22C4", diamond: "\u22C4", sdot: "\u22C5", sstarf: "\u22C6", Star: "\u22C6", divideontimes: "\u22C7", divonx: "\u22C7", bowtie: "\u22C8", ltimes: "\u22C9", rtimes: "\u22CA", leftthreetimes: "\u22CB", lthree: "\u22CB", rightthreetimes: "\u22CC", rthree: "\u22CC", backsimeq: "\u22CD", bsime: "\u22CD", curlyvee: "\u22CE", cuvee: "\u22CE", curlywedge: "\u22CF", cuwed: "\u22CF", Sub: "\u22D0", Subset: "\u22D0", Sup: "\u22D1", Supset: "\u22D1", Cap: "\u22D2", Cup: "\u22D3", fork: "\u22D4", pitchfork: "\u22D4", epar: "\u22D5", lessdot: "\u22D6", ltdot: "\u22D6", gtdot: "\u22D7", gtrdot: "\u22D7", Ll: "\u22D8", nll: "\u22D8\u0338", Gg: "\u22D9", ggg: "\u22D9", ngg: "\u22D9\u0338", leg: "\u22DA", lesg: "\u22DA\uFE00", lesseqgtr: "\u22DA", lessequalgreater: "\u22DA", gel: "\u22DB", gesl: "\u22DB\uFE00", greaterequalless: "\u22DB", gtreqless: "\u22DB", cuepr: "\u22DE", curlyeqprec: "\u22DE", cuesc: "\u22DF", curlyeqsucc: "\u22DF", lnsim: "\u22E6", gnsim: "\u22E7", precnsim: "\u22E8", prnsim: "\u22E8", scnsim: "\u22E9", succnsim: "\u22E9", vellip: "\u22EE", ctdot: "\u22EF", utdot: "\u22F0", dtdot: "\u22F1", disin: "\u22F2", isinsv: "\u22F3", isins: "\u22F4", isindot: "\u22F5", notindot: "\u22F5\u0338", notinvc: "\u22F6", notinvb: "\u22F7", isine: "\u22F9", notine: "\u22F9\u0338", nisd: "\u22FA", xnis: "\u22FB", nis: "\u22FC", notnivc: "\u22FD", notnivb: "\u22FE", barwed: "\u2305", barwedge: "\u2305", Barwed: "\u2306", doublebarwedge: "\u2306", drcrop: "\u230C", dlcrop: "\u230D", urcrop: "\u230E", ulcrop: "\u230F", bnot: "\u2310", profline: "\u2312", profsurf: "\u2313", telrec: "\u2315", target: "\u2316", ulcorn: "\u231C", ulcorner: "\u231C", urcorn: "\u231D", urcorner: "\u231D", dlcorn: "\u231E", llcorner: "\u231E", drcorn: "\u231F", lrcorner: "\u231F", frown: "\u2322", sfrown: "\u2322", smile: "\u2323", ssmile: "\u2323", cylcty: "\u232D", profalar: "\u232E", topbot: "\u2336", ovbar: "\u233D", solbar: "\u233F", angzarr: "\u237C", lmoust: "\u23B0", lmoustache: "\u23B0", rmoust: "\u23B1", rmoustache: "\u23B1", overbracket: "\u23B4", tbrk: "\u23B4", bbrk: "\u23B5", underbracket: "\u23B5", bbrktbrk: "\u23B6", overparenthesis: "\u23DC", underparenthesis: "\u23DD", overbrace: "\u23DE", underbrace: "\u23DF", trpezium: "\u23E2", elinters: "\u23E7", blank: "\u2423", boxh: "\u2500", horizontalline: "\u2500", boxv: "\u2502", boxdr: "\u250C", boxdl: "\u2510", boxur: "\u2514", boxul: "\u2518", boxvr: "\u251C", boxvl: "\u2524", boxhd: "\u252C", boxhu: "\u2534", boxvh: "\u253C", boxH: "\u2550", boxV: "\u2551", boxdR: "\u2552", boxDr: "\u2553", boxDR: "\u2554", boxdL: "\u2555", boxDl: "\u2556", boxDL: "\u2557", boxuR: "\u2558", boxUr: "\u2559", boxUR: "\u255A", boxuL: "\u255B", boxUl: "\u255C", boxUL: "\u255D", boxvR: "\u255E", boxVr: "\u255F", boxVR: "\u2560", boxvL: "\u2561", boxVl: "\u2562", boxVL: "\u2563", boxHd: "\u2564", boxhD: "\u2565", boxHD: "\u2566", boxHu: "\u2567", boxhU: "\u2568", boxHU: "\u2569", boxvH: "\u256A", boxVh: "\u256B", boxVH: "\u256C", uhblk: "\u2580", lhblk: "\u2584", block: "\u2588", blk14: "\u2591", blk12: "\u2592", blk34: "\u2593", squ: "\u25A1", square: "\u25A1", blacksquare: "\u25AA", filledverysmallsquare: "\u25AA", squarf: "\u25AA", squf: "\u25AA", emptyverysmallsquare: "\u25AB", rect: "\u25AD", marker: "\u25AE", fltns: "\u25B1", bigtriangleup: "\u25B3", xutri: "\u25B3", blacktriangle: "\u25B4", utrif: "\u25B4", triangle: "\u25B5", utri: "\u25B5", blacktriangleright: "\u25B8", rtrif: "\u25B8", rtri: "\u25B9", triangleright: "\u25B9", bigtriangledown: "\u25BD", xdtri: "\u25BD", blacktriangledown: "\u25BE", dtrif: "\u25BE", dtri: "\u25BF", triangledown: "\u25BF", blacktriangleleft: "\u25C2", ltrif: "\u25C2", ltri: "\u25C3", triangleleft: "\u25C3", loz: "\u25CA", lozenge: "\u25CA", cir: "\u25CB", tridot: "\u25EC", bigcirc: "\u25EF", xcirc: "\u25EF", ultri: "\u25F8", urtri: "\u25F9", lltri: "\u25FA", emptysmallsquare: "\u25FB", filledsmallsquare: "\u25FC", bigstar: "\u2605", starf: "\u2605", star: "\u2606", phone: "\u260E", female: "\u2640", male: "\u2642", spades: "\u2660", spadesuit: "\u2660", clubs: "\u2663", clubsuit: "\u2663", hearts: "\u2665", heartsuit: "\u2665", diamondsuit: "\u2666", diams: "\u2666", sung: "\u266A", check: "\u2713", checkmark: "\u2713", cross: "\u2717", malt: "\u2720", maltese: "\u2720", sext: "\u2736", verticalseparator: "\u2758", bsolhsub: "\u27C8", suphsol: "\u27C9", longleftarrow: "\u27F5", xlarr: "\u27F5", longrightarrow: "\u27F6", xrarr: "\u27F6", longleftrightarrow: "\u27F7", xharr: "\u27F7", doublelongleftarrow: "\u27F8", Longleftarrow: "\u27F8", xlArr: "\u27F8", doublelongrightarrow: "\u27F9", Longrightarrow: "\u27F9", xrArr: "\u27F9", doublelongleftrightarrow: "\u27FA", Longleftrightarrow: "\u27FA", xhArr: "\u27FA", longmapsto: "\u27FC", xmap: "\u27FC", dzigrarr: "\u27FF", nvlarr: "\u2902", nvrarr: "\u2903", nvharr: "\u2904", Map: "\u2905", lbarr: "\u290C", bkarow: "\u290D", lBarr: "\u290E", dbkarow: "\u290F", rBarr: "\u290F", drbkarow: "\u2910", rbarr: "\u2910", RBarr: "\u2910", ddotrahd: "\u2911", uparrowbar: "\u2912", downarrowbar: "\u2913", Rarrtl: "\u2916", latail: "\u2919", ratail: "\u291A", lAtail: "\u291B", rAtail: "\u291C", larrfs: "\u291D", rarrfs: "\u291E", larrbfs: "\u291F", rarrbfs: "\u2920", nwarhk: "\u2923", nearhk: "\u2924", hksearow: "\u2925", searhk: "\u2925", hkswarow: "\u2926", swarhk: "\u2926", nwnear: "\u2927", nesear: "\u2928", toea: "\u2928", seswar: "\u2929", tosa: "\u2929", swnwar: "\u292A", rarrc: "\u2933", nrarrc: "\u2933\u0338", cudarrr: "\u2935", ldca: "\u2936", rdca: "\u2937", cudarrl: "\u2938", larrpl: "\u2939", curarrm: "\u293C", cularrp: "\u293D", rarrpl: "\u2945", harrcir: "\u2948", uarrocir: "\u2949", lurdshar: "\u294A", ldrushar: "\u294B", leftrightvector: "\u294E", rightupdownvector: "\u294F", downleftrightvector: "\u2950", leftupdownvector: "\u2951", leftvectorbar: "\u2952", rightvectorbar: "\u2953", rightupvectorbar: "\u2954", rightdownvectorbar: "\u2955", downleftvectorbar: "\u2956", downrightvectorbar: "\u2957", leftupvectorbar: "\u2958", leftdownvectorbar: "\u2959", leftteevector: "\u295A", rightteevector: "\u295B", rightupteevector: "\u295C", rightdownteevector: "\u295D", downleftteevector: "\u295E", downrightteevector: "\u295F", leftupteevector: "\u2960", leftdownteevector: "\u2961", lhar: "\u2962", uhar: "\u2963", rhar: "\u2964", dhar: "\u2965", luruhar: "\u2966", ldrdhar: "\u2967", ruluhar: "\u2968", rdldhar: "\u2969", lharul: "\u296A", llhard: "\u296B", rharul: "\u296C", lrhard: "\u296D", udhar: "\u296E", upequilibrium: "\u296E", duhar: "\u296F", reverseupequilibrium: "\u296F", roundimplies: "\u2970", erarr: "\u2971", simrarr: "\u2972", larrsim: "\u2973", rarrsim: "\u2974", rarrap: "\u2975", ltlarr: "\u2976", gtrarr: "\u2978", subrarr: "\u2979", suplarr: "\u297B", lfisht: "\u297C", rfisht: "\u297D", ufisht: "\u297E", dfisht: "\u297F", vzigzag: "\u299A", vangrt: "\u299C", angrtvbd: "\u299D", ange: "\u29A4", range: "\u29A5", dwangle: "\u29A6", uwangle: "\u29A7", angmsdaa: "\u29A8", angmsdab: "\u29A9", angmsdac: "\u29AA", angmsdad: "\u29AB", angmsdae: "\u29AC", angmsdaf: "\u29AD", angmsdag: "\u29AE", angmsdah: "\u29AF", bemptyv: "\u29B0", demptyv: "\u29B1", cemptyv: "\u29B2", raemptyv: "\u29B3", laemptyv: "\u29B4", ohbar: "\u29B5", omid: "\u29B6", opar: "\u29B7", operp: "\u29B9", olcross: "\u29BB", odsold: "\u29BC", olcir: "\u29BE", ofcir: "\u29BF", olt: "\u29C0", ogt: "\u29C1", cirscir: "\u29C2", cirE: "\u29C3", solb: "\u29C4", bsolb: "\u29C5", boxbox: "\u29C9", trisb: "\u29CD", rtriltri: "\u29CE", lefttrianglebar: "\u29CF", notlefttrianglebar: "\u29CF\u0338", righttrianglebar: "\u29D0", notrighttrianglebar: "\u29D0\u0338", iinfin: "\u29DC", infintie: "\u29DD", nvinfin: "\u29DE", eparsl: "\u29E3", smeparsl: "\u29E4", eqvparsl: "\u29E5", blacklozenge: "\u29EB", lozf: "\u29EB", ruledelayed: "\u29F4", dsol: "\u29F6", bigodot: "\u2A00", xodot: "\u2A00", bigoplus: "\u2A01", xoplus: "\u2A01", bigotimes: "\u2A02", xotime: "\u2A02", biguplus: "\u2A04", xuplus: "\u2A04", bigsqcup: "\u2A06", xsqcup: "\u2A06", fpartint: "\u2A0D", cirfnint: "\u2A10", awint: "\u2A11", rppolint: "\u2A12", scpolint: "\u2A13", npolint: "\u2A14", pointint: "\u2A15", quatint: "\u2A16", intlarhk: "\u2A17", pluscir: "\u2A22", plusacir: "\u2A23", simplus: "\u2A24", plusdu: "\u2A25", plussim: "\u2A26", plustwo: "\u2A27", mcomma: "\u2A29", minusdu: "\u2A2A", loplus: "\u2A2D", roplus: "\u2A2E", Cross: "\u2A2F", timesd: "\u2A30", timesbar: "\u2A31", smashp: "\u2A33", lotimes: "\u2A34", rotimes: "\u2A35", otimesas: "\u2A36", Otimes: "\u2A37", odiv: "\u2A38", triplus: "\u2A39", triminus: "\u2A3A", tritime: "\u2A3B", intprod: "\u2A3C", iprod: "\u2A3C", amalg: "\u2A3F", capdot: "\u2A40", ncup: "\u2A42", ncap: "\u2A43", capand: "\u2A44", cupor: "\u2A45", cupcap: "\u2A46", capcup: "\u2A47", cupbrcap: "\u2A48", capbrcup: "\u2A49", cupcup: "\u2A4A", capcap: "\u2A4B", ccups: "\u2A4C", ccaps: "\u2A4D", ccupssm: "\u2A50", And: "\u2A53", Or: "\u2A54", andand: "\u2A55", oror: "\u2A56", orslope: "\u2A57", andslope: "\u2A58", andv: "\u2A5A", orv: "\u2A5B", andd: "\u2A5C", ord: "\u2A5D", wedbar: "\u2A5F", sdote: "\u2A66", simdot: "\u2A6A", congdot: "\u2A6D", ncongdot: "\u2A6D\u0338", easter: "\u2A6E", apacir: "\u2A6F", apE: "\u2A70", nape: "\u2A70\u0338", eplus: "\u2A71", pluse: "\u2A72", Esim: "\u2A73", ddotseq: "\u2A77", eddot: "\u2A77", equivdd: "\u2A78", ltcir: "\u2A79", gtcir: "\u2A7A", ltquest: "\u2A7B", gtquest: "\u2A7C", leqslant: "\u2A7D", les: "\u2A7D", lessslantequal: "\u2A7D", nleqslant: "\u2A7D\u0338", nles: "\u2A7D\u0338", notlessslantequal: "\u2A7D\u0338", geqslant: "\u2A7E", ges: "\u2A7E", greaterslantequal: "\u2A7E", ngeqslant: "\u2A7E\u0338", nges: "\u2A7E\u0338", notgreaterslantequal: "\u2A7E\u0338", lesdot: "\u2A7F", gesdot: "\u2A80", lesdoto: "\u2A81", gesdoto: "\u2A82", lesdotor: "\u2A83", gesdotol: "\u2A84", lap: "\u2A85", lessapprox: "\u2A85", gap: "\u2A86", gtrapprox: "\u2A86", lne: "\u2A87", lneq: "\u2A87", gne: "\u2A88", gneq: "\u2A88", lnap: "\u2A89", lnapprox: "\u2A89", gnap: "\u2A8A", gnapprox: "\u2A8A", lEg: "\u2A8B", lesseqqgtr: "\u2A8B", gEl: "\u2A8C", gtreqqless: "\u2A8C", lsime: "\u2A8D", gsime: "\u2A8E", lsimg: "\u2A8F", gsiml: "\u2A90", lge: "\u2A91", gle: "\u2A92", lesges: "\u2A93", gesles: "\u2A94", els: "\u2A95", eqslantless: "\u2A95", egs: "\u2A96", eqslantgtr: "\u2A96", elsdot: "\u2A97", egsdot: "\u2A98", el: "\u2A99", eg: "\u2A9A", siml: "\u2A9D", simg: "\u2A9E", simle: "\u2A9F", simge: "\u2AA0", lessless: "\u2AA1", notnestedlessless: "\u2AA1\u0338", greatergreater: "\u2AA2", notnestedgreatergreater: "\u2AA2\u0338", glj: "\u2AA4", gla: "\u2AA5", ltcc: "\u2AA6", gtcc: "\u2AA7", lescc: "\u2AA8", gescc: "\u2AA9", smt: "\u2AAA", lat: "\u2AAB", smte: "\u2AAC", smtes: "\u2AAC\uFE00", late: "\u2AAD", lates: "\u2AAD\uFE00", bumpE: "\u2AAE", pre: "\u2AAF", precedesequal: "\u2AAF", preceq: "\u2AAF", notprecedesequal: "\u2AAF\u0338", npre: "\u2AAF\u0338", npreceq: "\u2AAF\u0338", sce: "\u2AB0", succeedsequal: "\u2AB0", succeq: "\u2AB0", notsucceedsequal: "\u2AB0\u0338", nsce: "\u2AB0\u0338", nsucceq: "\u2AB0\u0338", prE: "\u2AB3", scE: "\u2AB4", precneqq: "\u2AB5", prne: "\u2AB5", scne: "\u2AB6", succneqq: "\u2AB6", prap: "\u2AB7", precapprox: "\u2AB7", scap: "\u2AB8", succapprox: "\u2AB8", precnapprox: "\u2AB9", prnap: "\u2AB9", scnap: "\u2ABA", succnapprox: "\u2ABA", Pr: "\u2ABB", Sc: "\u2ABC", subdot: "\u2ABD", supdot: "\u2ABE", subplus: "\u2ABF", supplus: "\u2AC0", submult: "\u2AC1", supmult: "\u2AC2", subedot: "\u2AC3", supedot: "\u2AC4", subE: "\u2AC5", subseteqq: "\u2AC5", nsubE: "\u2AC5\u0338", nsubseteqq: "\u2AC5\u0338", supE: "\u2AC6", supseteqq: "\u2AC6", nsupE: "\u2AC6\u0338", nsupseteqq: "\u2AC6\u0338", subsim: "\u2AC7", supsim: "\u2AC8", subnE: "\u2ACB", subsetneqq: "\u2ACB", varsubsetneqq: "\u2ACB\uFE00", vsubnE: "\u2ACB\uFE00", supnE: "\u2ACC", supsetneqq: "\u2ACC", varsupsetneqq: "\u2ACC\uFE00", vsupnE: "\u2ACC\uFE00", csub: "\u2ACF", csup: "\u2AD0", csube: "\u2AD1", csupe: "\u2AD2", subsup: "\u2AD3", supsub: "\u2AD4", subsub: "\u2AD5", supsup: "\u2AD6", suphsub: "\u2AD7", supdsub: "\u2AD8", forkv: "\u2AD9", topfork: "\u2ADA", mlcp: "\u2ADB", Dashv: "\u2AE4", doublelefttee: "\u2AE4", vdashl: "\u2AE6", barv: "\u2AE7", vbar: "\u2AE8", vbarv: "\u2AE9", Vbar: "\u2AEB", Not: "\u2AEC", bNot: "\u2AED", rnmid: "\u2AEE", cirmid: "\u2AEF", midcir: "\u2AF0", topcir: "\u2AF1", nhpar: "\u2AF2", parsim: "\u2AF3", parsl: "\u2AFD", nparsl: "\u2AFD\u20E5", flat: "\u266D", natur: "\u266E", natural: "\u266E", sharp: "\u266F", curren: "\xA4", cent: "\xA2", dollar: "$", pound: "\xA3", yen: "\xA5", euro: "\u20AC", sup1: "\xB9", frac12: "\xBD", half: "\xBD", frac13: "\u2153", frac14: "\xBC", frac15: "\u2155", frac16: "\u2159", frac18: "\u215B", sup2: "\xB2", frac23: "\u2154", frac25: "\u2156", sup3: "\xB3", frac34: "\xBE", frac35: "\u2157", frac38: "\u215C", frac45: "\u2158", frac56: "\u215A", frac58: "\u215D", frac78: "\u215E", afr: "\u{1D51E}", aopf: "\u{1D552}", ascr: "\u{1D4B6}", Afr: "\u{1D504}", Aopf: "\u{1D538}", Ascr: "\u{1D49C}", ordf: "\xAA", aacute: "\xE1", Aacute: "\xC1", agrave: "\xE0", Agrave: "\xC0", abreve: "\u0103", Abreve: "\u0102", acirc: "\xE2", Acirc: "\xC2", aring: "\xE5", angst: "\xC5", Aring: "\xC5", auml: "\xE4", Auml: "\xC4", atilde: "\xE3", Atilde: "\xC3", aogon: "\u0105", Aogon: "\u0104", amacr: "\u0101", Amacr: "\u0100", aelig: "\xC6", AElig: "\xC6", bfr: "\u{1D51F}", bopf: "\u{1D553}", bscr: "\u{1D4B7}", bernou: "\u212C", bernoullis: "\u212C", Bfr: "\u{1D505}", Bopf: "\u{1D539}", Bscr: "\u212C", cfr: "\u{1D520}", copf: "\u{1D554}", cscr: "\u{1D4B8}", cayleys: "\u212D", Cfr: "\u212D", complexes: "\u2102", Copf: "\u2102", Cscr: "\u{1D49E}", cacute: "\u0107", Cacute: "\u0106", ccirc: "\u0109", Ccirc: "\u0108", ccaron: "\u010D", Ccaron: "\u010C", cdot: "\u010B", Cdot: "\u010A", ccedil: "\xE7", Ccedil: "\xC7", incare: "\u2105", dfr: "\u{1D521}", differentiald: "\u2146", dopf: "\u{1D555}", dscr: "\u{1D4B9}", capitaldifferentiald: "\u2145", dd: "\u2145", DD: "\u2145", Dfr: "\u{1D507}", Dopf: "\u{1D53B}", Dscr: "\u{1D49F}", dcaron: "\u010F", Dcaron: "\u010E", dstrok: "\u0111", Dstrok: "\u0110", eth: "\xF0", ETH: "\xD0", ee: "\u2147", efr: "\u{1D522}", eopf: "\u{1D556}", escr: "\u212F", exponentiale: "\u2147", Efr: "\u{1D508}", Eopf: "\u{1D53C}", Escr: "\u2130", expectation: "\u2130", eacute: "\xE9", Eacute: "\xC9", egrave: "\xE8", Egrave: "\xC8", ecirc: "\xEA", Ecirc: "\xCA", ecaron: "\u011B", Ecaron: "\u011A", euml: "\xEB", Euml: "\xCB", edot: "\u0117", Edot: "\u0116", eogon: "\u0119", Eogon: "\u0118", emacr: "\u0113", Emacr: "\u0112", ffr: "\u{1D523}", fopf: "\u{1D557}", fscr: "\u{1D4BB}", Ffr: "\u{1D509}", Fopf: "\u{1D53D}", fouriertrf: "\u2131", Fscr: "\u2131", fflig: "\uFB00", ffilig: "\uFB03", ffllig: "\uFB04", filig: "\uFB01", fjlig: "fj", fllig: "\uFB02", fnof: "\u0192", gfr: "\u{1D524}", gopf: "\u{1D558}", gscr: "\u210A", Gfr: "\u{1D50A}", Gopf: "\u{1D53E}", Gscr: "\u{1D4A2}", gacute: "\u01F5", gbreve: "\u011F", Gbreve: "\u011E", gcirc: "\u011D", Gcirc: "\u011C", gdot: "\u0121", Gdot: "\u0120", gcedil: "\u0122", hfr: "\u{1D525}", hopf: "\u{1D559}", hscr: "\u{1D4BD}", planckh: "\u210E", hamilt: "\u210B", Hfr: "\u210C", hilbertspace: "\u210B", Hopf: "\u210D", Hscr: "\u210B", poincareplane: "\u210C", quaternions: "\u210D", hcirc: "\u0125", Hcirc: "\u0124", hbar: "\u210F", hslash: "\u210F", hstrok: "\u0127", planck: "\u210F", plankv: "\u210F", Hstrok: "\u0126", ifr: "\u{1D526}", ii: "\u2148", imaginaryi: "\u2148", iopf: "\u{1D55A}", iscr: "\u{1D4BE}", Ifr: "\u2111", im: "\u2111", image: "\u2111", imagline: "\u2110", imagpart: "\u2111", Iopf: "\u{1D540}", Iscr: "\u2110", iacute: "\xED", Iacute: "\xCD", igrave: "\xEC", Igrave: "\xCC", icirc: "\xEE", Icirc: "\xCE", iuml: "\xEF", Iuml: "\xCF", itilde: "\u0129", Itilde: "\u0128", idot: "\u0130", iogon: "\u012F", Iogon: "\u012E", imacr: "\u012B", Imacr: "\u012A", ijlig: "\u0132", IJlig: "\u0132", imath: "\u0131", inodot: "\u0131", jfr: "\u{1D527}", jopf: "\u{1D55B}", jscr: "\u{1D4BF}", Jfr: "\u{1D50D}", Jopf: "\u{1D541}", Jscr: "\u{1D4A5}", jcirc: "\u0135", Jcirc: "\u0134", jmath: "\u0237", kfr: "\u{1D528}", kopf: "\u{1D55C}", kscr: "\u{1D4C0}", Kfr: "\u{1D50E}", Kopf: "\u{1D542}", Kscr: "\u{1D4A6}", kcedil: "\u0137", Kcedil: "\u0136", ell: "\u2113", lfr: "\u{1D529}", lopf: "\u{1D55D}", lscr: "\u{1D4C1}", lagran: "\u2112", laplacetrf: "\u2112", Lfr: "\u{1D50F}", Lopf: "\u{1D543}", Lscr: "\u2112", lacute: "\u013A", Lacute: "\u0139", lcaron: "\u013E", Lcaron: "\u013D", lcedil: "\u013C", Lcedil: "\u013B", lstrok: "\u0142", Lstrok: "\u0141", lmidot: "\u0140", Lmidot: "\u013F", mfr: "\u{1D52A}", mopf: "\u{1D55E}", mscr: "\u{1D4C2}", mellintrf: "\u2133", Mfr: "\u{1D510}", Mopf: "\u{1D544}", Mscr: "\u2133", phmmat: "\u2133", nfr: "\u{1D52B}", nopf: "\u{1D55F}", nscr: "\u{1D4C3}", naturals: "\u2115", Nfr: "\u{1D511}", Nopf: "\u2115", Nscr: "\u{1D4A9}", nacute: "\u0144", Nacute: "\u0143", ncaron: "\u0148", Ncaron: "\u0147", ntilde: "\xF1", Ntilde: "\xD1", ncedil: "\u0146", Ncedil: "\u0145", numero: "\u2116", eng: "\u014B", ENG: "\u014A", ofr: "\u{1D52C}", oopf: "\u{1D560}", order: "\u2134", orderof: "\u2134", oscr: "\u2134", Ofr: "\u{1D512}", Oopf: "\u{1D546}", Oscr: "\u{1D4AA}", ordm: "\xBA", oacute: "\xF3", Oacute: "\xD3", ograve: "\xF2", Ograve: "\xD2", ocirc: "\xF4", Ocirc: "\xD4", ouml: "\xF6", Ouml: "\xD6", odblac: "\u0151", Odblac: "\u0150", otilde: "\xF5", Otilde: "\xD5", oslash: "\xF8", Oslash: "\xD8", omacr: "\u014D", Omacr: "\u014C", oelig: "\u0152", OElig: "\u0152", pfr: "\u{1D52D}", popf: "\u{1D561}", pscr: "\u{1D4C5}", Pfr: "\u{1D513}", Popf: "\u2119", primes: "\u2119", Pscr: "\u{1D4AB}", qfr: "\u{1D52E}", qopf: "\u{1D562}", qscr: "\u{1D4C6}", Qfr: "\u{1D514}", Qopf: "\u211A", Qscr: "\u{1D4AC}", rationals: "\u211A", kgreen: "\u0138", rfr: "\u{1D52F}", ropf: "\u{1D563}", rscr: "\u{1D4C7}", re: "\u211C", real: "\u211C", realine: "\u211B", realpart: "\u211C", reals: "\u211D", Rfr: "\u211C", Ropf: "\u211D", Rscr: "\u211B", racute: "\u0155", Racute: "\u0154", rcaron: "\u0159", Rcaron: "\u0158", rcedil: "\u0157", Rcedil: "\u0156", sfr: "\u{1D530}", sopf: "\u{1D564}", sscr: "\u{1D4C8}", Sfr: "\u{1D516}", Sopf: "\u{1D54A}", Sscr: "\u{1D4AE}", circleds: "\u24C8", os: "\u24C8", sacute: "\u015B", Sacute: "\u015A", scirc: "\u015D", Scirc: "\u015C", scaron: "\u0161", Scaron: "\u0160", scedil: "\u015F", Scedil: "\u015E", szlig: "\xDF", tfr: "\u{1D531}", topf: "\u{1D565}", tscr: "\u{1D4C9}", Tfr: "\u{1D517}", Topf: "\u{1D54B}", Tscr: "\u{1D4AF}", tcaron: "\u0165", Tcaron: "\u0164", tcedil: "\u0163", Tcedil: "\u0162", trade: "\u2122", tstrok: "\u0167", Tstrok: "\u0166", ufr: "\u{1D532}", uopf: "\u{1D566}", uscr: "\u{1D4CA}", Ufr: "\u{1D518}", Uopf: "\u{1D54C}", Uscr: "\u{1D4B0}", uacute: "\xFA", Uacute: "\xDA", ugrave: "\xF9", Ugrave: "\xD9", ubreve: "\u016D", Ubreve: "\u016C", ucirc: "\xFB", Ucirc: "\xDB", uring: "\u016F", Uring: "\u016E", uuml: "\xFC", Uuml: "\xDC", udblac: "\u0171", Udblac: "\u0170", utilde: "\u0169", Utilde: "\u0168", uogon: "\u0173", Uogon: "\u0172", umacr: "\u016B", Umacr: "\u016A", vfr: "\u{1D533}", vopf: "\u{1D567}", vscr: "\u{1D4CB}", Vfr: "\u{1D519}", Vopf: "\u{1D54D}", Vscr: "\u{1D4B1}", wfr: "\u{1D534}", wopf: "\u{1D568}", wscr: "\u{1D4CC}", Wfr: "\u{1D51A}", Wopf: "\u{1D54E}", Wscr: "\u{1D4B2}", wcirc: "\u0175", Wcirc: "\u0174", xfr: "\u{1D535}", xopf: "\u{1D569}", xscr: "\u{1D4CD}", Xfr: "\u{1D51B}", Xopf: "\u{1D54F}", Xscr: "\u{1D4B3}", yfr: "\u{1D536}", yopf: "\u{1D56A}", yscr: "\u{1D4CE}", Yfr: "\u{1D51C}", Yopf: "\u{1D550}", Yscr: "\u{1D4B4}", yacute: "\xFD", Yacute: "\xDD", ycirc: "\u0177", Ycirc: "\u0176", yuml: "\xFF", Yuml: "\u0178", zfr: "\u{1D537}", zopf: "\u{1D56B}", zscr: "\u{1D4CF}", integers: "\u2124", zeetrf: "\u2128", Zfr: "\u2128", Zopf: "\u2124", Zscr: "\u{1D4B5}", zacute: "\u017A", Zacute: "\u0179", zcaron: "\u017E", Zcaron: "\u017D", zdot: "\u017C", Zdot: "\u017B", imped: "\u01B5", thorn: "\xFE", THORN: "\xDE", napos: "\u0149", alpha: "\u03B1", Alpha: "\u0391", beta: "\u03B2", Beta: "\u0392", gamma: "\u03B3", Gamma: "\u0393", delta: "\u03B4", Delta: "\u0394", epsi: "\u03B5", epsilon: "\u03B5", epsiv: "\u03F5", straightepsilon: "\u03F5", varepsilon: "\u03F5", Epsilon: "\u0395", digamma: "\u03DD", gammad: "\u03DD", Gammad: "\u03DC", zeta: "\u03B6", Zeta: "\u0396", eta: "\u03B7", Eta: "\u0397", theta: "\u03B8", thetasym: "\u03D1", thetav: "\u03D1", vartheta: "\u03D1", Theta: "\u0398", iota: "\u03B9", Iota: "\u0399", kappa: "\u03BA", kappav: "\u03F0", varkappa: "\u03F0", Kappa: "\u039A", lambda: "\u03BB", Lambda: "\u039B", mu: "\u03BC", micro: "\xB5", Mu: "\u039C", nu: "\u03BD", Nu: "\u039D", xi: "\u03BE", Xi: "\u039E", omicron: "\u03BF", Omicron: "\u039F", pi: "\u03C0", piv: "\u03D6", varpi: "\u03D6", Pi: "\u03A0", rho: "\u03C1", rhov: "\u03F1", varrho: "\u03F1", Rho: "\u03A1", sigma: "\u03C3", Sigma: "\u03A3", sigmaf: "\u03C2", sigmav: "\u03C2", varsigma: "\u03C2", tau: "\u03C4", Tau: "\u03A4", upsi: "\u03C5", upsilon: "\u03C5", Upsilon: "\u03A5", Upsi: "\u03D2", upsih: "\u03D2", phi: "\u03C6", phiv: "\u03D5", straightphi: "\u03D5", varphi: "\u03D5", Phi: "\u03A6", chi: "\u03C7", Chi: "\u03A7", psi: "\u03C8", Psi: "\u03A8", omega: "\u03C9", ohm: "\u03A9", Omega: "\u03A9", acy: "\u0430", Acy: "\u0410", bcy: "\u0431", Bcy: "\u0411", vcy: "\u0432", Vcy: "\u0412", gcy: "\u0433", Gcy: "\u0413", gjcy: "\u0403", GJcy: "\u0403", dcy: "\u0434", Dcy: "\u0414", djcy: "\u0402", DJcy: "\u0402", iecy: "\u0415", IEcy: "\u0415", iocy: "\u0401", IOcy: "\u0401", jukcy: "\u0454", Jukcy: "\u0404", zhcy: "\u0416", ZHcy: "\u0416", zcy: "\u0437", Zcy: "\u0417", dscy: "\u0405", DScy: "\u0405", icy: "\u0438", Icy: "\u0418", iukcy: "\u0456", Iukcy: "\u0406", yicy: "\u0407", YIcy: "\u0407", jcy: "\u0439", Jcy: "\u0419", jsercy: "\u0458", Jsercy: "\u0408", kcy: "\u043A", Kcy: "\u041A", kjcy: "\u040C", KJcy: "\u040C", lcy: "\u043B", Lcy: "\u041B", ljcy: "\u0409", LJcy: "\u0409", mcy: "\u043C", Mcy: "\u041C", ncy: "\u043D", Ncy: "\u041D", njcy: "\u040A", NJcy: "\u040A", ocy: "\u043E", Ocy: "\u041E", pcy: "\u043F", Pcy: "\u041F", rcy: "\u0440", Rcy: "\u0420", scy: "\u0441", Scy: "\u0421", tcy: "\u0442", Tcy: "\u0422", tshcy: "\u045B", TSHcy: "\u040B", ucy: "\u0443", Ucy: "\u0423", ubrcy: "\u045E", Ubrcy: "\u040E", fcy: "\u0444", Fcy: "\u0424", khcy: "\u0425", KHcy: "\u0425", tscy: "\u0426", TScy: "\u0426", chcy: "\u0427", CHcy: "\u0427", dzcy: "\u040F", DZcy: "\u040F", shcy: "\u0428", SHcy: "\u0428", shchcy: "\u0449", SHCHcy: "\u0429", hardcy: "\u044A", HARDcy: "\u042A", ycy: "\u044B", Ycy: "\u042B", softcy: "\u044C", SOFTcy: "\u042C", ecy: "\u044D", Ecy: "\u042D", yucy: "\u042E", YUcy: "\u042E", yacy: "\u042F", YAcy: "\u042F", alefsym: "\u2135", aleph: "\u2135", beth: "\u2136", gimel: "\u2137", daleth: "\u2138"
+};
 function wZ(q) {
   if (!r(q, "---"))
     return null;
@@ -33011,7 +32710,7 @@ var YJ = 1;
 var pJ = 2;
 var lJ = 3;
 var uJ = 4;
-var zG = function() {
+var zG = function () {
   let q = new Uint8Array(128), G;
   q[l] = q[$q] = q[tZ] = q[Aq] = q[I] = AZ;
   for (G = BG; G <= KG; G++)
@@ -33024,7 +32723,7 @@ var zG = function() {
     q[G] = n1;
   return q;
 }();
-var TG = function() {
+var TG = function () {
   let q = new Uint8Array(128);
   return q[i1] = pJ, q[L1] = uJ, q[AG] = q[c1] = q[d1] = q[E1] = lJ, q[mq] = q[VG] = q[yG] = q[XG] = q[$q] = q[I] = q[BG] = YJ, q[P1] = q[I1] = q[w1] = YJ, q;
 }();
@@ -33116,7 +32815,7 @@ function aG(q) {
   return G === "title" || G === "textarea" || G === "style" || G === "xmp" || G === "iframe" || G === "noembed" || G === "noframes" || G === "script" || G === "plaintext";
 }
 function rG(q) {
-  return q.replace(/<(\/?)(title|textarea|style|xmp|iframe|noembed|noframes|script|plaintext)(\s|>|\/)/gi, function(G, Y, Z, J) {
+  return q.replace(/<(\/?)(title|textarea|style|xmp|iframe|noembed|noframes|script|plaintext)(\s|>|\/)/gi, function (G, Y, Z, J) {
     return "&lt;" + Y + Z + J;
   });
 }
@@ -33189,22 +32888,22 @@ var xZ = /^(\d{1,9})([.)])(\s+|$)/;
 var EZ = /^([*+\-])(\s+|$)/;
 var XZ = /^<([a-z][^ >/\n\r]*) ?([^>]*?)>/i;
 var WJ = /^<([a-z][^ >/]*) ?(?:[^>/]+[^/]|)>/i;
-var B = function(q, G = 0) {
+var B = function (q, G = 0) {
   return q.charCodeAt(G);
 };
-var JZ = function(q) {
+var JZ = function (q) {
   return uG(B(q));
 };
-var PZ = function(q) {
+var PZ = function (q) {
   return fG(B(q));
 };
-var Tq = function(q) {
+var Tq = function (q) {
   return q === " " || q === "	";
 };
-var YZ = function(q, G) {
+var YZ = function (q, G) {
   return iG(q < q1 ? q : G);
 };
-var eJ = function(q) {
+var eJ = function (q) {
   var G = B(q);
   return JZ(q) || G === V1 || G === c1 || G === RG || G === LG;
 };
@@ -33321,7 +33020,7 @@ function VY(q) {
 }
 function XY(tag, key, value, sanitizeUrlFn, options) {
   if (key === "style")
-    return VY(value).reduce(function(q, [G, Y]) {
+    return VY(value).reduce(function (q, [G, Y]) {
       let Z = sanitizeUrlFn(Y, tag, G);
       if (Z != null)
         q[G.replace(/(-[a-z])/g, (J) => J[1].toUpperCase())] = Z;
@@ -33461,7 +33160,7 @@ function e1(q, G, Y, Z) {
       delete J[j];
   return J;
 }
-var EG = function(q) {
+var EG = function (q) {
   return YY.has(q);
 };
 function KY(q, G, Y) {
@@ -33563,7 +33262,7 @@ function mZ(q) {
 var zY = /* @__PURE__ */ new Set([" ", "	", "\r", `
 `, "\f", "\v"]);
 function f1(q, G, Y, Z, J) {
-  var X = [], $ = [], U = [], V = G, K = G, j = J.disableAutoLink || Z.inAnchor, H = false, v = !!Z.inAnchor, D = !!J.disableParsingRawHTML, w = function(Eq, pq) {
+  var X = [], $ = [], U = [], V = G, K = G, j = J.disableAutoLink || Z.inAnchor, H = false, v = !!Z.inAnchor, D = !!J.disableParsingRawHTML, w = function (Eq, pq) {
     if (!v && (!pq || !J.disableAutoLink)) {
       var oq = RZ(q, V, Z, J, "<");
       if (oq)
@@ -33633,7 +33332,7 @@ function f1(q, G, Y, Z, J) {
     }
     var $1 = { type: b.htmlBlock, tag: Oq.tagName, attrs: {}, children: Zq, rawText: v1, text: v1, verbatim: true, endPos: Oq.endPos };
     return z(V), X.push($1), V = $1.endPos, K = V, true;
-  }, z = function(Eq) {
+  }, z = function (Eq) {
     if (Eq > K) {
       var pq = q.slice(K, Eq);
       X.push({ type: b.text, text: H ? vG(pq) : pq }), K = Eq, H = false;
@@ -33754,7 +33453,7 @@ function f1(q, G, Y, Z, J) {
           K = i;
         }
         if (e.length) {
-          e.sort(function(Eq, pq) {
+          e.sort(function (Eq, pq) {
             return Eq - pq;
           });
           var zq = 0;
@@ -33916,7 +33615,8 @@ function f1(q, G, Y, Z, J) {
         continue;
       }
       var JG = V > K ? B(q, V - 1) : 0, qq = V + 1 < Y ? B(q, V + 1) : 0, FG = V > K && JG === I && qq === I ? V - 1 : V;
-      if (z(FG), X.push({ type: b.text, text: `
+      if (z(FG), X.push({
+        type: b.text, text: `
 ` }), K = V + 1, V > G && JG === I && K < Y && B(q, K) === I)
         K++;
       V = K;
@@ -33946,7 +33646,7 @@ function f1(q, G, Y, Z, J) {
   if (z(V), $.length)
     xJ(X, $, null);
   if (U.length) {
-    U.sort(function(Eq, pq) {
+    U.sort(function (Eq, pq) {
       return Eq.resultIdx - pq.resultIdx;
     });
     for (var y = 0; y < U.length; y++)
@@ -34437,7 +34137,7 @@ function mG(q, G, Y) {
     var z = q.slice(J).trim();
     if (z) {
       if (G.inBlockQuote && Z.length > 0) {
-        let O = function(N) {
+        let O = function (N) {
           if (N.type === b.blockQuote) {
             var S = N;
             if (S.children && S.children.length > 0) {
@@ -34465,7 +34165,8 @@ function mG(q, G, Y) {
             if (F) {
               var _ = F;
               if (U.children && _.children)
-                U.children.push({ type: b.text, text: `
+                U.children.push({
+                  type: b.text, text: `
 ` }, ..._.children);
               J = F.endPos;
               continue;
@@ -35149,7 +34850,7 @@ function RJ(q, G, Y, Z) {
 }
 function CZ(q, G) {
   return q.split(`
-`).map(function(Y) {
+`).map(function (Y) {
     if (Y.length === 0)
       return Y;
     let Z = G, J = 0, X = 0, $ = 0;
@@ -35179,7 +34880,7 @@ function tG(q, G, Y, Z, J = true) {
     G.push(...$);
 }
 function SG(q) {
-  return q.some(function(G) {
+  return q.some(function (G) {
     return G.type === b.codeBlock || G.type === b.paragraph || G.type === b.blockQuote || G.type === b.orderedList || G.type === b.unorderedList || G.type === b.heading;
   });
 }
@@ -35475,7 +35176,8 @@ function eG(q, G, Y, Z, J, X, $, U, V, K, j, H) {
   if (D.length > 0 && (D[0] === "-" || D[0] === "*" || D[0] === "+" || D[0] >= "0" && D[0] <= "9")) {
     if (/^([-*+]|\d{1,9}[.)])\s+/.test(D)) {
       let F = PG(D, 0, D.length, V, K);
-      return $.push({ type: b.text, text: `
+      return $.push({
+        type: b.text, text: `
 ` }, ...F), { processed: true, newPos: s(q, Y), wasBlank: false };
     }
   }
@@ -35486,13 +35188,15 @@ function eG(q, G, Y, Z, J, X, $, U, V, K, j, H) {
   if (Q.length > 0) {
     if (j && Q[0].type === b.paragraph) {
       let _ = Q[0];
-      if ($.push({ type: b.text, text: `
+      if ($.push({
+        type: b.text, text: `
 ` }, ..._.children), Q.length > 1)
         $.push(...Q.slice(1));
     } else if (!U && Q[0].type === b.paragraph && $.length > 0) {
       let _ = $[$.length - 1], F = Q[0];
       if (_.type === b.paragraph)
-        _.children.push({ type: b.text, text: `
+        _.children.push({
+          type: b.text, text: `
 ` }, ...F.children);
       else if (_.type === b.heading)
         $.push(...F.children);
@@ -36293,7 +35997,7 @@ function vZ(q, G, Y, Z) {
       var D = q.length, w = E(q, G), P = v.endPos, p = P;
       while (p < w && (q[p] === " " || q[p] === "	" || q[p] === "\r"))
         p++;
-      var i = p >= w || q[p] === "<" && function() {
+      var i = p >= w || q[p] === "<" && function () {
         var hG = qG(q, p);
         return hG && gG(hG.tagLower);
       }();
@@ -36923,8 +36627,10 @@ function yY(q, G, Y) {
       L++;
     }
   }
-  return { endPos: J < Z && q[J] === `
-` ? J + 1 : J, target: V, title: N };
+  return {
+    endPos: J < Z && q[J] === `
+` ? J + 1 : J, target: V, title: N
+  };
 }
 function BY(q, G) {
   let Y = G, Z = Y, J = false;
@@ -37464,7 +37170,7 @@ function TY(q, G, Y, Z, J, X, $, U) {
         return Z("span", { key: Y.key }, j);
       }
       if (K.rawText && K.verbatim) {
-        let _ = function(O) {
+        let _ = function (O) {
           if (O.type === b.htmlSelfClosing && "isClosingTag" in O && O.isClosingTag)
             return [];
           if (O.type === b.paragraph) {
@@ -37528,10 +37234,10 @@ function TY(q, G, Y, Z, J, X, $, U) {
     }
     case b.table: {
       let K = q;
-      return Z("table", { key: Y.key }, Z("thead", null, Z("tr", null, K.header.map(function(H, v) {
+      return Z("table", { key: Y.key }, Z("thead", null, Z("tr", null, K.header.map(function (H, v) {
         return Z("th", { key: v, style: K.align[v] == null ? {} : { textAlign: K.align[v] } }, G(H, Y));
-      }))), Z("tbody", null, K.cells.map(function(H, v) {
-        return Z("tr", { key: v }, H.map(function(w, z) {
+      }))), Z("tbody", null, K.cells.map(function (H, v) {
+        return Z("tr", { key: v }, H.map(function (w, z) {
           return Z("td", { key: z, style: K.align[z] == null ? {} : { textAlign: K.align[z] } }, G(w, Y));
         }));
       })));
@@ -37543,7 +37249,7 @@ function TY(q, G, Y, Z, J, X, $, U) {
     case b.orderedList:
     case b.unorderedList: {
       let K = q.type === b.orderedList ? "ol" : "ul";
-      return Z(K, { key: Y.key, start: q.type === b.orderedList ? q.start : void 0 }, q.items.map(function(H, v) {
+      return Z(K, { key: Y.key, start: q.type === b.orderedList ? q.start : void 0 }, q.items.map(function (H, v) {
         return Z("li", { key: v }, G(H, Y));
       }));
     }
@@ -37613,7 +37319,7 @@ function xY(q, G) {
   for (let Q = 0; Q < q.length; Q++) {
     let _ = q[Q];
     if (_.type === b.htmlBlock && "rawText" in _ && _.rawText && /<\/?pre\b/i.test(_.rawText) && Q + 1 < q.length && q[Q + 1].type === b.paragraph && "removedClosingTags" in q[Q + 1] && q[Q + 1].removedClosingTags) {
-      let N = function(M) {
+      let N = function (M) {
         let y = "";
         for (let L of M) {
           let W = L.type;
@@ -37642,7 +37348,7 @@ function xY(q, G) {
     if (Q.charCodeAt(0) === $G)
       D.push({ identifier: Q, footnote: j[Q].target });
   if (D.length)
-    v.push(U("footer", { key: "footer" }, D.map(function(_) {
+    v.push(U("footer", { key: "footer" }, D.map(function (_) {
       let F = _.identifier.charCodeAt(0) === $G ? _.identifier.slice(1) : _.identifier, O = kG(_.footnote, { inline: true, refs: j }, K);
       return U("div", { id: Z(F, iq), key: _.identifier }, F + ": ", H(O, { inline: true, refs: j }));
     })));
@@ -37749,18 +37455,22 @@ function MarkdownRenderer({ content, navigate, onElement, overrides = {} }) {
     iframe: () => null,
     ...overrides
   };
-  return (0, import_jsx_runtime2.jsx)("div", { ref: contentRef, className: "markdown-content", children: (0, import_jsx_runtime2.jsx)(EY, { options: {
-    overrides: defaultOverrides,
-    createElement: (type, props, ...children) => {
-      if (typeof type === "string" && onElement) {
-        try {
-          onElement(type, props);
-        } catch (e) {
+  return (0, import_jsx_runtime2.jsx)("div", {
+    ref: contentRef, className: "markdown-content", children: (0, import_jsx_runtime2.jsx)(EY, {
+      options: {
+        overrides: defaultOverrides,
+        createElement: (type, props, ...children) => {
+          if (typeof type === "string" && onElement) {
+            try {
+              onElement(type, props);
+            } catch (e) {
+            }
+          }
+          return import_react2.default.createElement(type, props, ...children);
         }
-      }
-      return import_react2.default.createElement(type, props, ...children);
-    }
-  }, children: processedContent }) });
+      }, children: processedContent
+    })
+  });
 }
 
 // ../../dist/web/components/FileRenderer.js
@@ -38134,26 +37844,32 @@ ${stack}` : message;
   const RuntimeFooter = import_react4.default.useMemo(() => {
     if (!showRuntimeFooter)
       return null;
-    return (0, import_jsx_runtime4.jsxs)("div", { style: {
-      display: "flex",
-      height: "50px",
-      borderTop: "1px solid #ddd",
-      backgroundColor: "#f5f5f5",
-      alignItems: "center",
-      padding: "0 12px",
-      justifyContent: "space-between",
-      fontSize: "12px"
-    }, children: [(0, import_jsx_runtime4.jsxs)("div", { style: { display: "flex", alignItems: "center", gap: "8px" }, children: [(0, import_jsx_runtime4.jsxs)("span", { style: { color: "#666" }, children: ["Runtime: ", activeRuntime === "web" ? "Web WASM" : "Node.js"] }), showVersionInfo && (0, import_jsx_runtime4.jsxs)("span", { style: { color: "#999", fontSize: "11px" }, children: ["v", runtimeVersion] })] }), availableRuntimes.length > 1 && (0, import_jsx_runtime4.jsx)("div", { style: { display: "flex", gap: "8px" }, children: availableRuntimes.map((rt) => (0, import_jsx_runtime4.jsx)("button", { onClick: () => handleRuntimeSwitch(rt), style: {
-      padding: "4px 8px",
-      borderRadius: "4px",
-      border: "none",
-      backgroundColor: activeRuntime === rt ? "#007AFF" : "#e5e5e5",
-      color: activeRuntime === rt ? "#fff" : "#333",
-      fontSize: "11px",
-      fontWeight: activeRuntime === rt ? "bold" : "normal",
-      cursor: "pointer",
-      transition: "all 0.2s ease"
-    }, children: rt === "web" ? "WASM" : "Node" }, rt)) })] });
+    return (0, import_jsx_runtime4.jsxs)("div", {
+      style: {
+        display: "flex",
+        height: "50px",
+        borderTop: "1px solid #ddd",
+        backgroundColor: "#f5f5f5",
+        alignItems: "center",
+        padding: "0 12px",
+        justifyContent: "space-between",
+        fontSize: "12px"
+      }, children: [(0, import_jsx_runtime4.jsxs)("div", { style: { display: "flex", alignItems: "center", gap: "8px" }, children: [(0, import_jsx_runtime4.jsxs)("span", { style: { color: "#666" }, children: ["Runtime: ", activeRuntime === "web" ? "Web WASM" : "Node.js"] }), showVersionInfo && (0, import_jsx_runtime4.jsxs)("span", { style: { color: "#999", fontSize: "11px" }, children: ["v", runtimeVersion] })] }), availableRuntimes.length > 1 && (0, import_jsx_runtime4.jsx)("div", {
+        style: { display: "flex", gap: "8px" }, children: availableRuntimes.map((rt) => (0, import_jsx_runtime4.jsx)("button", {
+          onClick: () => handleRuntimeSwitch(rt), style: {
+            padding: "4px 8px",
+            borderRadius: "4px",
+            border: "none",
+            backgroundColor: activeRuntime === rt ? "#007AFF" : "#e5e5e5",
+            color: activeRuntime === rt ? "#fff" : "#333",
+            fontSize: "11px",
+            fontWeight: activeRuntime === rt ? "bold" : "normal",
+            cursor: "pointer",
+            transition: "all 0.2s ease"
+          }, children: rt === "web" ? "WASM" : "Node"
+        }, rt))
+      })]
+    });
   }, [showRuntimeFooter, activeRuntime, runtimeVersion, showVersionInfo, availableRuntimes, handleRuntimeSwitch]);
   return (0, import_jsx_runtime4.jsxs)("div", { style: { height: "100%", display: "flex", flexDirection: "column" }, children: [(0, import_jsx_runtime4.jsxs)("div", { style: { flex: 1, display: "flex", flexDirection: "column" }, children: [!wasmReady && !wasmError && (0, import_jsx_runtime4.jsx)("div", { children: "Initializing WASM transpiler..." }), wasmReady && loading && (0, import_jsx_runtime4.jsx)("div", { children: "Loading hook..." }), (error || wasmError || element) && (0, import_jsx_runtime4.jsx)(ErrorBoundary_default, { initialError: error || wasmError, onElement: registerUsageFromElement, children: (0, import_jsx_runtime4.jsx)("div", { style: { flex: 1 }, children: element }) })] }), RuntimeFooter] });
 };
@@ -38170,7 +37886,7 @@ async function initWasmTranspiler() {
     return;
   }
   try {
-    const { default: init, transpile_jsx: transpile_jsx2, transpile_jsx_with_metadata: transpile_jsx_with_metadata2, get_version: get_version2, run_self_test: run_self_test2 } = await Promise.resolve().then(() => (init_relay_hook_transpiler(), relay_hook_transpiler_exports));
+    const { default: init, transpile_jsx, transpile_jsx_with_metadata, get_version, run_self_test } = await import("../wasm/relay_hook_transpiler.js");
     let wasmPath;
     try {
       wasmPath = new URL("/wasm/relay_hook_transpiler_bg.wasm", window.location.origin).toString();
@@ -38187,16 +37903,16 @@ async function initWasmTranspiler() {
       await init({ module_or_path: wasmUrl });
     }
     const transpileFn = (code, filename, isTypescript) => {
-      return transpile_jsx2(code, filename || "module.tsx", isTypescript);
+      return transpile_jsx(code, filename || "module.tsx", isTypescript);
     };
     const transpileWithMetadataFn = (code, filename, isTypescript) => {
-      return transpile_jsx_with_metadata2(code, filename || "module.tsx", isTypescript);
+      return transpile_jsx_with_metadata(code, filename || "module.tsx", isTypescript);
     };
-    const version = get_version2 ? get_version2() : "wasm";
+    const version = get_version ? get_version() : "wasm";
     globalThis.__hook_transpiler_version = version;
     globalThis.__hook_transpile_jsx = transpileFn;
     globalThis.__hook_transpile_jsx_with_metadata = transpileWithMetadataFn;
-    globalThis.__hook_wasm_self_test = run_self_test2;
+    globalThis.__hook_wasm_self_test = run_self_test;
     console.log("[hook-transpiler] WASM transpiler ready:", version);
   } catch (e) {
     console.warn("[hook-transpiler] Failed to initialize WASM transpiler (expected in Android)", e);
@@ -38223,9 +37939,9 @@ async function initWasmThemedStyler() {
     return;
   }
   try {
-    const { default: init, render_css_for_web, get_rn_styles, get_version: get_version2 } = await import("../wasm/themed_styler.js");
+    const { default: init, render_css_for_web, get_rn_styles, get_version } = await import("../wasm/themed_styler.js");
     await init();
-    const version = get_version2 ? get_version2() : "wasm";
+    const version = get_version ? get_version() : "wasm";
     console.log("[themed-styler] WASM initialized:", version);
     g2.__themedStylerRenderCss = (usage2, themes2) => {
       const state = {
@@ -38283,10 +37999,14 @@ function renderDefaultHookRenderer() {
   const props = buildHookRendererProps(window.location.origin, "/hooks/test-hook.jsx");
   console.log("Test App: Default HookRenderer props:", props);
   root.render(
-    /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(import_react6.default.StrictMode, { children: /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("div", { children: [
+    /* @__PURE__ */(0, import_jsx_runtime5.jsx)(import_react6.default.StrictMode, {
+    children: /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("div", {
+      children: [
       /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("h2", { children: "Local Hook Test" }),
       /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(HookRenderer, { ...props })
-    ] }) })
+      ]
+    })
+  })
   );
 }
 function HookRendererWithErrorBoundary({ rendererProps }) {
@@ -38297,33 +38017,43 @@ function HookRendererWithErrorBoundary({ rendererProps }) {
     console.log("[UrlHookTester] Rendering attempt #" + renderAttempts, { rendererProps });
   }, [rendererProps.host, rendererProps.hookPath, renderAttempts]);
   if (error) {
-    return /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("div", { style: { padding: "1rem", background: "#fee", border: "2px solid red", borderRadius: "4px", color: "#c00" }, children: [
+    return /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("div", {
+      style: { padding: "1rem", background: "#fee", border: "2px solid red", borderRadius: "4px", color: "#c00" }, children: [
       /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("h3", { children: "\u274C Hook Rendering Failed" }),
-      /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("p", { children: [
+      /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("p", {
+        children: [
         /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("strong", { children: "Error:" }),
-        " ",
-        error.message
-      ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("details", { style: { marginTop: "0.5rem", fontSize: "0.9rem" }, children: [
+          " ",
+          error.message
+        ]
+      }),
+      /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("details", {
+        style: { marginTop: "0.5rem", fontSize: "0.9rem" }, children: [
         /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("summary", { children: "Stack trace" }),
         /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("pre", { style: { background: "#f5f5f5", padding: "0.5rem", overflow: "auto", maxHeight: "200px" }, children: error.stack })
-      ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("p", { style: { marginTop: "0.5rem", fontSize: "0.9rem" }, children: [
-        "Host: ",
+        ]
+      }),
+      /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("p", {
+        style: { marginTop: "0.5rem", fontSize: "0.9rem" }, children: [
+          "Host: ",
         /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("code", { children: rendererProps.host }),
         /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("br", {}),
-        "Path: ",
+          "Path: ",
         /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("code", { children: rendererProps.hookPath || "(OPTIONS discovery)" })
-      ] })
-    ] });
+        ]
+      })
+      ]
+    });
   }
-  return /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(import_react6.default.Suspense, { fallback: /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("div", { style: { padding: "1rem", color: "#666" }, children: "Loading hook..." }), children: /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(
-    HookRenderer,
-    {
-      ...rendererProps,
-      onError: setError
-    }
-  ) });
+  return /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(import_react6.default.Suspense, {
+    fallback: /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("div", { style: { padding: "1rem", color: "#666" }, children: "Loading hook..." }), children: /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(
+      HookRenderer,
+      {
+        ...rendererProps,
+        onError: setError
+      }
+    )
+  });
 }
 function UrlHookTester({ defaultHost, defaultPath }) {
   const [host, setHost] = import_react6.default.useState(defaultHost);
@@ -38345,40 +38075,50 @@ function UrlHookTester({ defaultHost, defaultPath }) {
     return buildHookRendererProps(resolvedHost, resolvedPath);
   }, [activeHost, activePath, defaultHost, defaultPath]);
   const effectiveUrl = rendererProps.hookPath ? `${rendererProps.host}${rendererProps.hookPath}` : `${rendererProps.host} (OPTIONS discovery)`;
-  return /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("div", { className: "url-tester", children: [
-    /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("form", { className: "url-form", onSubmit, children: [
-      /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("label", { children: [
-        "Host",
+  return /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("div", {
+    className: "url-tester", children: [
+    /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("form", {
+      className: "url-form", onSubmit, children: [
+      /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("label", {
+        children: [
+          "Host",
         /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(
-          "input",
-          {
-            type: "text",
-            value: host,
-            onChange: (e) => setHost(e.target.value),
-            placeholder: "https://example.com"
-          }
-        )
-      ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("label", { children: [
-        "Path",
+            "input",
+            {
+              type: "text",
+              value: host,
+              onChange: (e) => setHost(e.target.value),
+              placeholder: "https://example.com"
+            }
+          )
+        ]
+      }),
+      /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("label", {
+        children: [
+          "Path",
         /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(
-          "input",
-          {
-            type: "text",
-            value: hookPath,
-            onChange: (e) => setHookPath(e.target.value),
-            placeholder: "/hooks/client/get-client.jsx"
-          }
-        )
-      ] }),
+            "input",
+            {
+              type: "text",
+              value: hookPath,
+              onChange: (e) => setHookPath(e.target.value),
+              placeholder: "/hooks/client/get-client.jsx"
+            }
+          )
+        ]
+      }),
       /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("button", { type: "submit", children: "Load Hook" })
-    ] }),
-    /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("div", { className: "url-preview", children: [
+      ]
+    }),
+    /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("div", {
+      className: "url-preview", children: [
       /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("span", { children: "Active URL:" }),
       /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("span", { className: "url-value", children: effectiveUrl })
-    ] }),
+      ]
+    }),
     /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("div", { className: "renderer-container", children: /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(HookRendererWithErrorBoundary, { rendererProps }) })
-  ] });
+    ]
+  });
 }
 function renderUrlTesterPage() {
   const container = document.getElementById("remote-root");
@@ -38388,7 +38128,7 @@ function renderUrlTesterPage() {
   console.log("Test App: Rendering remote URL HookRenderer tester...");
   const root = (0, import_client.createRoot)(container);
   root.render(
-    /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(import_react6.default.StrictMode, { children: /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(UrlHookTester, { defaultHost: defaultRemoteHost, defaultPath: defaultRemotePath }) })
+    /* @__PURE__ */(0, import_jsx_runtime5.jsx)(import_react6.default.StrictMode, { children: /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(UrlHookTester, { defaultHost: defaultRemoteHost, defaultPath: defaultRemotePath }) })
   );
 }
 async function main() {

@@ -18,14 +18,14 @@
     "resolveJsonModule": true
   },
   "include": [
-    "web/**/*",
-    "android/**/*",
-    "shared/**/*"
+    "src/web/**/*",
+    "src/android/**/*",
+    "src/shared/**/*"
   ],
   "exclude": [
     "node_modules",
     "dist",
-    "src/**/*",
+    "src/*.rs",
     "**/*.test.ts",
     "**/*.test.tsx"
   ],

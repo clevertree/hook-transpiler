@@ -26,7 +26,7 @@ fn test_ts_type_annotations_on() {
         <div>{greet(x)}</div>
     "#;
     // Flag on: SHOULD strip TS
-    let out = transpile_jsx_with_options(src, &TranspileOptions { is_typescript: true }).expect("should transpile");
+    let out = transpile_jsx_with_options(src, &TranspileOptions { is_typescript: true, ..Default::default() }).expect("should transpile");
     println!("OUTPUT (ON):\n{}", out);
     
     assert!(!out.contains(": string"));
@@ -43,7 +43,7 @@ fn test_ts_generics() {
         const ref = useRef<HTMLDivElement>(null);
         <div>{data?.name}</div>
     "#;
-    let out = transpile_jsx_with_options(src, &TranspileOptions { is_typescript: true }).expect("should transpile");
+    let out = transpile_jsx_with_options(src, &TranspileOptions { is_typescript: true, ..Default::default() }).expect("should transpile");
     println!("OUTPUT (GENERICS):\n{}", out);
 
     assert!(!out.contains("<User | null>"));
@@ -66,7 +66,7 @@ fn test_ts_complex_constructs() {
         const y = u!.name;
         <div>{u.name}</div>
     "#;
-    let out = transpile_jsx_with_options(src, &TranspileOptions { is_typescript: true }).expect("should transpile");
+    let out = transpile_jsx_with_options(src, &TranspileOptions { is_typescript: true, ..Default::default() }).expect("should transpile");
     println!("OUTPUT (COMPLEX):\n{}", out);
 
     assert!(!out.contains("interface User"));

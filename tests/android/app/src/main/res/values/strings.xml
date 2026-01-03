@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">HookTranspiler Test</string>
+    <string name="local_hook">Local Hook</string>
+    <string name="remote_hook">Remote Hook</string>
+</resources>

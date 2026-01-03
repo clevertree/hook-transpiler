@@ -1,6 +1,6 @@
 [package]
 name = "relay-hook-transpiler"
-version = "1.3.16"
+version = "1.3.20"
 edition = "2024"
 license = "MIT OR Apache-2.0"
 description = "Minimal JSX/TSX transpiler for Relay hooks with dynamic import() rewrite to context.helpers.loadModule and friendly errors"
@@ -52,12 +52,17 @@ crate-type = ["cdylib", "rlib", "staticlib"]
 
 [features]
 default = []
+debug = []
+debug-all = ["debug", "android", "wasm", "native-swc"]
 wasm = ["wasm-bindgen", "serde-wasm-bindgen"]
-android = ["jni"]
+# Enable SWC for native platforms; keep wasm builds slim by opting into this feature when building native artifacts.
+native-swc = ["swc_core", "base64"]
+android = ["jni", "native-swc"]
 
 [dependencies]
 anyhow = "1.0.100"
-serde = { version = "1.0.228", features = ["derive"] }
+regex = "1.10"
+serde = { version = "=1.0.203", features = ["derive"] }
 thiserror = "2.0.17"
 once_cell = "1.21.3"
 libc = "0.2"
@@ -65,9 +70,19 @@ libc = "0.2"
 reqwest = { version = "0.12.25", features = ["json", "rustls-tls", "gzip"], optional = true }
 jni = { version = "0.21", optional = true, default-features = false }
 
+# SWC (native-only; excluded from wasm32 target)
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+swc_core = { version = "0.101", optional = true, features = ["common", "common_sourcemap", "ecma_ast", "ecma_parser", "ecma_visit", "ecma_codegen", "ecma_transforms", "ecma_transforms_react", "ecma_transforms_typescript", "ecma_transforms_module", "ecma_transforms_compat"] }
+base64 = { version = "0.22", optional = true }
+
 # WASM bindings (optional)
 wasm-bindgen = { version = "0.2.106", optional = true }
 serde-wasm-bindgen = { version = "0.6.5", optional = true }
 
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+wasm-bindgen = { version = "0.2.106" }
+serde-wasm-bindgen = { version = "0.6.5" }
+
 [dev-dependencies]
 pretty_assertions = "1.4.1"
+

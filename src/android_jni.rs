@@ -1,7 +1,12 @@
-use crate::{TranspileOptions, transpile_jsx_with_options, version};
+use crate::{TranspileOptions, transpile_jsx_with_options, version, DebugLevel};
 use jni::JNIEnv;
 use jni::objects::{JClass, JString};
-use jni::sys::{jstring, jboolean};
+use jni::sys::{jstring, jboolean, jint};
+use std::sync::Mutex;
+
+thread_local! {
+    static ANDROID_DEBUG_LEVEL: Mutex<DebugLevel> = Mutex::new(DebugLevel::default());
+}
 
 fn android_logger(msg: String) {
     let tag = std::ffi::CString::new("RustTranspiler").unwrap();
@@ -38,6 +43,47 @@ fn new_jstring(env: &mut JNIEnv, value: &str) -> jstring {
     }
 }
 
+/// Set debug level for Android transpiler
+#[unsafe(no_mangle)]
+pub extern "system" fn Java_com_relay_pure_RustTranspilerModule_nativeSetDebugLevel(
+    _env: JNIEnv,
+    _class: JClass,
+    level: jint,
+) -> jboolean {
+    let debug_level = match level {
+        0 => DebugLevel::Off,
+        1 => DebugLevel::Error,
+        2 => DebugLevel::Warn,
+        3 => DebugLevel::Info,
+        4 => DebugLevel::Trace,
+        5 => DebugLevel::Verbose,
+        _ => return 0,
+    };
+    
+    ANDROID_DEBUG_LEVEL.with(|dl| {
+        if let Ok(mut level_guard) = dl.lock() {
+            *level_guard = debug_level;
+            android_logger(format!("Debug level set to: {}", debug_level));
+            1
+        } else {
+            0
+        }
+    })
+}
+
+/// Get current debug level for Android transpiler
+#[unsafe(no_mangle)]
+pub extern "system" fn Java_com_relay_pure_RustTranspilerModule_nativeGetDebugLevel(
+    _env: JNIEnv,
+    _class: JClass,
+) -> jint {
+    ANDROID_DEBUG_LEVEL.with(|dl| {
+        dl.lock()
+            .map(|level| *level as jint)
+            .unwrap_or(DebugLevel::default() as jint)
+    })
+}
+
 /// JNI bridge exposed to Android (via RustTranspilerModule)
 #[unsafe(no_mangle)]
 pub extern "system" fn Java_com_relay_client_RustTranspilerModule_nativeTranspile(
@@ -72,21 +118,30 @@ pub extern "system" fn Java_com_relay_pure_RustTranspilerModule_nativeTranspile(
         }
     };
 
-    let _file = jstring_to_string(&mut env, filename).unwrap_or_else(|| "module.tsx".to_string());
+    let filename = jstring_to_string(&mut env, filename).unwrap_or_else(|| "module.tsx".to_string());
+    
+    let debug_level = ANDROID_DEBUG_LEVEL.with(|dl| {
+        dl.lock()
+            .map(|level| *level)
+            .unwrap_or(DebugLevel::default())
+    });
     
     let opts = TranspileOptions {
         is_typescript: is_typescript != 0,
+        target: crate::TranspileTarget::Android,
+        filename: Some(filename.clone()),
+        to_commonjs: true,
+        source_maps: true,
+        inline_source_map: true,
+        compat_for_jsc: true,
+        debug_level,
+        ..Default::default()
     };
 
-    // Step 1: Transform ES6 modules to CommonJS (import → require, export → module.exports)
-    let commonjs_code = crate::jsx_parser::transform_es6_modules(&source);
-    android_logger(format!("nativeTranspile: after module transform = {}", commonjs_code.len()));
-    
-    // Step 2: Transpile JSX syntax
-    let transpiled_res = transpile_jsx_with_options(&commonjs_code, &opts);
+    let transpiled_res = transpile_jsx_with_options(&source, &opts);
     match transpiled_res {
         Ok(output) => {
-            android_logger(format!("nativeTranspile: after JSX transform = {}", output.len()));
+            android_logger(format!("nativeTranspile: transpiled {} bytes (filename={})", output.len(), filename));
             new_jstring(&mut env, &output)
         },
         Err(err) => {

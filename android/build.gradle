@@ -7,12 +7,20 @@ plugins {
 android {
     namespace = "com.clevertree.hooktranspiler"
     compileSdk = 33
+    
+    buildFeatures {
+        buildConfig = true
+    }
 
     defaultConfig {
         minSdk = 24
         targetSdk = 33
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles "consumer-rules.pro"
+        
+        buildConfigField "String", "VERSION_NAME", "\"1.3.9\""
+        buildConfigField "String", "JSCBRIDGE_VERSION", "\"1.0.0\""
+        buildConfigField "String", "THEMED_STYLER_VERSION", "\"1.2.5\""
     }
 
     buildTypes {
@@ -61,8 +69,11 @@ dependencies {
     // JSON parsing
     implementation 'com.google.code.gson:gson:2.10.1'
 
-    // JavaScriptCore
-    implementation 'org.webkit:android-jsc:+'
+    // JSC Bridge
+    implementation 'com.clevertree:jscbridge:1.0.0'
+
+    // Themed Styler
+    implementation 'com.clevertree:themed-styler-android:1.0.0'
 
     // OkHttp for HTTP requests
     implementation 'com.squareup.okhttp3:okhttp:4.11.0'

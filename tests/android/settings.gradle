@@ -1,4 +1,4 @@
+rootProject.name = "HookTranspilerTest"
 include ':app'
 include ':android'
 project(':android').projectDir = new File(rootProject.projectDir, '../../android')
-rootProject.name = "RelayAndroidTest"

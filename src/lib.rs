@@ -1,16 +1,59 @@
 mod jsx_parser;
+mod swc_transformer;
+pub mod debug;
+#[cfg(all(feature = "native-swc", not(target_arch = "wasm32")))]
+mod swc_native;
 
 #[cfg(feature = "wasm")]
 use serde::{Deserialize, Serialize};
 
+pub use debug::{DebugLevel, DebugContext, DebugEntry};
+
+/// Target platform for transpilation
+#[cfg_attr(feature = "wasm", derive(Serialize, Deserialize))]
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum TranspileTarget {
+    /// Web browser - supports modern ES2020+ features
+    Web,
+    /// Android JavaScriptCore - older JS engine, needs more transpilation
+    Android,
+}
+
+impl Default for TranspileTarget {
+    fn default() -> Self {
+        Self::Web
+    }
+}
+
 pub struct TranspileOptions {
     pub is_typescript: bool,
+    /// Target platform - determines which features need transpilation
+    pub target: TranspileTarget,
+    /// Optional filename for diagnostics and SWC parser hints
+    pub filename: Option<String>,
+    /// Whether to emit CommonJS-compatible output (native targets only)
+    pub to_commonjs: bool,
+    /// Emit source maps (native SWC path only)
+    pub source_maps: bool,
+    /// Inline source maps as data URLs (native SWC path only)
+    pub inline_source_map: bool,
+    /// Apply compat downlevel transforms for older engines (native SWC path only)
+    pub compat_for_jsc: bool,
+    /// Debug level for transpilation logging
+    pub debug_level: DebugLevel,
 }
 
 impl Default for TranspileOptions {
     fn default() -> Self {
         Self {
             is_typescript: false,
+            target: TranspileTarget::Web,
+            filename: None,
+            to_commonjs: false,
+            source_maps: false,
+            inline_source_map: false,
+            compat_for_jsc: true,
+            debug_level: DebugLevel::default(),
         }
     }
 }
@@ -73,7 +116,62 @@ pub fn transpile_jsx_simple(source: &str) -> Result<String, String> {
 
 /// Transpile JSX with options (e.g. TypeScript support)
 pub fn transpile_jsx_with_options(source: &str, opts: &TranspileOptions) -> Result<String, String> {
-    jsx_parser::transpile_jsx(source, opts).map_err(|e| e.to_string())
+    let debug_ctx = DebugContext::new(opts.debug_level);
+    
+    debug_ctx.info(format!("Starting transpilation for target: {:?}", opts.target));
+    if let Some(filename) = &opts.filename {
+        debug_ctx.trace(format!("File: {}", filename));
+    }
+    debug_ctx.trace(format!("Options: typescript={}, commonjs={}, maps={}", 
+        opts.is_typescript, opts.to_commonjs, opts.source_maps));
+    
+    // Prefer SWC for native Android when the feature is enabled; keep wasm/web slim.
+    #[cfg(all(feature = "native-swc", not(target_arch = "wasm32")))]
+    if opts.target == TranspileTarget::Android {
+        debug_ctx.trace("Using SWC transpiler for Android target");
+        let mut code = swc_native::transpile_with_swc(source, opts)
+            .map_err(|e| {
+                debug_ctx.error(format!("SWC transpile error: {}", e));
+                format!("SWC transpile failed: {e}")
+            })?;
+        
+        // Apply dynamic import transformation (import() -> __hook_import())
+        // Always run this since SWC preserves import() calls
+        debug_ctx.trace("Applying dynamic import transformation");
+        code = jsx_parser::transform_dynamic_imports(&code);
+        
+        debug_ctx.info("Transpilation completed successfully");
+        return Ok(code);
+    }
+
+    debug_ctx.trace("Using JSX parser for transpilation");
+    let jsx_output = jsx_parser::transpile_jsx(source, opts).map_err(|e| {
+        debug_ctx.error(format!("JSX parse error: {}", e));
+        e.to_string()
+    })?;
+    debug_ctx.trace("JSX transformation complete");
+    
+    // For Android/iOS targets, apply ES5 downleveling for JavaScriptCore
+    // Web target doesn't need transformation (modern browsers support ES2020+)
+    if opts.target == TranspileTarget::Android {
+        debug_ctx.trace("Applying ES5 downleveling for Android JavaScriptCore");
+        let downleveled = swc_transformer::downlevel_for_jsc(&jsx_output)
+            .map_err(|e| {
+                debug_ctx.error(format!("ES5 downlevel error: {}", e));
+                format!("ES5 transformation failed: {}", e)
+            })?;
+        
+        // CRITICAL: Transform dynamic imports after downleveling
+        // This ensures import() calls become __hook_import() calls
+        debug_ctx.trace("Applying dynamic import transformation");
+        let transformed = jsx_parser::transform_dynamic_imports(&downleveled);
+        
+        debug_ctx.info("Transpilation completed successfully");
+        return Ok(transformed);
+    }
+    
+    debug_ctx.info("Transpilation completed successfully");
+    Ok(jsx_output)
 }
 
 /// Transform ES6 modules to CommonJS
@@ -121,21 +219,33 @@ pub struct TranspileResult {
 /// Transpile JSX with metadata extraction
 /// This is the primary entry point for web clients needing full analysis
 pub fn transpile_jsx_with_metadata(source: &str, _filename: Option<&str>, is_typescript: bool) -> Result<TranspileResult, String> {
+    let debug_ctx = DebugContext::new(DebugLevel::default());
+    
+    debug_ctx.trace("Extracting metadata from source");
+    
     // Detect if we have JSX
     let has_jsx = source.contains('<') && source.contains('>') && 
                   (source.contains("return") || source.contains("(") || source.contains("<"));
+    debug_ctx.trace(format!("Has JSX: {}", has_jsx));
     
     // Detect dynamic imports
     let has_dynamic_import = source.contains("import(");
+    debug_ctx.trace(format!("Has dynamic imports: {}", has_dynamic_import));
     
-    // Transpile the JSX
+    // Transpile the JSX with Web target (no unnecessary transpilation)
     let opts = TranspileOptions {
         is_typescript,
+        target: TranspileTarget::Web,
+        filename: _filename.map(|f| f.to_string()),
+        debug_level: DebugLevel::default(),
+        ..Default::default()
     };
     let code = transpile_jsx_with_options(source, &opts)?;
     
+    debug_ctx.trace("Extracting import bindings");
     // Extract imports for metadata with proper binding detection
     let imports = extract_imports_with_bindings(source);
+    debug_ctx.info(format!("Extracted {} imports", imports.len()));
     
     Ok(TranspileResult {
         code,
@@ -237,6 +347,37 @@ mod ios_ffi;
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    #[cfg(all(feature = "native-swc", not(target_arch = "wasm32")))]
+    fn swc_native_emits_cjs_and_sourcemap_footer() {
+        let opts = TranspileOptions {
+            is_typescript: false,
+            target: TranspileTarget::Android,
+            filename: Some("map-test.jsx".to_string()),
+            to_commonjs: true,
+            source_maps: true,
+            inline_source_map: true,
+            compat_for_jsc: true,
+            debug_level: Default::default(),
+        };
+
+        let code = r#"
+            export default function Component() {
+                return <div>hello</div>;
+            }
+        "#;
+
+        let output = transpile_jsx_with_options(code, &opts).expect("SWC transpile should succeed");
+        println!("SWC output:\n{}", output);
+        assert!(
+            output.contains("module.exports")
+                || output.contains("exports.default")
+                || output.contains("Object.defineProperty(exports, \"default\"")
+        , "should emit CommonJS exports");
+        assert!(output.contains("__hook_jsx_runtime") || output.contains("jsx"), "should include JSX runtime calls");
+        assert!(output.contains("sourceMappingURL=data:application/json;base64,"), "should include inline source map footer");
+    }
 
     #[test]
     fn test_simple_jsx() {

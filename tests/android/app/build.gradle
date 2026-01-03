@@ -13,32 +13,12 @@ android {
         targetSdk 34
         versionCode 1
         versionName "1.0"
-        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
-
-        externalNativeBuild {
-            cmake {
-                arguments "-DANDROID_STL=c++_shared"
-            }
-        }
     }
 
     buildTypes {
         release {
             minifyEnabled false
         }
-    }
-
-    // Build JNI bridge against JavaScriptCore
-    externalNativeBuild {
-        cmake {
-            path file('src/main/cpp/CMakeLists.txt')
-            // Pass the extracted JSC location to CMake
-            buildStagingDirectory file("${buildDir}/cmake")
-        }
-    }
-
-    packagingOptions {
-        pickFirst "**/libc++_shared.so"
     }
 
     compileOptions {
@@ -50,91 +30,34 @@ android {
         jvmTarget = '1.8'
     }
 
-
-// Suppress obsolete option warnings from javac when targeting legacy bytecode
-tasks.withType(JavaCompile).configureEach {
-    options.compilerArgs += ['-Xlint:-options']
+    packagingOptions {
+        pickFirst 'lib/*/libthemed_styler.so'
+        pickFirst 'lib/*/libjsc.so'
+    }
 }
-    sourceSets {
-        main {
-            jniLibs.srcDirs = ['src/main/jniLibs']
-        }
+
+repositories {
+    flatDir {
+        dirs 'libs'
     }
 }
 
 dependencies {
+    // AndroidX
     implementation 'androidx.core:core-ktx:1.12.0'
     implementation 'androidx.appcompat:appcompat:1.6.1'
     implementation 'com.google.android.material:material:1.10.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
-    implementation 'net.java.dev.jna:jna:5.13.0@aar'
-    // JavaScriptCore - using newer artifact that's available in Maven Central
-    implementation 'org.webkit:android-jsc:+'
-    implementation 'com.google.code.gson:gson:2.10.1'
-    
-    // Use local Android library project
+
+    // Hook Transpiler - use local library module
     implementation project(':android')
 
-    testImplementation 'junit:junit:4.13.2'
+    // JSON parsing
+    implementation 'com.google.code.gson:gson:2.10.1'
 
-    // Instrumented test dependencies (runs on Android device/emulator)
-    androidTestImplementation 'androidx.test.ext:junit:1.1.5'
-    androidTestImplementation 'androidx.test:runner:1.5.2'
-    androidTestImplementation 'androidx.test:core:1.5.0'
-}
+    // Themed-styler Android helpers (YAML parsing hook)
+    implementation 'com.clevertree:themed-styler-android:1.0.0'
 
-// Task to extract JSC libraries from android-jsc AAR before CMake runs
-tasks.register('extractJscLibraries') {
-    def extractedDir = file("src/main/jniLibs")
-    
-    outputs.dir(extractedDir)
-    
-    doLast {
-        // Clean and recreate extraction directory
-        delete extractedDir
-        extractedDir.mkdirs()
-        
-        // Find and extract android-jsc AAR from gradle cache
-        def jscAarFile = null
-        def cacheDir = file("${gradle.getGradleUserHomeDir()}/caches")
-        
-        cacheDir.eachFileRecurse { file ->
-            if (file.name.startsWith("jetified-android-jsc") && file.name.endsWith(".aar")) {
-                jscAarFile = file
-            }
-        }
-        
-        if (!jscAarFile?.exists()) {
-            throw new GradleException("Could not find android-jsc AAR in gradle cache. Run a build with android-jsc dependency first.")
-        }
-        
-        println "Found android-jsc AAR: ${jscAarFile.absolutePath}"
-        
-        // Extract the AAR using Java's ZipFile
-        def zipFile = new java.util.zip.ZipFile(jscAarFile)
-        zipFile.entries().findAll { entry ->
-            entry.name.startsWith("jni/")
-        }.forEach { entry ->
-            def outFile = new File(extractedDir, entry.name.substring(4)) // Remove "jni/" prefix
-            if (entry.isDirectory()) {
-                outFile.mkdirs()
-            } else {
-                outFile.parentFile.mkdirs()
-                outFile.bytes = zipFile.getInputStream(entry).bytes
-            }
-        }
-        zipFile.close()
-        
-        println "Extracted JSC libraries to: ${extractedDir.absolutePath}"
-    }
-}
-
-// Make sure extraction runs before build starts
-tasks.named('preBuild') {
-    dependsOn 'extractJscLibraries'
-}
-
-// Make CMake depend on JSC extraction
-tasks.named('preBuild').configure {
-    dependsOn 'extractJscLibraries'
+    // HTTP for remote hooks
+    implementation 'com.squareup.okhttp3:okhttp:4.11.0'
 }
