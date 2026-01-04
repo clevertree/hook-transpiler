@@ -4,7 +4,9 @@ import android.content.Context
 import android.graphics.Color
 import android.graphics.Typeface
 import android.text.method.ScrollingMovementMethod
+import android.view.Gravity
 import android.widget.Button
+import android.widget.FrameLayout
 import android.widget.LinearLayout
 import android.widget.TextView
 import com.clevertree.hooktranspiler.model.RendererMode
@@ -16,52 +18,79 @@ import java.util.*
  * Debug Console Overlay for JavaScript debugging
  * Shows real-time console.log, errors, and warnings
  */
-class DebugConsoleOverlay(context: Context) : LinearLayout(context) {
+class DebugConsoleOverlay(context: Context) : FrameLayout(context) {
     private val consoleTextView: TextView
     private val toggleButton: Button
+    private val hoverButton: Button
     private val clearButton: Button
     private val exportButton: Button
     private val consolePanel: LinearLayout
+    private val header: LinearLayout
     private val modeContainer: LinearLayout
     private val btnAct: Button
     private val btnAndroid: Button
+    private val btnLogs: Button
+    private val btnMarkup: Button
     private val logs = mutableListOf<String>()
     private val dateFormat = SimpleDateFormat("HH:mm:ss.SSS", Locale.US)
     
     var onModeSelected: ((RendererMode) -> Unit)? = null
     private var isExpanded = false
+    private var showMarkup = false
+    private var currentMarkup = ""
     
     init {
-        orientation = VERTICAL
-        setBackgroundColor(Color.argb(230, 0, 0, 0))
-        
+        // Hover button (visible when collapsed)
+        hoverButton = Button(context).apply {
+            text = "DEBUG"
+            setTextColor(Color.WHITE)
+            setBackgroundColor(Color.argb(180, 0, 0, 0))
+            textSize = 10f
+            setPadding(8, 4, 8, 4)
+            setOnClickListener { toggle() }
+        }
+        addView(hoverButton, LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT).apply {
+            gravity = Gravity.BOTTOM or Gravity.END
+            setMargins(0, 0, 16, 16)
+        })
+
+        // Main container (visible when expanded)
+        val mainContainer = LinearLayout(context).apply {
+            orientation = LinearLayout.VERTICAL
+            setBackgroundColor(Color.argb(230, 0, 0, 0))
+            isVisible = false
+        }
+        addView(mainContainer, LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT).apply {
+            gravity = Gravity.BOTTOM
+        })
+
         // Header with controls
-        val header = LinearLayout(context).apply {
-            orientation = HORIZONTAL
+        header = LinearLayout(context).apply {
+            orientation = LinearLayout.HORIZONTAL
             setBackgroundColor(Color.argb(255, 33, 33, 33))
-            setPadding(8, 8, 8, 8)
+            setPadding(4, 4, 4, 4)
         }
         
         toggleButton = Button(context).apply {
-            text = "▲ Debug Console"
+            text = "▼ HIDE"
             setTextColor(Color.WHITE)
             setBackgroundColor(Color.argb(255, 66, 66, 66))
-            textSize = 12f
-            setPadding(16, 8, 16, 8)
+            textSize = 10f
+            setPadding(8, 4, 8, 4)
             setOnClickListener { toggle() }
         }
 
         modeContainer = LinearLayout(context).apply {
-            orientation = HORIZONTAL
-            setPadding(8, 0, 8, 0)
+            orientation = LinearLayout.HORIZONTAL
+            setPadding(4, 0, 4, 0)
         }
 
         btnAct = Button(context).apply {
             text = "Act"
-            textSize = 11f
+            textSize = 9f
             setBackgroundColor(Color.parseColor("#4CAF50"))
             setTextColor(Color.WHITE)
-            setPadding(12, 6, 12, 6)
+            setPadding(8, 4, 8, 4)
             setOnClickListener {
                 setMode(RendererMode.ACT)
                 onModeSelected?.invoke(RendererMode.ACT)
@@ -70,10 +99,10 @@ class DebugConsoleOverlay(context: Context) : LinearLayout(context) {
 
         btnAndroid = Button(context).apply {
             text = "Android"
-            textSize = 11f
+            textSize = 9f
             setBackgroundColor(Color.parseColor("#2196F3"))
             setTextColor(Color.WHITE)
-            setPadding(12, 6, 12, 6)
+            setPadding(8, 4, 8, 4)
             setOnClickListener {
                 setMode(RendererMode.ANDROID)
                 onModeSelected?.invoke(RendererMode.ANDROID)
@@ -86,8 +115,8 @@ class DebugConsoleOverlay(context: Context) : LinearLayout(context) {
             text = "Clear"
             setTextColor(Color.WHITE)
             setBackgroundColor(Color.argb(255, 220, 53, 69))
-            textSize = 11f
-            setPadding(12, 6, 12, 6)
+            textSize = 9f
+            setPadding(8, 4, 8, 4)
             setOnClickListener { clear() }
         }
         
@@ -95,25 +124,61 @@ class DebugConsoleOverlay(context: Context) : LinearLayout(context) {
             text = "Export"
             setTextColor(Color.WHITE)
             setBackgroundColor(Color.argb(255, 13, 110, 253))
-            textSize = 11f
-            setPadding(12, 6, 12, 6)
+            textSize = 9f
+            setPadding(8, 4, 8, 4)
             setOnClickListener { exportLogs() }
         }
         
-        header.addView(toggleButton, LayoutParams(0, LayoutParams.WRAP_CONTENT, 1f))
-        header.addView(modeContainer, LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT))
-        header.addView(clearButton, LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT).apply {
-            marginStart = 8
+        header.addView(toggleButton, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
+        header.addView(modeContainer, LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT))
+        header.addView(clearButton, LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply {
+            marginStart = 4
         })
-        header.addView(exportButton, LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT).apply {
-            marginStart = 8
+        header.addView(exportButton, LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply {
+            marginStart = 4
         })
         
-        addView(header, LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT))
+        mainContainer.addView(header, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT))
+        
+        // Sub-header for Logs/Markup toggle
+        val subHeader = LinearLayout(context).apply {
+            orientation = LinearLayout.HORIZONTAL
+            setBackgroundColor(Color.argb(255, 44, 44, 44))
+            setPadding(4, 4, 4, 4)
+        }
+        
+        btnLogs = Button(context).apply {
+            text = "LOGS"
+            textSize = 9f
+            setBackgroundColor(Color.parseColor("#28a745"))
+            setTextColor(Color.WHITE)
+            setPadding(8, 4, 8, 4)
+            setOnClickListener { 
+                showMarkup = false
+                updateView()
+            }
+        }
+        
+        btnMarkup = Button(context).apply {
+            text = "MARKUP"
+            textSize = 9f
+            setBackgroundColor(Color.parseColor("#6c757d"))
+            setTextColor(Color.WHITE)
+            setPadding(8, 4, 8, 4)
+            setOnClickListener { 
+                showMarkup = true
+                updateView()
+            }
+        }
+        
+        subHeader.addView(btnLogs, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply { marginEnd = 2 })
+        subHeader.addView(btnMarkup, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply { marginStart = 2 })
+        
+        mainContainer.addView(subHeader, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT))
         
         // Console panel
         consolePanel = LinearLayout(context).apply {
-            orientation = VERTICAL
+            orientation = LinearLayout.VERTICAL
             setBackgroundColor(Color.argb(245, 0, 0, 0))
         }
         
@@ -121,22 +186,19 @@ class DebugConsoleOverlay(context: Context) : LinearLayout(context) {
             text = "Debug Console Ready\n"
             setTextColor(Color.argb(255, 200, 200, 200))
             typeface = Typeface.MONOSPACE
-            textSize = 10f
-            setPadding(12, 12, 12, 12)
+            textSize = 9f
+            setPadding(8, 8, 8, 8)
             movementMethod = ScrollingMovementMethod()
             isVerticalScrollBarEnabled = true
             maxLines = 100
         }
         
-        consolePanel.addView(consoleTextView, LayoutParams(
-            LayoutParams.MATCH_PARENT,
+        consolePanel.addView(consoleTextView, LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.MATCH_PARENT,
             dpToPx(200)
         ))
         
-        addView(consolePanel, LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT))
-        
-        // Start collapsed
-        consolePanel.isVisible = false
+        mainContainer.addView(consolePanel, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT))
     }
     
     private fun dpToPx(dp: Int): Int {
@@ -146,8 +208,9 @@ class DebugConsoleOverlay(context: Context) : LinearLayout(context) {
     
     fun toggle() {
         isExpanded = !isExpanded
-        consolePanel.isVisible = isExpanded
-        toggleButton.text = if (isExpanded) "▼ Debug Console" else "▲ Debug Console"
+        val mainContainer = consolePanel.parent as LinearLayout
+        mainContainer.isVisible = isExpanded
+        hoverButton.isVisible = !isExpanded
     }
 
     fun setMode(mode: RendererMode) {
@@ -156,10 +219,66 @@ class DebugConsoleOverlay(context: Context) : LinearLayout(context) {
         btnAct.alpha = if (mode == RendererMode.ACT) 1.0f else 0.5f
         btnAndroid.alpha = if (mode == RendererMode.ANDROID) 1.0f else 0.5f
     }
+
+    fun setMarkup(markup: String) {
+        if (currentMarkup == markup) return
+        currentMarkup = markup
+        if (showMarkup) {
+            updateView(isPeriodicUpdate = true)
+        }
+    }
+
+    private fun updateView(isPeriodicUpdate: Boolean = false) {
+        btnLogs.setBackgroundColor(if (!showMarkup) Color.parseColor("#28a745") else Color.parseColor("#6c757d"))
+        btnMarkup.setBackgroundColor(if (showMarkup) Color.parseColor("#28a745") else Color.parseColor("#6c757d"))
+        
+        consoleTextView.post {
+            if (showMarkup) {
+                val newText = if (currentMarkup.isEmpty()) "<!-- No markup rendered yet -->" else currentMarkup
+                if (consoleTextView.text.toString() != newText) {
+                    val oldScrollY = consoleTextView.scrollY
+                    consoleTextView.text = newText
+                    if (isPeriodicUpdate) {
+                        consoleTextView.scrollTo(0, oldScrollY)
+                    } else {
+                        consoleTextView.scrollTo(0, 0)
+                    }
+                }
+            } else {
+                val newText = if (logs.isEmpty()) "Debug Console Ready\n" else logs.joinToString("\n")
+                if (consoleTextView.text.toString() != newText) {
+                    val oldScrollY = consoleTextView.scrollY
+                    val wasAtBottom = isAtBottom()
+                    
+                    consoleTextView.text = newText
+                    
+                    if (isPeriodicUpdate && !wasAtBottom) {
+                        consoleTextView.scrollTo(0, oldScrollY)
+                    } else {
+                        // Auto-scroll to bottom for logs if we were already at bottom or it's not periodic
+                        val layout = consoleTextView.layout
+                        if (layout != null) {
+                            val scrollAmount = layout.getLineTop(consoleTextView.lineCount) - consoleTextView.height
+                            if (scrollAmount > 0) {
+                                consoleTextView.scrollTo(0, scrollAmount)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private fun isAtBottom(): Boolean {
+        val layout = consoleTextView.layout ?: return true
+        val scrollAmount = layout.getLineTop(consoleTextView.lineCount) - consoleTextView.height
+        return consoleTextView.scrollY >= scrollAmount - 10 // 10px buffer
+    }
     
     fun clear() {
         logs.clear()
-        consoleTextView.text = "Console cleared at ${dateFormat.format(Date())}\n"
+        currentMarkup = ""
+        updateView()
     }
     
     fun log(level: String, message: String) {
@@ -180,16 +299,8 @@ class DebugConsoleOverlay(context: Context) : LinearLayout(context) {
         }
         
         // Update UI
-        consoleTextView.post {
-            consoleTextView.text = logs.joinToString("\n")
-            // Auto-scroll to bottom
-            val layout = consoleTextView.layout
-            if (layout != null) {
-                val scrollAmount = layout.getLineTop(consoleTextView.lineCount) - consoleTextView.height
-                if (scrollAmount > 0) {
-                    consoleTextView.scrollTo(0, scrollAmount)
-                }
-            }
+        if (!showMarkup) {
+            updateView(isPeriodicUpdate = true)
         }
     }
     
@@ -199,8 +310,22 @@ class DebugConsoleOverlay(context: Context) : LinearLayout(context) {
     fun logDebug(message: String) = log("LOG", message)
     
     private fun exportLogs() {
-        // TODO: Implement export to file or share sheet
-        logInfo("Export feature: coming soon")
+        val content = if (showMarkup) currentMarkup else logs.joinToString("\n")
+        if (content.isEmpty()) {
+            logWarn("Nothing to export")
+            return
+        }
+        
+        try {
+            val intent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
+                type = "text/plain"
+                putExtra(android.content.Intent.EXTRA_SUBJECT, if (showMarkup) "Hook Markup Export" else "Hook Console Logs")
+                putExtra(android.content.Intent.EXTRA_TEXT, content)
+            }
+            context.startActivity(android.content.Intent.createChooser(intent, "Export Hook Debug Data"))
+        } catch (e: Exception) {
+            logError("Export failed: ${e.message}")
+        }
     }
     
     /**

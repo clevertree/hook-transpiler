@@ -1,5 +1,6 @@
 package com.clevertree.hooktranspiler.render
 
+import com.clevertree.hooktranspiler.R
 import android.content.Context
 import android.graphics.Color
 import android.os.Handler
@@ -38,6 +39,8 @@ class NativeRenderer(private val context: Context, private val rootContainer: Vi
     private val nodes = ConcurrentHashMap<Int, View>()
     private val containerNodes = ConcurrentHashMap<Int, ViewGroup>()
     private val viewTypes = ConcurrentHashMap<Int, String>()
+    private val classNames = ConcurrentHashMap<Int, String>()
+    private val tagMap = java.util.WeakHashMap<View, Int>()
     private val lastAppliedStyles = ConcurrentHashMap<Int, Map<String, Any>>()
     private val renderEpoch = AtomicInteger(0)
     private var viewsCreatedInCurrentRender = 0
@@ -184,13 +187,7 @@ class NativeRenderer(private val context: Context, private val rootContainer: Vi
                     }
                 }
             }
-            "h1", "h2", "h3", "h4", "h5", "h6", "p" -> {
-                LinearLayout(context).apply {
-                    orientation = LinearLayout.VERTICAL
-                    containerNodes[tag] = this
-                }
-            }
-            "text", "span", "label" -> TextView(context)
+            "text", "span", "label", "h1", "h2", "h3", "h4", "h5", "h6", "p", "MarkdownRenderer" -> TextView(context)
             "frame" -> FrameLayout(context).apply { containerNodes[tag] = this }
             "button" -> Button(context)
             "img", "image" -> ImageView(context)
@@ -207,9 +204,14 @@ class NativeRenderer(private val context: Context, private val rootContainer: Vi
         }
 
         view.id = if (tag > 0) tag else View.generateViewId()
+        tagMap[view] = tag
         viewTypes[tag] = type
+        classNames[tag] = className
         nodes[tag] = view  // Register before applying props so updates can run
         viewsCreatedInCurrentRender++
+        
+        view.setTag(R.id.tag_name, type)
+        view.setTag(R.id.tag_id, tag)
 
         // Root view (tag=-1) should use FrameLayout.LayoutParams to fill parent width and height
         // ScrollView with isFillViewport=true will handle the scrolling if content exceeds height
@@ -270,12 +272,16 @@ class NativeRenderer(private val context: Context, private val rootContainer: Vi
 
     fun updateProps(tag: Int, props: Map<String, Any>) {
         runOnMainThread {
-            Log.d(TAG, "[UpdateProps] tag=$tag propsKeys=${props.keys}")
-            val view = nodes[tag] ?: return@runOnMainThread
+            Log.d(TAG, "[UpdateProps] tag=$tag propsKeys=${props.keys} values=${props.values.map { it.toString().take(20) }}")
+            val view = nodes[tag] ?: run {
+                Log.w(TAG, "[UpdateProps] View not found for tag=$tag")
+                return@runOnMainThread
+            }
             
-            if (props.containsKey("text")) {
-                val text = props["text"]?.toString() ?: ""
-                Log.d(TAG, "[UpdateProps] tag=$tag setting text='$text'")
+            val textValue = props["text"] ?: props["content"]
+            if (textValue != null) {
+                val text = textValue.toString()
+                Log.d(TAG, "[UpdateProps] tag=$tag setting text='${text.take(50)}...'")
                 if (view is TextView) {
                     view.text = text
                 } else if (view is ViewGroup) {
@@ -288,25 +294,52 @@ class NativeRenderer(private val context: Context, private val rootContainer: Vi
                 }
             }
             
-            // Apply basic styles
-            (props["style"] as? Map<String, Any>)?.let { style ->
-                applyStyles(view, style)
+            // 1. Apply themed styles (unified styler) - always call to get base tag styles
+            val className = if (props.containsKey("className")) {
+                val cn = (props["className"] as? String) ?: ""
+                classNames[tag] = cn
+                cn
+            } else {
+                classNames[tag] ?: ""
             }
-            
-            // Apply className if present (integration with styler)
-            if (props.containsKey("className")) {
-                val rawClassName = props["className"]
-                val className = (rawClassName as? String) ?: ""
-                if (className.isNotEmpty()) {
-                    Log.d(TAG, "[UpdateProps] tag=$tag className='$className'")
+            applyThemedStyles(view, className)
+
+            // 2. Apply inline styles (can override themed styles)
+            val inlineStyle = props["style"]
+            if (inlineStyle != null) {
+                Log.d(TAG, "[UpdateProps] tag=$tag found inline style: $inlineStyle (type: ${inlineStyle.javaClass.simpleName})")
+                if (inlineStyle is Map<*, *>) {
+                    val styleMap = inlineStyle as Map<String, Any>
+                    // Process inline styles through themed-styler to expand shorthands and convert units
+                    val processedStyle = try {
+                        @Suppress("UNCHECKED_CAST")
+                        ThemedStylerModule.processStyles(styleMap as Map<String, Any>)
+                    } catch (e: Exception) {
+                        Log.e(TAG, "Error processing inline styles", e)
+                        styleMap
+                    }
+                    applyStyles(view, processedStyle)
                 }
-                Log.d(TAG, "[Class-Raw] tag=$tag raw=$rawClassName type=${rawClassName?.javaClass}")
-                
-                Log.d(TAG, "[Class] tag=$tag className=$className")
-                Log.d(TAG, "[Props-Update] tag=$tag className=$className")
-                
-                // Apply themed styles (unified styler)
-                applyThemedStyles(view, className)
+            }
+
+            val srcValue = props["src"]
+            if (srcValue != null && view is ImageView) {
+                val url = srcValue.toString()
+                if (url.isNotEmpty()) {
+                    Log.d(TAG, "[UpdateProps] tag=$tag loading image src=$url")
+                    // Simple image loader for test app
+                    Thread {
+                        try {
+                            val inputStream = java.net.URL(url).openStream()
+                            val bitmap = android.graphics.BitmapFactory.decodeStream(inputStream)
+                            runOnMainThread {
+                                view.setImageBitmap(bitmap)
+                            }
+                        } catch (e: Exception) {
+                            Log.e(TAG, "Error loading image: $url", e)
+                        }
+                    }.start()
+                }
             }
             
             if (props.containsKey("className") && props["className"] !is String) {
@@ -351,6 +384,12 @@ class NativeRenderer(private val context: Context, private val rootContainer: Vi
 
         for ((key, value) in style) {
             when (key) {
+                "androidOrientation" -> {
+                    val target = containerNodes[tag] ?: view
+                    if (target is LinearLayout) {
+                        target.orientation = if (value.toString() == "horizontal") LinearLayout.HORIZONTAL else LinearLayout.VERTICAL
+                    }
+                }
                 "width" -> {
                     val w = when (value.toString()) {
                         "match_parent" -> ViewGroup.LayoutParams.MATCH_PARENT
@@ -448,24 +487,38 @@ class NativeRenderer(private val context: Context, private val rootContainer: Vi
                 
                 "elevation" -> view.elevation = parseNumber(value) ?: 0f
 
-                "androidOrientation" -> {
-                    val target = containerNodes[tag] ?: view
-                    if (target is LinearLayout) {
-                        target.orientation = if (value.toString() == "horizontal") LinearLayout.HORIZONTAL else LinearLayout.VERTICAL
+                "androidScaleType" -> {
+                    if (view is ImageView) {
+                        view.scaleType = when (value.toString()) {
+                            "center_crop" -> ImageView.ScaleType.CENTER_CROP
+                            "fit_center" -> ImageView.ScaleType.FIT_CENTER
+                            "fit_xy" -> ImageView.ScaleType.FIT_XY
+                            "center" -> ImageView.ScaleType.CENTER
+                            "center_inside" -> ImageView.ScaleType.CENTER_INSIDE
+                            else -> ImageView.ScaleType.FIT_CENTER
+                        }
                     }
                 }
+
                 "androidGravity" -> {
                     val target = containerNodes[tag] ?: view
                     if (target is LinearLayout) {
-                        target.gravity = when (value.toString()) {
-                            "center_vertical" -> android.view.Gravity.CENTER_VERTICAL
-                            "top" -> android.view.Gravity.TOP
-                            "bottom" -> android.view.Gravity.BOTTOM
-                            "center_horizontal" -> android.view.Gravity.CENTER_HORIZONTAL
-                            "center" -> android.view.Gravity.CENTER
-                            "fill_vertical" -> android.view.Gravity.FILL_VERTICAL
-                            else -> android.view.Gravity.NO_GRAVITY
+                        var gravity = android.view.Gravity.NO_GRAVITY
+                        val parts = value.toString().split("|")
+                        for (part in parts) {
+                            gravity = gravity or when (part) {
+                                "center_vertical" -> android.view.Gravity.CENTER_VERTICAL
+                                "top" -> android.view.Gravity.TOP
+                                "bottom" -> android.view.Gravity.BOTTOM
+                                "center_horizontal" -> android.view.Gravity.CENTER_HORIZONTAL
+                                "center" -> android.view.Gravity.CENTER
+                                "fill_vertical" -> android.view.Gravity.FILL_VERTICAL
+                                "start" -> android.view.Gravity.START
+                                "end" -> android.view.Gravity.END
+                                else -> android.view.Gravity.NO_GRAVITY
+                            }
                         }
+                        target.gravity = gravity
                     }
                 }
                 "androidLayoutGravity" -> {
@@ -511,13 +564,16 @@ class NativeRenderer(private val context: Context, private val rootContainer: Vi
             lp.weight = weight
             if (weight > 0) {
                 val parent = view.parent as? LinearLayout
-                val orientation = parent?.orientation ?: if (style["androidOrientation"] == "horizontal") LinearLayout.HORIZONTAL else LinearLayout.VERTICAL
-                if (orientation == LinearLayout.VERTICAL) {
-                    lp.height = 0
+                if (parent != null) {
+                    if (parent.orientation == LinearLayout.VERTICAL) {
+                        lp.height = 0
+                    } else {
+                        lp.width = 0
+                    }
+                    Log.d(TAG, "[applyStyles] tag=$tag applied weight=$weight, height=${lp.height}, width=${lp.width} (parent orientation=${if (parent.orientation == LinearLayout.VERTICAL) "VERTICAL" else "HORIZONTAL"})")
                 } else {
-                    lp.width = 0
+                    Log.d(TAG, "[applyStyles] tag=$tag applied weight=$weight, but parent is null - waiting for addChild to set 0-dimension")
                 }
-                Log.d(TAG, "[applyStyles] tag=$tag applied weight=$weight, height=${lp.height}, width=${lp.width}")
             }
         }
         
@@ -582,7 +638,9 @@ class NativeRenderer(private val context: Context, private val rootContainer: Vi
             // If parent is not a ViewGroup (e.g., TextView/Button), merge text instead of failing
             if (parentTag != -1 && parentNode is TextView && child is TextView) {
                 Log.d(TAG, "Merging text child $childTag into non-ViewGroup parent $parentTag")
-                parentNode.text = child.text
+                val existingText = parentNode.text.toString()
+                val newText = child.text.toString()
+                parentNode.text = existingText + newText
                 nodes.remove(childTag)
                 return@runOnMainThreadBlocking
             }
@@ -632,14 +690,19 @@ class NativeRenderer(private val context: Context, private val rootContainer: Vi
                     val clp = child.layoutParams as LinearLayout.LayoutParams
                     if (clp.weight > 0) {
                         if (parent.orientation == LinearLayout.HORIZONTAL) {
-                            if (clp.width == ViewGroup.LayoutParams.WRAP_CONTENT || clp.width == ViewGroup.LayoutParams.MATCH_PARENT) {
-                                clp.width = 0
+                            clp.width = 0
+                            // Ensure height is not also 0 (which could happen if it was previously in a vertical layout)
+                            if (clp.height == 0) {
+                                clp.height = ViewGroup.LayoutParams.WRAP_CONTENT
                             }
                         } else {
-                            if (clp.height == ViewGroup.LayoutParams.WRAP_CONTENT || clp.height == ViewGroup.LayoutParams.MATCH_PARENT) {
-                                clp.height = 0
+                            clp.height = 0
+                            // Ensure width is not also 0
+                            if (clp.width == 0) {
+                                clp.width = ViewGroup.LayoutParams.MATCH_PARENT
                             }
                         }
+                        Log.d(TAG, "[ADD_CHILD_WEIGHT] tag=$childTag parentTag=$parentTag weight=${clp.weight} orientation=${if (parent.orientation == LinearLayout.HORIZONTAL) "HORIZONTAL" else "VERTICAL"} -> width=${clp.width}, height=${clp.height}")
                     }
                 }
 
@@ -670,7 +733,6 @@ class NativeRenderer(private val context: Context, private val rootContainer: Vi
                 
                 // Inherit text styles from parent if child is a TextView
                 if (child is TextView) {
-                    val parentTag = parent.id
                     lastAppliedStyles[parentTag]?.let { parentStyles ->
                         val textStyles = parentStyles.filterKeys { it in listOf("color", "fontSize", "fontWeight", "textAlign") }
                         if (textStyles.isNotEmpty()) {
@@ -684,6 +746,61 @@ class NativeRenderer(private val context: Context, private val rootContainer: Vi
             } else {
                 Log.w(TAG, "addChild failed: parent node $parentTag not found")
             }
+        }
+    }
+
+    fun getRenderedHierarchy(): String {
+        val sb = StringBuilder()
+        // Start from root tag -1 if it exists, otherwise try to find the first child of rootContainer
+        val root = nodes[-1] ?: if (rootContainer.childCount > 0) rootContainer.getChildAt(0) else null
+        
+        if (root != null) {
+            traverseHierarchy(root, sb, 0)
+        } else {
+            sb.append("<!-- No views rendered -->")
+        }
+        return sb.toString()
+    }
+
+    private fun traverseHierarchy(view: View, sb: StringBuilder, indent: Int) {
+        val tag = tagMap[view] ?: view.id
+        val type = viewTypes[tag] ?: view.javaClass.simpleName.replace("AppCompat", "").replace("TextView", "text").replace("LinearLayout", "div").replace("FrameLayout", "div").lowercase()
+        val className = classNames[tag] ?: ""
+        
+        sb.append("  ".repeat(indent))
+        sb.append("<$type")
+        if (className.isNotEmpty()) {
+            sb.append(" class=\"$className\"")
+        }
+        
+        // Check if it's a ViewGroup with children (excluding the internal text_child we might have added)
+        val viewGroup = view as? ViewGroup
+        val children = mutableListOf<View>()
+        if (viewGroup != null) {
+            for (i in 0 until viewGroup.childCount) {
+                val child = viewGroup.getChildAt(i)
+                if (child.tag != "text_child") {
+                    children.add(child)
+                }
+            }
+        }
+
+        val textChild = (view as? ViewGroup)?.findViewWithTag<TextView>("text_child")
+        val text = if (view is TextView) view.text.toString() else textChild?.text?.toString() ?: ""
+
+        if (children.isNotEmpty()) {
+            sb.append(">\n")
+            for (child in children) {
+                traverseHierarchy(child, sb, indent + 1)
+            }
+            sb.append("  ".repeat(indent))
+            sb.append("</$type>\n")
+        } else if (text.isNotEmpty()) {
+            sb.append(">")
+            sb.append(text)
+            sb.append("</$type>\n")
+        } else {
+            sb.append(" />\n")
         }
     }
 
@@ -706,6 +823,8 @@ class NativeRenderer(private val context: Context, private val rootContainer: Vi
             
             nodes.clear()
             viewTypes.clear()
+            classNames.clear()
+            tagMap.clear()
             lastAppliedStyles.clear()
             rootContainer.removeAllViews()
             viewsCreatedInCurrentRender = 0

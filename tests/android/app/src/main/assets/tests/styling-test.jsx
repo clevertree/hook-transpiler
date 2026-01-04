@@ -3,8 +3,17 @@ import React from 'react';
 export default function StylingTest() {
     return (
         <div className="p-4 bg-surface rounded-xl border-themed shadow-sm">
-            <h2 className="text-lg font-bold mb-2 text-themed">Styling & Themes</h2>
+            <h2>Styling & Themes</h2>
             <p className="text-sm text-muted mb-4">Tests: className, themed-styler, dynamic styles</p>
+
+            <div className="space-y-4 mb-6">
+                <h1>Header 1</h1>
+                <h2>Header 2</h2>
+                <h3>Header 3</h3>
+                <h4>Header 4</h4>
+                <h5>Header 5</h5>
+                <h6>Header 6</h6>
+            </div>
 
             <div className="space-y-4">
                 <div className="p-4 rounded-lg bg-bg border-themed">

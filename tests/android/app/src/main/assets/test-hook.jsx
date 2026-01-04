@@ -9,6 +9,7 @@ import DynamicImportTest from './tests/dynamic-import-test.jsx';
 import RemoteFetchTest from './tests/remote-fetch-test.jsx';
 import EventsTest from './tests/events-test.jsx';
 import TemplateLiteralsTest from './tests/template-literals-test.jsx';
+import MarkdownTest from './tests/markdown-test.jsx';
 
 const TABS = [
   { id: 'state', label: 'useState', component: UseStateTest },
@@ -19,10 +20,11 @@ const TABS = [
   { id: 'fetch', label: 'Fetch', component: RemoteFetchTest },
   { id: 'events', label: 'Events', component: EventsTest },
   { id: 'template', label: 'Templates', component: TemplateLiteralsTest },
+  { id: 'markdown', label: 'Markdown-NEW', component: MarkdownTest },
 ];
 
 export default function TestSuite() {
-  const [activeTab, setActiveTab] = useState('state');
+  const [activeTab, setActiveTab] = useState('markdown');
   const [themeState, setThemeState] = useState(() => getThemes());
   const [renderError, setRenderError] = useState(null);
   const [resetKey, setResetKey] = useState(0);
@@ -117,7 +119,7 @@ export default function TestSuite() {
       {/* Footer Info */}
       <div className="p-4 text-center">
         <p className="text-xs text-muted">
-          Transpiler v1.3.20 • Styler v1.2.7 • JSCBridge v1.0.0
+          Transpiler v1.3.20 • Styler v1.2.8 • JSCBridge v1.0.0
         </p>
       </div>
     </div>

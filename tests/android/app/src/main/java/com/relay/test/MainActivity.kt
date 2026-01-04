@@ -16,11 +16,30 @@ class MainActivity : AppCompatActivity() {
         val tabLayout = findViewById<TabLayout>(R.id.tab_layout)
         val hookContainer = findViewById<android.widget.FrameLayout>(R.id.hook_container)
 
-        // Local hook test - load from assets
-        supportFragmentManager.beginTransaction()
-            .replace(R.id.hook_container, LocalHookFragment())
-            .commit()
+        tabLayout.addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener {
+            override fun onTabSelected(tab: TabLayout.Tab) {
+                Log.i("MainActivity", "Tab selected: ${tab.position}")
+                when (tab.position) {
+                    0 -> {
+                        Log.i("MainActivity", "Showing LocalHookFragment")
+                        supportFragmentManager.beginTransaction()
+                            .replace(R.id.hook_container, LocalHookFragment())
+                            .commit()
+                    }
+                    1 -> {
+                        Log.i("MainActivity", "Showing RemoteHookFragment")
+                        supportFragmentManager.beginTransaction()
+                            .replace(R.id.hook_container, RemoteHookFragment())
+                            .commit()
+                    }
+                }
+            }
 
+            override fun onTabUnselected(tab: TabLayout.Tab) {}
+            override fun onTabReselected(tab: TabLayout.Tab) {}
+        })
+
+        Log.i("MainActivity", "Adding tabs")
         tabLayout.addTab(tabLayout.newTab().apply {
             text = getString(R.string.local_hook)
             tag = 0
@@ -30,20 +49,15 @@ class MainActivity : AppCompatActivity() {
             tag = 1
         })
 
-        tabLayout.addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener {
-            override fun onTabSelected(tab: TabLayout.Tab) {
-                when (tab.position) {
-                    0 -> supportFragmentManager.beginTransaction()
-                        .replace(R.id.hook_container, LocalHookFragment())
-                        .commit()
-                    1 -> supportFragmentManager.beginTransaction()
-                        .replace(R.id.hook_container, RemoteHookFragment())
-                        .commit()
-                }
-            }
-
-            override fun onTabUnselected(tab: TabLayout.Tab) {}
-            override fun onTabReselected(tab: TabLayout.Tab) {}
-        })
+        // Ensure first tab is selected if not already
+        if (tabLayout.selectedTabPosition != 0) {
+            Log.i("MainActivity", "Selecting first tab explicitly")
+            tabLayout.getTabAt(0)?.select()
+        } else if (supportFragmentManager.findFragmentById(R.id.hook_container) == null) {
+            Log.i("MainActivity", "Initial load of LocalHookFragment")
+            supportFragmentManager.beginTransaction()
+                .replace(R.id.hook_container, LocalHookFragment())
+                .commit()
+        }
     }
 }

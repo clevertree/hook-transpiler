@@ -215,6 +215,7 @@
       var hook = getHookSlot(path, idx);
       var shouldRun = shallowDepsChanged(hook.deps, deps);
       if (shouldRun) {
+        log("info", "useEffect schedule: path=" + path + " idx=" + idx);
         pendingEffects.push({ hook, effect, deps });
       }
     }

@@ -64,31 +64,25 @@ class HookRenderer @JvmOverloads constructor(
     var onTranspiled: ((String) -> Unit)? = null
 
     init {
-        val rootLayout = LinearLayout(context).apply {
-            orientation = LinearLayout.VERTICAL
-            layoutParams = LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT)
-        }
-        addView(rootLayout)
-
-        // Create ScrollView that will hold the rendered content
+        // Main content container
         scrollView = ScrollView(context).apply {
             setBackgroundColor(android.graphics.Color.parseColor("#F8F9FA"))
-            layoutParams = LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                0,
-                1f
+            layoutParams = LayoutParams(
+                LayoutParams.MATCH_PARENT,
+                LayoutParams.MATCH_PARENT
             )
             isFillViewport = true
         }
-        rootLayout.addView(scrollView)
+        addView(scrollView)
 
         nativeRenderer = NativeRenderer(context, scrollView)
 
-        // Place debug console outside the render container at the bottom
+        // Place debug console as an overlay at the bottom
         debugConsole = DebugConsoleOverlay(context).apply {
-            layoutParams = LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT
+            layoutParams = LayoutParams(
+                LayoutParams.MATCH_PARENT,
+                LayoutParams.WRAP_CONTENT,
+                android.view.Gravity.BOTTOM
             )
             logInfo("Debug console ready")
             onModeSelected = { mode ->
@@ -96,13 +90,14 @@ class HookRenderer @JvmOverloads constructor(
                 switchMode(mode)
             }
         }
-        rootLayout.addView(debugConsole)
+        addView(debugConsole)
         
         updateModeButtons()
         setupEngine()
     }
     
     private fun switchMode(mode: RendererMode) {
+        debugConsole?.logInfo("Switching to $mode mode...")
         setRendererMode(mode)
         updateModeButtons()
         // Auto-reload current hook if one was loaded
@@ -257,6 +252,11 @@ class HookRenderer @JvmOverloads constructor(
                 // Pull logs from JS context
                 jsContext?.let { debugConsole?.pullFromJSContext(it) }
                 
+                // Update markup in debug console
+                withContext(Dispatchers.Main) {
+                    debugConsole?.setMarkup(nativeRenderer.getRenderedHierarchy())
+                }
+                
                 onReady?.invoke(viewCount)
             } catch (e: Exception) {
                 debugConsole?.logError("❌ Render error: ${e.message}")
@@ -274,6 +274,7 @@ class HookRenderer @JvmOverloads constructor(
                 jsContext?.let { ctx ->
                     withContext(Dispatchers.Main) {
                         debugConsole?.pullFromJSContext(ctx)
+                        debugConsole?.setMarkup(nativeRenderer.getRenderedHierarchy())
                     }
                 }
                 delay(500) // Pull every 500ms
@@ -416,7 +417,10 @@ class HookRenderer @JvmOverloads constructor(
         ctx.setObjectForKey("__android_transpile", object : JavaScriptObject() {
             fun callString(source: String, filename: String): String {
                 Log.d("HookRenderer", "__android_transpile called: filename=$filename, sourceLen=${source.length}")
-                val result = transpiler.transpile(source, filename).getOrNull() ?: ""
+                val result = transpiler.transpile(source, filename).getOrElse { 
+                    Log.e("HookRenderer", "Transpilation failed for $filename: ${it.message}")
+                    throw RuntimeException("Transpilation failed: ${it.message}")
+                }
                 Log.d("HookRenderer", "__android_transpile result preview: ${result.take(500)}")
                 return result
             }
@@ -508,7 +512,38 @@ class HookRenderer @JvmOverloads constructor(
                     } catch (e: Exception) { null }
                 } ?: buildThemesJson(themeName)
                 
+                customThemesJson = themesJson
                 nativeRenderer.setTheme(themesJson)
+            }
+        })
+
+        ctx.setObjectForKey("__android_registerTheme", object : JavaScriptObject() {
+            fun callString(name: String, defsJson: String): String {
+                Log.i(TAG, "[BRIDGE] registerTheme called from JS: $name")
+                try {
+                    val defs = gson.fromJson(defsJson, Map::class.java)
+                    val existingJson = customThemesJson ?: buildThemesJson()
+                    val map = gson.fromJson(existingJson, MutableMap::class.java) as MutableMap<String, Any>
+                    val themes = (map["themes"] as? MutableMap<String, Any>) ?: mutableMapOf()
+                    themes[name] = defs
+                    map["themes"] = themes
+                    customThemesJson = gson.toJson(map)
+                    Log.d(TAG, "[BRIDGE] Theme $name registered in customThemesJson")
+                } catch (e: Exception) {
+                    Log.e(TAG, "Error in __android_registerTheme", e)
+                }
+                return ""
+            }
+        })
+
+        ctx.setObjectForKey("__android_parseThemeYaml", object : JavaScriptObject() {
+            fun callString(yaml: String): String {
+                return try {
+                    ThemedStylerModule.parseThemeYaml(yaml)
+                } catch (e: Exception) {
+                    Log.e(TAG, "Error in __android_parseThemeYaml", e)
+                    "{}"
+                }
             }
         })
 
@@ -587,6 +622,13 @@ class HookRenderer @JvmOverloads constructor(
                     
                     // Create the themed-styler bridge module
                     globalThis.__clevertree_packages['@clevertree/themed-styler'] = {
+                        parseThemeYaml: function(yaml) {
+                            console.log('[themed-styler] parseThemeYaml');
+                            if (typeof globalThis.__android_parseThemeYaml === 'function') {
+                                return JSON.parse(globalThis.__android_parseThemeYaml(yaml));
+                            }
+                            return {};
+                        },
                         setCurrentTheme: function(name) {
                             console.log('[themed-styler] setCurrentTheme: ' + name);
                             state.currentTheme = name;
@@ -618,6 +660,9 @@ class HookRenderer @JvmOverloads constructor(
                             console.log('[themed-styler] registerTheme: ' + name);
                             state.themes[name] = defs || {};
                             if (!state.currentTheme) state.currentTheme = name;
+                            if (typeof globalThis.__android_registerTheme === 'function') {
+                                globalThis.__android_registerTheme(name, JSON.stringify(defs));
+                            }
                             return true;
                         },
                         clearUsage: function() {
@@ -692,6 +737,15 @@ class HookRenderer @JvmOverloads constructor(
         // Load bridge from asset file
         Log.d(TAG, "installBridge: loading bridge.js from assets")
         try {
+            // Load markdown-to-jsx if available
+            try {
+                val markdownCode = context.assets.open("markdown-to-jsx.min.js").bufferedReader().use { it.readText() }
+                ctx.evaluateScript(markdownCode, "markdown-to-jsx.js")
+                Log.d(TAG, "Successfully loaded markdown-to-jsx.min.js")
+            } catch (e: Exception) {
+                Log.w(TAG, "markdown-to-jsx.min.js not found in assets, skipping")
+            }
+
             val bridgeCode = context.assets.open("bridge.js").bufferedReader().use { it.readText() }
             val bridgeResult = ctx.evaluateScript(bridgeCode, "bridge.js")
             Log.d(TAG, "Bridge evaluation result: $bridgeResult")
@@ -755,6 +809,51 @@ class HookRenderer @JvmOverloads constructor(
                         return (Array.isArray(arr) ? arr : Array.prototype.slice.call(arr)).slice(0, i || 1).concat(new Array(Math.max(0, i - arr.length)).fill(void 0));
                     };
                     
+                    // Basic Symbol polyfill if missing
+                    if (typeof globalObj.Symbol === 'undefined') {
+                        console.log('[POLYFILL] Symbol missing, installing basic polyfill');
+                        globalObj.Symbol = function(name) {
+                            return '@@' + name + '_' + Math.random().toString(36).substr(2);
+                        };
+                        globalObj.Symbol.iterator = '@@iterator';
+                        globalObj.Symbol.for = function(name) { return '@@' + name; };
+                    }
+
+                    // Array.from polyfill if missing
+                    if (typeof Array.from === 'undefined') {
+                        console.log('[POLYFILL] Array.from missing, installing polyfill');
+                        Array.from = function(iter) {
+                            var list = [];
+                            if (!iter) return list;
+                            if (typeof iter.forEach === 'function') {
+                                iter.forEach(function(i) { list.push(i); });
+                            } else if (typeof iter.length === 'number') {
+                                for (var i = 0; i < iter.length; i++) list.push(iter[i]);
+                            }
+                            return list;
+                        };
+                    }
+
+                    // Object.assign polyfill if missing
+                    if (typeof Object.assign !== 'function') {
+                        console.log('[POLYFILL] Object.assign missing, installing polyfill');
+                        Object.assign = function(target) {
+                            if (target == null) throw new TypeError('Cannot convert undefined or null to object');
+                            var to = Object(target);
+                            for (var index = 1; index < arguments.length; index++) {
+                                var nextSource = arguments[index];
+                                if (nextSource != null) {
+                                    for (var nextKey in nextSource) {
+                                        if (Object.prototype.hasOwnProperty.call(nextSource, nextKey)) {
+                                            to[nextKey] = nextSource[nextKey];
+                                        }
+                                    }
+                                }
+                            }
+                            return to;
+                        };
+                    }
+                    
                     globalObj._type_of = globalObj._type_of || function(obj) {
                         "@babel/helpers - typeof";
                         return obj && typeof Symbol !== "undefined" && obj.constructor === Symbol ? "symbol" : typeof obj;
@@ -764,13 +863,95 @@ class HookRenderer @JvmOverloads constructor(
                         return Array.isArray(arr) ? arr : Array.from(arr);
                     };
 
+                    globalObj._array_without_holes = globalObj._array_without_holes || function(arr) {
+                        if (Array.isArray(arr)) return globalObj._array_like_to_array(arr);
+                    };
+
+                    globalObj._iterable_to_array = globalObj._iterable_to_array || function(iter) {
+                        if (typeof Symbol !== "undefined" && iter[Symbol.iterator] != null || iter["@@iterator"] != null) return Array.from(iter);
+                    };
+
+                    globalObj._non_iterable_spread = globalObj._non_iterable_spread || function() {
+                        throw new TypeError("Invalid attempt to spread non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
+                    };
+
                     globalObj._to_array = globalObj._to_array || globalObj._to_consumable_array;
+
+                    globalObj._array_like_to_array = globalObj._array_like_to_array || function(arr, len) {
+                        if (len == null || len > arr.length) len = arr.length;
+                        for (var i = 0, arr2 = new Array(len); i < len; i++) arr2[i] = arr[i];
+                        return arr2;
+                    };
+
+                    globalObj._unsupported_iterable_to_array = globalObj._unsupported_iterable_to_array || function(o, minLen) {
+                        if (!o) return;
+                        if (typeof o === "string") return globalObj._array_like_to_array(o, minLen);
+                        var n = Object.prototype.toString.call(o).slice(8, -1);
+                        if (n === "Object" && o.constructor) n = o.constructor.name;
+                        if (n === "Map" || n === "Set") return Array.from(o);
+                        if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return globalObj._array_like_to_array(o, minLen);
+                    };
+
+                    globalObj._create_for_of_iterator_helper = globalObj._create_for_of_iterator_helper || function(o, allowArrayLike) {
+                        var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"];
+                        if (!it) {
+                            if (Array.isArray(o) || (it = globalObj._unsupported_iterable_to_array(o)) || allowArrayLike && o && typeof o.length === "number") {
+                                if (it) o = it;
+                                var i = 0;
+                                var F = function() {};
+                                return {
+                                    s: F,
+                                    n: function() {
+                                        if (i >= o.length) return { done: true };
+                                        return { done: false, value: o[i++] };
+                                    },
+                                    e: function(e) { throw e; },
+                                    f: F
+                                };
+                            }
+                            throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
+                        }
+                        var normalCompletion = true, didErr = false, err;
+                        return {
+                            s: function() { it = it.call(o); },
+                            n: function() {
+                                var step = it.next();
+                                normalCompletion = step.done;
+                                return step;
+                            },
+                            e: function(e) {
+                                didErr = true;
+                                err = e;
+                            },
+                            f: function() {
+                                try {
+                                    if (!normalCompletion && it.return != null) it.return();
+                                } finally {
+                                    if (didErr) throw err;
+                                }
+                            }
+                        };
+                    };
                     
                     // Class helpers
                     globalObj._classCallCheck = globalObj._classCallCheck || function(instance, Constructor) {
                         if (!(instance instanceof Constructor)) {
                             throw new TypeError("Cannot call a class as a function");
                         }
+                    };
+
+                    globalObj._define_property = globalObj._define_property || function(obj, key, value) {
+                        if (key in obj) {
+                            Object.defineProperty(obj, key, {
+                                value: value,
+                                enumerable: true,
+                                configurable: true,
+                                writable: true
+                            });
+                        } else {
+                            obj[key] = value;
+                        }
+                        return obj;
                     };
                     
                     globalObj._defineProperties = globalObj._defineProperties || function(target, props) {
@@ -781,6 +962,43 @@ class HookRenderer @JvmOverloads constructor(
                             if ("value" in descriptor) descriptor.writable = true;
                             Object.defineProperty(target, descriptor.key, descriptor);
                         }
+                    };
+
+                    globalObj._array_with_holes = globalObj._array_with_holes || function(arr) {
+                        if (Array.isArray(arr)) return arr;
+                    };
+
+                    globalObj._iterable_to_array_limit = globalObj._iterable_to_array_limit || function(arr, i) {
+                        var _i = arr == null ? null : typeof Symbol !== "undefined" && arr[Symbol.iterator] || arr["@@iterator"];
+                        if (_i == null) return;
+                        var _arr = [];
+                        var _n = true;
+                        var _d = false;
+                        var _s, _e;
+                        try {
+                            for (_i = _i.call(arr); !(_n = (_s = _i.next()).done); _n = true) {
+                                _arr.push(_s.value);
+                                if (i && _arr.length === i) break;
+                            }
+                        } catch (err) {
+                            _d = true;
+                            _e = err;
+                        } finally {
+                            try {
+                                if (!_n && _i["return"] != null) _i["return"]();
+                            } finally {
+                                if (_d) throw _e;
+                            }
+                        }
+                        return _arr;
+                    };
+
+                    globalObj._non_iterable_rest = globalObj._non_iterable_rest || function() {
+                        throw new TypeError("Invalid attempt to destructure non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
+                    };
+
+                    globalObj._sliced_to_array = globalObj._sliced_to_array || function(arr, i) {
+                        return globalObj._array_with_holes(arr) || globalObj._iterable_to_array_limit(arr, i) || globalObj._unsupported_iterable_to_array(arr, i) || globalObj._non_iterable_rest();
                     };
                     
                     globalObj._createClass = globalObj._createClass || function(Constructor, protoProps, staticProps) {
@@ -820,15 +1038,20 @@ class HookRenderer @JvmOverloads constructor(
                     };
 
                     // JSX runtime - will be filled by React/Android after bundle loads
-                    globalObj._jsxruntime = globalObj._jsxruntime || {
+                    globalObj.__hook_jsx_runtime = globalObj.__hook_jsx_runtime || {
                         jsx: function() { 
+                            if (globalObj.Act && globalObj.Act.createElement) return globalObj.Act.createElement.apply(globalObj.Act, arguments);
+                            if (globalObj.React && globalObj.React.createElement) return globalObj.React.createElement.apply(globalObj.React, arguments);
                             console.warn('[JSX] jsx() not yet initialized');
                             return null;
                         },
                         jsxs: function() { 
+                            if (globalObj.Act && globalObj.Act.createElement) return globalObj.Act.createElement.apply(globalObj.Act, arguments);
+                            if (globalObj.React && globalObj.React.createElement) return globalObj.React.createElement.apply(globalObj.React, arguments);
                             console.warn('[JSX] jsxs() not yet initialized');
                             return null;
-                        }
+                        },
+                        Fragment: 'Fragment'
                     };
                     
                     console.log('[GLOBAL-SETUP] SWC helpers installed at globalThis level');
@@ -994,6 +1217,23 @@ class HookRenderer @JvmOverloads constructor(
                             }
                             return { Provider: null };
                         },
+                        lazy: function(loader) {
+                            if (typeof globalThis.Act !== 'undefined' && globalThis.Act.lazy) {
+                                return globalThis.Act.lazy(loader);
+                            }
+                            console.warn('[React.lazy] Act.lazy not available');
+                            return function() { return null; };
+                        },
+                        Suspense: function(props) {
+                            if (typeof globalThis.Act !== 'undefined' && globalThis.Act.Suspense) {
+                                return globalThis.Act.Suspense(props);
+                            }
+                            console.warn('[React.Suspense] Act.Suspense not available');
+                            return props.children;
+                        },
+                        Fragment: (typeof globalThis.Act !== 'undefined') ? globalThis.Act.Fragment : '__act_fragment__',
+                        memo: function(comp) { return comp; },
+                        forwardRef: function(comp) { return comp; },
                         render: function(Component, props) {
                             console.log('[React.render] Called, delegating to Act.render');
                             
@@ -1138,6 +1378,7 @@ class HookRenderer @JvmOverloads constructor(
 
     private fun executeJs(code: String, filename: String, props: Map<String, Any>) {
         Log.d(TAG, "[EXECUTE_JS] Starting: filename=$filename, codeLength=${code.length}, mode=$rendererMode")
+        Log.d(TAG, "[EXECUTE_JS] Code preview: ${code.take(2000)}")
         val ctx = jsContext ?: run {
             Log.e(TAG, "[EXECUTE_JS] Cannot execute - jsContext is null!")
             return
@@ -1152,6 +1393,19 @@ class HookRenderer @JvmOverloads constructor(
         
         val propsJson = gson.toJson(props)
         ctx.evaluateScript("globalThis.__hook_props = $propsJson;", "props.js")
+        
+        // Set metadata for the current hook
+        val dirname = if (filename.contains("/")) filename.substringBeforeLast("/") else ""
+        ctx.evaluateScript("""
+            globalThis.__relay_meta = {
+                url: "$filename",
+                filename: "$filename",
+                dirname: "$dirname"
+            };
+            if (globalThis.__clevertree_packages) {
+                globalThis.__clevertree_packages['@clevertree/meta'] = globalThis.__relay_meta;
+            }
+        """.trimIndent(), "meta.js")
         
         // Update native renderer theme if present in props
         val themes = props["themes"] as? Map<String, Any>
@@ -1659,8 +1913,8 @@ class HookRenderer @JvmOverloads constructor(
                 text = errorText.toString()
                 setTextColor(Color.parseColor("#D32F2F"))
                 setPadding(48, 48, 48, 48)
-                textSize = 14f
-                lineSpacingExtra = 8f
+                setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 14f)
+                setLineSpacing(8f, 1f)
                 typeface = android.graphics.Typeface.MONOSPACE
                 layoutParams = LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT)
             }
@@ -1683,6 +1937,12 @@ class HookRenderer @JvmOverloads constructor(
     fun getStatus(): HookStatus = currentStatus
 
     override fun onDetachedFromWindow() {
+        Log.d(TAG, "onDetachedFromWindow: cleaning up")
+        try {
+            jsContext?.evaluateScript("if (globalThis.Act && globalThis.Act.unmount) { console.log('Calling Act.unmount()'); globalThis.Act.unmount(); }", "unmount.js")
+        } catch (e: Exception) {
+            Log.e(TAG, "Error calling Act.unmount()", e)
+        }
         super.onDetachedFromWindow()
         jsContext = null
         scope.cancel()

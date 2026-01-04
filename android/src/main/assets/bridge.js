@@ -43,6 +43,72 @@
     globalObj.setInterval = globalObj.setTimeout; // Simple alias for now
     globalObj.clearInterval = globalObj.clearTimeout;
 
+    globalObj.__clevertree_packages = globalObj.__clevertree_packages || {};
+
+    globalObj.__clevertree_packages['@clevertree/markdown'] = (function() {
+        var MarkdownRenderer = function (props) {
+            var Act = globalObj.Act || globalObj.React;
+            if (!Act) {
+                console.error('[Markdown] Act/React not found');
+                return null;
+            }
+            
+            if (typeof globalThis.MarkdownToJsx === 'undefined') {
+                console.warn('[Markdown] MarkdownToJsx not loaded, falling back to raw text');
+                return Act.createElement('text', { text: props.content || props.children });
+            }
+
+            try {
+                var compiler = globalThis.MarkdownToJsx.compiler;
+                // Map standard HTML tags to our native-supported tags
+                var options = {
+                    overrides: {
+                        MarkdownRenderer: { component: MarkdownRenderer },
+                        h1: { component: 'h1' },
+                        h2: { component: 'h2' },
+                        h3: { component: 'h3' },
+                        h4: { component: 'h4' },
+                        h5: { component: 'h5' },
+                        h6: { component: 'h6' },
+                        p: { component: 'p' },
+                        span: { component: 'span' },
+                        strong: { component: 'span' },
+                        em: { component: 'span' },
+                        code: { component: 'span' },
+                        del: { component: 'span' },
+                        ins: { component: 'span' },
+                        sub: { component: 'span' },
+                        sup: { component: 'span' },
+                        div: { component: 'div' },
+                        img: { component: 'img' },
+                        a: { component: 'span' }, // Map links to spans for now
+                        ul: { component: 'div' },
+                        ol: { component: 'div' },
+                        li: { component: 'div' }
+                    },
+                    createElement: Act.createElement
+                };
+                
+                // Merge custom overrides if provided
+                if (props.overrides) {
+                    for (var key in props.overrides) {
+                        options.overrides[key] = props.overrides[key];
+                    }
+                }
+
+                console.log('[MarkdownRenderer] Rendering content length: ' + (props.content || '').length);
+                return compiler(props.content || props.children || '', options);
+            } catch (e) {
+                console.error('[Markdown] Error rendering markdown:', e);
+                return Act.createElement('text', { text: 'Error rendering markdown' });
+            }
+        };
+
+        return {
+            MarkdownRenderer: MarkdownRenderer
+        };
+    })();
+
     globalObj.URL = function (url, base) {
         this.href = url;
         if (base) {
@@ -97,13 +163,20 @@
     };
 
     globalObj.fetch = function (url, init) {
+        var baseUrl = (globalObj.__relay_meta && globalObj.__relay_meta.url) || "";
+        var resolvedUrl = url;
+        if (baseUrl && url.indexOf('http') !== 0) {
+            resolvedUrl = new globalObj.URL(url, baseUrl).href;
+            console.log('[fetch] Resolved ' + url + ' to ' + resolvedUrl + ' (base=' + baseUrl + ')');
+        }
+
         return new Promise(function (resolve, reject) {
             var options = init || {};
             var resultJson = "";
-            if (url.indexOf('http') === 0) {
-                resultJson = __android_fetch(url, JSON.stringify(options));
+            if (resolvedUrl.indexOf('http') === 0) {
+                resultJson = __android_fetch(resolvedUrl, JSON.stringify(options));
             } else {
-                var path = url;
+                var path = resolvedUrl;
                 if (path.indexOf('/') === 0) path = path.substring(1);
                 var content = __android_readFile(path);
                 resultJson = JSON.stringify({
@@ -175,8 +248,7 @@
             return globalObj.__hook_jsx_runtime || {};
         }
         if (id === '@clevertree/meta') return { default: { url: parentPath || id }, url: parentPath || id };
-        if (id === '@clevertree/markdown') return { MarkdownRenderer: function (props) { return (globalObj.Act || globalObj.React).createElement('MarkdownRenderer', props); } };
-        if (id === '@clevertree/theme') return { registerThemesFromYaml: function () { return Promise.resolve(); } };
+
 
         // Check cache by absolute path
         var cacheKey = id;
