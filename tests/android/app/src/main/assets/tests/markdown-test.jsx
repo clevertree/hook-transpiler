@@ -14,6 +14,13 @@ This is a test of the **MarkdownRenderer** on Android.
 
 ### Nested Markdown
 <MarkdownRenderer content="#### I am nested markdown!" />
+
+### Tables
+| Feature | Status | Notes |
+| :--- | :---: | ---: |
+| Headers | ✅ | Working |
+| Bold | ✅ | Working |
+| Tables | 🆕 | Added |
   `;
 
     const CustomBox = ({ color, children }) => (

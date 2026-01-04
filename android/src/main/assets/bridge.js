@@ -45,14 +45,14 @@
 
     globalObj.__clevertree_packages = globalObj.__clevertree_packages || {};
 
-    globalObj.__clevertree_packages['@clevertree/markdown'] = (function() {
+    globalObj.__clevertree_packages['@clevertree/markdown'] = (function () {
         var MarkdownRenderer = function (props) {
             var Act = globalObj.Act || globalObj.React;
             if (!Act) {
                 console.error('[Markdown] Act/React not found');
                 return null;
             }
-            
+
             if (typeof globalThis.MarkdownToJsx === 'undefined') {
                 console.warn('[Markdown] MarkdownToJsx not loaded, falling back to raw text');
                 return Act.createElement('text', { text: props.content || props.children });
@@ -84,11 +84,17 @@
                         a: { component: 'span' }, // Map links to spans for now
                         ul: { component: 'div' },
                         ol: { component: 'div' },
-                        li: { component: 'div' }
+                        li: { component: 'div' },
+                        table: { component: 'table', props: { className: 'table' } },
+                        thead: { component: 'div' },
+                        tbody: { component: 'div' },
+                        tr: { component: 'table-row', props: { className: 'table-row' } },
+                        th: { component: 'table-cell', props: { className: 'table-cell table-header' } },
+                        td: { component: 'table-cell', props: { className: 'table-cell' } }
                     },
                     createElement: Act.createElement
                 };
-                
+
                 // Merge custom overrides if provided
                 if (props.overrides) {
                     for (var key in props.overrides) {
@@ -96,7 +102,6 @@
                     }
                 }
 
-                console.log('[MarkdownRenderer] Rendering content length: ' + (props.content || '').length);
                 return compiler(props.content || props.children || '', options);
             } catch (e) {
                 console.error('[Markdown] Error rendering markdown:', e);

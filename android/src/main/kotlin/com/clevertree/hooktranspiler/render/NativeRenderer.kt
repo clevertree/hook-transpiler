@@ -44,7 +44,6 @@ class NativeRenderer(private val context: Context, private val rootContainer: Vi
     private val lastAppliedStyles = ConcurrentHashMap<Int, Map<String, Any>>()
     private val renderEpoch = AtomicInteger(0)
     private var viewsCreatedInCurrentRender = 0
-    private var currentThemeJson: String = "{}"
     
     // Optional: JS context for triggering events back to JS
     private var jsContext: Any? = null
@@ -54,40 +53,17 @@ class NativeRenderer(private val context: Context, private val rootContainer: Vi
     }
 
     fun setTheme(themeJson: String) {
-        // Inject display metrics into theme for Rust crate
-        // The themed-styler crate uses these for accurate unit conversions
         try {
-            Log.wtf(TAG, "========== SET THEME CALLED ==========")
             Log.i(TAG, "[Theme] Native version: ${com.relay.client.ThemedStylerModule.nativeGetVersion()}")
-            val theme = gson.fromJson(themeJson, MutableMap::class.java) as MutableMap<String, Any>
-            Log.i(TAG, "[Theme] Parsed theme keys: ${theme.keys}")
-            val currentTheme = theme["current_theme"] as? String
-            val themes = theme["themes"] as? Map<String, Any>
-            val lightColors = (themes?.get("light") as? Map<String, Any>)?.get("variables") as? Map<String, Any>
-            val darkColors = (themes?.get("dark") as? Map<String, Any>)?.get("variables") as? Map<String, Any>
-            val defaultSelectors = (themes?.get("default") as? Map<String, Any>)?.get("selectors") as? Map<String, Any>
-            
-            Log.i(TAG, "[Theme] current_theme: $currentTheme")
-            Log.d(TAG, "[Theme] themes available: ${themes?.keys}")
-            Log.d(TAG, "[Theme] light.variables: ${lightColors?.keys}")
-            Log.d(TAG, "[Theme] dark.variables: ${darkColors?.keys}")
-            Log.d(TAG, "[Theme] default.selectors sample: ${defaultSelectors?.keys?.take(5)}")
-            
-            theme["displayDensity"] = context.resources.displayMetrics.density
-            theme["scaledDensity"] = context.resources.displayMetrics.scaledDensity
-            this.currentThemeJson = gson.toJson(theme)
-            
-            Log.i(TAG, "[Theme] Final theme JSON: ${this.currentThemeJson}")
+            val density = context.resources.displayMetrics.density
+            val scaledDensity = context.resources.displayMetrics.scaledDensity
             
             // Update the unified style cache with new theme
-            ThemedStylerModule.setTheme(this.currentThemeJson)
+            ThemedStylerModule.setTheme(themeJson, density, scaledDensity)
             
-            Log.d(TAG, "[Theme] Set theme with density=${context.resources.displayMetrics.density} scaledDensity=${context.resources.displayMetrics.scaledDensity}")
-            Log.d(TAG, "[Theme] currentThemeJson length: ${this.currentThemeJson.length}")
+            Log.d(TAG, "[Theme] Set theme with density=$density scaledDensity=$scaledDensity")
         } catch (e: Exception) {
-            Log.e(TAG, "[Theme] Failed to inject density into theme: ${e.message}", e)
-            this.currentThemeJson = themeJson
-            ThemedStylerModule.setTheme(this.currentThemeJson)
+            Log.e(TAG, "[Theme] Failed to set theme: ${e.message}", e)
         }
     }
 
@@ -188,6 +164,18 @@ class NativeRenderer(private val context: Context, private val rootContainer: Vi
                 }
             }
             "text", "span", "label", "h1", "h2", "h3", "h4", "h5", "h6", "p", "MarkdownRenderer" -> TextView(context)
+            "table" -> LinearLayout(context).apply { 
+                orientation = LinearLayout.VERTICAL 
+                containerNodes[tag] = this 
+            }
+            "table-row" -> LinearLayout(context).apply { 
+                orientation = LinearLayout.HORIZONTAL 
+                containerNodes[tag] = this 
+            }
+            "table-cell" -> LinearLayout(context).apply { 
+                orientation = LinearLayout.VERTICAL 
+                containerNodes[tag] = this 
+            }
             "frame" -> FrameLayout(context).apply { containerNodes[tag] = this }
             "button" -> Button(context)
             "img", "image" -> ImageView(context)
@@ -547,7 +535,13 @@ class NativeRenderer(private val context: Context, private val rootContainer: Vi
                     }
                 }
                 "flex", "flexGrow" -> {
-                    // Handled after loop
+                    val f = parseNumber(value) ?: 0f
+                    if (lp is LinearLayout.LayoutParams) {
+                        lp.weight = f
+                        if (lp.width == ViewGroup.LayoutParams.WRAP_CONTENT && f > 0) {
+                            lp.width = 0
+                        }
+                    }
                 }
                 "androidScrollHorizontal", "androidScrollVertical" -> {
                     // Handled in createViewInternal
