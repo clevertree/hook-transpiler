@@ -608,7 +608,7 @@ class NativeRenderer(private val context: Context, private val rootContainer: Vi
                 "width" -> {
                     val w = when (value.toString()) {
                         "match_parent" -> ViewGroup.LayoutParams.MATCH_PARENT
-                        "wrap_content" -> ViewGroup.LayoutParams.WRAP_CONTENT
+                        "wrap_content", "fit-content", "auto" -> ViewGroup.LayoutParams.WRAP_CONTENT
                         else -> parseNumber(value)?.toInt() ?: lp?.width ?: ViewGroup.LayoutParams.WRAP_CONTENT
                     }
                     Log.d(TAG, "[applyStyles] tag=$tag setting width=$w (raw=$value)")
@@ -617,7 +617,7 @@ class NativeRenderer(private val context: Context, private val rootContainer: Vi
                 "height" -> {
                     val h = when (value.toString()) {
                         "match_parent" -> ViewGroup.LayoutParams.MATCH_PARENT
-                        "wrap_content" -> ViewGroup.LayoutParams.WRAP_CONTENT
+                        "wrap_content", "fit-content", "auto" -> ViewGroup.LayoutParams.WRAP_CONTENT
                         else -> parseNumber(value)?.toInt() ?: lp?.height ?: ViewGroup.LayoutParams.WRAP_CONTENT
                     }
                     Log.d(TAG, "[applyStyles] tag=$tag setting height=$h (raw=$value)")

@@ -629,4 +629,50 @@ const lazyModal = import('./modals/Modal');
         assert_eq!(imports[0].module, "./forms/FormComponent");
         assert_eq!(imports[1].module, "./modals/Modal");
     }
+
+    #[test]
+    fn test_jsx_transform_with_key() {
+        let source = r#"
+export default function Test() {
+  return <div key="test-key">Hello</div>;
+}
+"#;
+        let mut opts = TranspileOptions::default();
+        opts.target = TranspileTarget::Android;
+        
+        let result = transpile_jsx_with_options(source, &opts).unwrap();
+        
+        // Verify that the key is passed as the third argument to the JSX function
+        // Modern JSX transform: jsx(type, props, key)
+        // We want to ensure our transpiler produces this format so our 'act' runtime can handle it.
+        assert!(result.contains(r#".jsx("div","#));
+        assert!(result.contains(r#"}, "test-key")"#));
+        assert!(result.contains("children:"));
+        assert!(result.contains("Hello"));
+    }
+
+    #[test]
+    fn test_jsxs_transform_with_key() {
+        let source = r#"
+export default function Test() {
+  return (
+    <div key="test-key">
+      <span>One</span>
+      <span>Two</span>
+    </div>
+  );
+}
+"#;
+        let mut opts = TranspileOptions::default();
+        opts.target = TranspileTarget::Android;
+        
+        let result = transpile_jsx_with_options(source, &opts).unwrap();
+        
+        // Verify that jsxs is used for multiple static children
+        assert!(result.contains(r#".jsxs("div","#));
+        assert!(result.contains(r#"}, "test-key")"#));
+        assert!(result.contains("children:"));
+        assert!(result.contains("One"));
+        assert!(result.contains("Two"));
+    }
 }

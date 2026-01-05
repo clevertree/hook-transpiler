@@ -46,7 +46,9 @@
     "typescript": "^5.0.0"
   },
   "dependencies": {
-    "@clevertree/md2jsx": "^1.0.2"
+    "@clevertree/md2jsx": "^1.0.2",
+    "chokidar": "^5.0.0",
+    "ws": "^8.18.3"
   },
   "peerDependencies": {
     "react": ">=18.0.0"

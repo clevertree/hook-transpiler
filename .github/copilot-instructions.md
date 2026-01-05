@@ -187,6 +187,22 @@ Android HookRenderer provides virtual modules to hooks via `globalThis.__clevert
 - Look for: `[__require_module] Found in __clevertree_packages: @module/name`
 - If module not found, check `installBridge()` ran before `loadRuntime()`
 
+## Android Live Reload System
+
+### Architecture
+The `HookRenderer` supports live reloading of JSX/TSX files from a local dev server during development.
+- **Detection**: On initialization, `HookRenderer` checks if the app is debuggable. If so, it pings `http://127.0.0.1:8081/status`.
+- **WebSocket**: If the dev server is found, it opens a WebSocket to `ws://127.0.0.1:8081` to listen for `reload` messages.
+- **Interception**: When `isDevServerActive` is true, `fetchViaModuleLoader` attempts to fetch files from the dev server before falling back to local assets.
+- **Trigger**: When a file change is detected by the dev server, it broadcasts a reload signal, and `HookRenderer` calls `loadHook()` for the current path.
+
+### Usage (CRITICAL)
+To use live reload, you MUST set up an ADB reverse proxy:
+```bash
+adb reverse tcp:8081 tcp:8081
+```
+Then start the dev server in `relay-client-android/scripts/start-dev.sh` or the respective test app's `scripts/start-dev.sh` (which runs `dev-server.cjs`).
+
 ## Build & Test Playbook (per repo)
 
 ### hook-transpiler (this repo)

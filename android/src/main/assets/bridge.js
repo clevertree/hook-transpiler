@@ -98,6 +98,36 @@
         this.get = function (name) { return this.params[name] || null; };
     };
 
+    // postMessage support
+    globalObj.postMessage = function (message) {
+        if (typeof __android_postMessage === 'function') {
+            __android_postMessage(JSON.stringify(message));
+        }
+    };
+
+    // localStorage polyfill
+    globalObj.localStorage = {
+        getItem: function (key) {
+            if (typeof __android_get_pref === 'function') {
+                return __android_get_pref(key, null);
+            }
+            return null;
+        },
+        setItem: function (key, value) {
+            if (typeof __android_set_pref === 'function') {
+                __android_set_pref(key, value);
+            }
+        },
+        removeItem: function (key) {
+            if (typeof __android_set_pref === 'function') {
+                __android_set_pref(key, null);
+            }
+        },
+        clear: function () {
+            // Not implemented for now
+        }
+    };
+
     globalObj.fetch = function (url, init) {
         var baseUrl = (globalObj.__relay_meta && globalObj.__relay_meta.url) || "";
         var resolvedUrl = url;

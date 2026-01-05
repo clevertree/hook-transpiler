@@ -23,6 +23,7 @@ import com.clevertree.jscbridge.JSException
 import com.clevertree.jscbridge.JavaScriptObject
 import com.clevertree.jscbridge.JSObject
 import com.google.gson.Gson
+import okhttp3.*
 import kotlinx.coroutines.*
 import java.net.URL
 import kotlin.coroutines.coroutineContext
@@ -47,11 +48,19 @@ class HookRenderer @JvmOverloads constructor(
     
     private val scrollView: ScrollView
     private val nativeRenderer: NativeRenderer
+    private val progressOverlay: LinearLayout
+    private val progressText: TextView
     private var debugConsole: DebugConsoleOverlay? = null
     private var customThemesJson: String? = null
     
     private var jscManager: HookJSCManager? = null
     private var jsContext: JSContext? = null
+
+    // Dev server support
+    private var isDevServerActive = false
+    private val devServerUrl = "http://127.0.0.1:8081"
+    private val devServerWsUrl = "ws://127.0.0.1:8081"
+    private var webSocket: WebSocket? = null
 
     private inner class HookJSCManager(context: Context) : com.clevertree.jscbridge.JSCManager(context) {
         override fun setupModules(context: JSContext) {
@@ -73,6 +82,7 @@ class HookRenderer @JvmOverloads constructor(
     var onSourceLoaded: ((String) -> Unit)? = null
     var onTranspiled: ((String) -> Unit)? = null
     var onThemeChanged: ((String) -> Unit)? = null
+    var onPostMessage: ((Map<String, Any>) -> Unit)? = null
 
     init {
         // Main content container
@@ -85,6 +95,25 @@ class HookRenderer @JvmOverloads constructor(
             isFillViewport = true
         }
         addView(scrollView)
+
+        progressOverlay = LinearLayout(context).apply {
+            orientation = LinearLayout.VERTICAL
+            gravity = android.view.Gravity.CENTER
+            setBackgroundColor(Color.parseColor("#F8F9FA"))
+            visibility = View.GONE
+            layoutParams = LayoutParams(
+                LayoutParams.MATCH_PARENT,
+                LayoutParams.MATCH_PARENT
+            )
+        }
+        progressText = TextView(context).apply {
+            textSize = 16f
+            setTextColor(Color.BLACK)
+            gravity = android.view.Gravity.CENTER
+            setPadding(32, 32, 32, 32)
+        }
+        progressOverlay.addView(progressText)
+        addView(progressOverlay)
 
         nativeRenderer = NativeRenderer(context, scrollView)
 
@@ -105,6 +134,75 @@ class HookRenderer @JvmOverloads constructor(
         
         updateModeButtons()
         setupEngine()
+        checkDevServer()
+    }
+
+    private fun checkDevServer() {
+        val isDebuggable = (context.applicationInfo.flags and android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE) != 0
+        Log.d(TAG, "checkDevServer: isDebuggable=$isDebuggable")
+        if (!isDebuggable) return
+        
+        Log.d(TAG, "Checking for dev server at $devServerUrl")
+        scope.launch(Dispatchers.IO) {
+            try {
+                val client = OkHttpClient.Builder()
+                    .connectTimeout(1, java.util.concurrent.TimeUnit.SECONDS)
+                    .readTimeout(1, java.util.concurrent.TimeUnit.SECONDS)
+                    .build()
+                val request = Request.Builder().url("$devServerUrl/status").build()
+                val response = client.newCall(request).execute()
+                if (response.isSuccessful) {
+                    Log.i(TAG, "Dev server detected! Enabling live reload.")
+                    isDevServerActive = true
+                    setupWebSocket()
+                }
+            } catch (e: Exception) {
+                Log.d(TAG, "Dev server not found: ${e.message}")
+            }
+        }
+    }
+
+    private fun setupWebSocket() {
+        val client = OkHttpClient()
+        val request = Request.Builder().url(devServerWsUrl).build()
+        
+        webSocket = client.newWebSocket(request, object : WebSocketListener() {
+            override fun onOpen(webSocket: WebSocket, response: Response) {
+                Log.i(TAG, "Live reload WebSocket connected")
+                debugConsole?.logInfo("Live reload active")
+            }
+
+            override fun onMessage(webSocket: WebSocket, text: String) {
+                Log.d(TAG, "WebSocket message: $text")
+                try {
+                    val msg = gson.fromJson(text, Map::class.java)
+                    if (msg["type"] == "reload") {
+                        Log.i(TAG, "Reload signal received from dev server")
+                        runOnUiThread {
+                            currentHookPath?.let { path ->
+                                Log.i(TAG, "Auto-reloading hook: $path")
+                                loadHook(path, currentProps)
+                            }
+                        }
+                    }
+                } catch (e: Exception) {
+                    Log.e(TAG, "Failed to parse WebSocket message", e)
+                }
+            }
+
+            override fun onClosed(webSocket: WebSocket, code: Int, reason: String) {
+                Log.i(TAG, "Live reload WebSocket closed")
+            }
+
+            override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
+                Log.e(TAG, "Live reload WebSocket failure", t)
+                // Retry after a delay
+                scope.launch {
+                    delay(5000)
+                    if (isDevServerActive) setupWebSocket()
+                }
+            }
+        })
     }
     
     fun setTheme(themesJson: String) {
@@ -238,13 +336,35 @@ class HookRenderer @JvmOverloads constructor(
         currentLoadJob = scope.launch {
             Log.d(TAG, "[LOAD_HOOK_COROUTINE] Coroutine started for $path")
             try {
+                showProgress("Initializing...")
                 debugConsole?.logInfo("Loading: ${path.substringAfterLast("/")}")
                 onLoading?.invoke()
                 currentStatus = currentStatus.copy(loading = true, hookPath = path)
 
-                Log.d(TAG, "[LOAD_HOOK] Fetching source for $path via module loader")
+                var finalPath = path
+                if (path == "remote") {
+                    val domain = props["domain"] as? String ?: throw Exception("Domain missing for remote hook")
+                    showProgress("Querying remote domain: $domain")
+                    
+                    // Query OPTIONS to get the hook path
+                    val client = OkHttpClient()
+                    val request = Request.Builder()
+                        .url(domain)
+                        .method("OPTIONS", null)
+                        .build()
+                    
+                    val response = withContext(Dispatchers.IO) { client.newCall(request).execute() }
+                    if (!response.isSuccessful) throw Exception("OPTIONS request failed: ${response.code}")
+                    
+                    val hookHeader = response.header("X-Relay-Hook") ?: "index.jsx"
+                    finalPath = if (domain.endsWith("/")) "$domain$hookHeader" else "$domain/$hookHeader"
+                    Log.i(TAG, "Remote hook resolved: $finalPath")
+                }
+
+                showProgress("Fetching source...")
+                Log.d(TAG, "[LOAD_HOOK] Fetching source for $finalPath via module loader")
                 // Use module loader for both local and remote - no distinction
-                val source = fetchViaModuleLoader(path)
+                val source = fetchViaModuleLoader(finalPath)
                 
                 if (!isActive) {
                     Log.w(TAG, "[LOAD_HOOK] Coroutine cancelled before render")
@@ -255,19 +375,43 @@ class HookRenderer @JvmOverloads constructor(
                 debugConsole?.logInfo("✓ Source loaded (${source.length} bytes)")
                 onSourceLoaded?.invoke(source)
 
-                Log.d(TAG, "[LOAD_HOOK] Calling render() for $path")
-                render(source, path, props)
-                Log.d(TAG, "[LOAD_HOOK] render() completed for $path")
+                showProgress("Transpiling and Rendering...")
+                Log.d(TAG, "[LOAD_HOOK] Calling render() for $finalPath")
+                render(source, finalPath, props)
+                Log.d(TAG, "[LOAD_HOOK] render() completed for $finalPath")
+                hideProgress()
             } catch (e: CancellationException) {
                 Log.d(TAG, "[LOAD_HOOK] Load cancelled for $path")
                 throw e  // Rethrow to properly handle coroutine cancellation
             } catch (e: Exception) {
                 Log.e(TAG, "[LOAD_HOOK_ERROR] Exception in loadHook coroutine", e)
                 debugConsole?.logError("❌ Error: ${e.message}")
+                showProgress("Error: ${e.message}")
                 handleError(e)
             }
         }
         Log.d(TAG, "[LOAD_HOOK] loadHook() function returned (coroutine launched)")
+    }
+
+    private fun showProgress(message: String) {
+        runOnUiThread {
+            progressText.text = message
+            progressOverlay.visibility = View.VISIBLE
+        }
+    }
+
+    private fun hideProgress() {
+        runOnUiThread {
+            progressOverlay.visibility = View.GONE
+        }
+    }
+
+    private fun runOnUiThread(action: () -> Unit) {
+        if (android.os.Looper.myLooper() == android.os.Looper.getMainLooper()) {
+            action()
+        } else {
+            scrollView.post(action)
+        }
     }
 
     /**
@@ -415,6 +559,15 @@ class HookRenderer @JvmOverloads constructor(
                         ""
                     }
                 }
+                
+                if (isDevServerActive) {
+                    try {
+                        return java.net.URL("$devServerUrl/$path").readText()
+                    } catch (e: Exception) {
+                        Log.w(TAG, "Dev server readFile failed for $path: ${e.message}")
+                    }
+                }
+                
                 return try {
                     context.assets.open(path).bufferedReader().use { it.readText() }
                 } catch (e: Exception) {
@@ -462,9 +615,9 @@ class HookRenderer @JvmOverloads constructor(
         })
 
         ctx.setObjectForKey("__android_transpile", object : JavaScriptObject() {
-            fun callString(source: String, filename: String): String {
-                Log.d("HookRenderer", "__android_transpile called: filename=$filename, sourceLen=${source.length}")
-                val result = transpiler.transpile(source, filename).getOrElse { 
+            override fun call(source: String?, filename: String?): String {
+                Log.d("HookRenderer", "__android_transpile called: filename=$filename, sourceLen=${source?.length ?: 0}")
+                val result = transpiler.transpile(source ?: "", filename ?: "hook.jsx").getOrElse { 
                     Log.e("HookRenderer", "Transpilation failed for $filename: ${it.message}")
                     throw RuntimeException("Transpilation failed: ${it.message}")
                 }
@@ -474,13 +627,13 @@ class HookRenderer @JvmOverloads constructor(
         })
 
         ctx.setObjectForKey("__android_md2jsx_parse", object : JavaScriptObject() {
-            fun callString(markdown: String, allowedTagsJson: String): String {
+            override fun call(markdown: String?, allowedTagsJson: String?): String {
                 val allowedTags = try {
-                    gson.fromJson(allowedTagsJson, Array<String>::class.java).toList()
+                    gson.fromJson(allowedTagsJson ?: "[]", Array<String>::class.java).toList()
                 } catch (e: Exception) {
                     emptyList<String>()
                 }
-                return MarkdownParser.parse(markdown, allowedTags)
+                return MarkdownParser.parse(markdown ?: "", allowedTags)
             }
         })
 
@@ -577,14 +730,14 @@ class HookRenderer @JvmOverloads constructor(
         })
 
         ctx.setObjectForKey("__android_registerTheme", object : JavaScriptObject() {
-            fun callString(name: String, defsJson: String): String {
+            override fun call(name: String?, defsJson: String?): String {
                 Log.i(TAG, "[BRIDGE] registerTheme called from JS: $name")
                 try {
-                    val defs = gson.fromJson(defsJson, Map::class.java)
+                    val defs = gson.fromJson(defsJson ?: "{}", Map::class.java)
                     val existingJson = customThemesJson ?: buildThemesJson()
                     val map = gson.fromJson(existingJson, MutableMap::class.java) as MutableMap<String, Any>
                     val themes = (map["themes"] as? MutableMap<String, Any>) ?: mutableMapOf()
-                    themes[name] = defs
+                    themes[name ?: "unknown"] = defs
                     map["themes"] = themes
                     customThemesJson = gson.toJson(map)
                     Log.d(TAG, "[BRIDGE] Theme $name registered in customThemesJson")
@@ -596,9 +749,9 @@ class HookRenderer @JvmOverloads constructor(
         })
 
         ctx.setObjectForKey("__android_parseThemeYaml", object : JavaScriptObject() {
-            fun callString(yaml: String): String {
+            override fun call(yaml: String?, unused: String?): String {
                 return try {
-                    ThemedStylerModule.parseThemeYaml(yaml)
+                    ThemedStylerModule.parseThemeYaml(yaml ?: "")
                 } catch (e: Exception) {
                     Log.e(TAG, "Error in __android_parseThemeYaml", e)
                     "{}"
@@ -641,6 +794,32 @@ class HookRenderer @JvmOverloads constructor(
                 } catch (e: Exception) {
                     Log.e(TAG, "Error in __android_cancel_timer", e)
                 }
+            }
+        })
+
+        ctx.setObjectForKey("__android_postMessage", object : JavaScriptObject() {
+            override fun call(json: String) {
+                try {
+                    val data = gson.fromJson(json, Map::class.java) as Map<String, Any>
+                    onPostMessage?.invoke(data)
+                } catch (e: Exception) {
+                    Log.e(TAG, "Error in __android_postMessage", e)
+                }
+            }
+        })
+
+        ctx.setObjectForKey("__android_get_pref", object : JavaScriptObject() {
+            override fun call(key: String?, default: String?): String {
+                val prefs = context.getSharedPreferences("relay_js_prefs", Context.MODE_PRIVATE)
+                return prefs.getString(key ?: "", default) ?: default ?: ""
+            }
+        })
+
+        ctx.setObjectForKey("__android_set_pref", object : JavaScriptObject() {
+            override fun call(key: String?, value: String?): String {
+                val prefs = context.getSharedPreferences("relay_js_prefs", Context.MODE_PRIVATE)
+                prefs.edit().putString(key ?: "", value).apply()
+                return ""
             }
         })
 
@@ -1203,6 +1382,31 @@ class HookRenderer @JvmOverloads constructor(
             Log.d(TAG, "loadRuntime: evaluating Android runtime (${androidSource.length} bytes)")
             ctx.evaluateScript(androidSource, "react-native.bundle.js")
             Log.d(TAG, "Android runtime evaluation complete")
+
+            val ensureJsxRuntime = """
+                (function() {
+                    var ActRuntime = globalThis.Act || globalThis.React;
+                    if (!ActRuntime || typeof ActRuntime.createElement !== 'function') {
+                        return;
+                    }
+                    var jsxWrapper = function(type, props, key) {
+                        var p = props || {};
+                        if (p.children !== undefined) {
+                            return ActRuntime.createElement(type, p, p.children);
+                        }
+                        return ActRuntime.createElement(type, p);
+                    };
+                    globalThis.__hook_jsx_runtime = {
+                        jsx: jsxWrapper,
+                        jsxs: jsxWrapper,
+                        Fragment: ActRuntime.Fragment
+                    };
+                    globalThis.__jsx = jsxWrapper;
+                    globalThis.__jsxs = jsxWrapper;
+                    globalThis.__Fragment = ActRuntime.Fragment;
+                })();
+            """.trimIndent()
+            ctx.evaluateScript(ensureJsxRuntime, "ensure_jsx_runtime.js")
             
             // CRITICAL: Override console AFTER Android loads to ensure our implementation always wins
             // This fixes console logging from async/event contexts
@@ -2004,6 +2208,14 @@ class HookRenderer @JvmOverloads constructor(
         // Use __android_readFile bridge (same as module loader)
         val source = if (path.startsWith("http")) {
             URL(path).readText()
+        } else if (isDevServerActive) {
+            try {
+                Log.d(TAG, "Fetching from dev server: $devServerUrl/$path")
+                URL("$devServerUrl/$path").readText()
+            } catch (e: Exception) {
+                Log.w(TAG, "Dev server fetch failed for $path, falling back to assets: ${e.message}")
+                context.assets.open(path).bufferedReader().use { it.readText() }
+            }
         } else {
             context.assets.open(path).bufferedReader().use { it.readText() }
         }
@@ -2181,6 +2393,8 @@ class HookRenderer @JvmOverloads constructor(
     override fun onDetachedFromWindow() {
         Log.d(TAG, "onDetachedFromWindow: cleaning up")
         try {
+            webSocket?.close(1000, "View detached")
+            webSocket = null
             jsContext?.evaluateScript("if (globalThis.Act && globalThis.Act.unmount) { console.log('Calling Act.unmount()'); globalThis.Act.unmount(); }", "unmount.js")
         } catch (e: Exception) {
             Log.e(TAG, "Error calling Act.unmount()", e)
