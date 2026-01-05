@@ -226,10 +226,10 @@ function DynamicImportTest() {
                 return;
             }
 
-            addLog('STEP 6: About to call __hook_import directly');
+            addLog('STEP 6: About to call import()');
 
-            // Call __hook_import directly to debug
-            hookImport('./lazy-data.js', 'client.jsx')
+            // Call import() which should be transformed
+            import('./lazy-data.js')
                 .then(function (module) {
                     addLog('STEP 7: Promise resolved!');
                     addLog('STEP 8: Module keys: ' + Object.keys(module).join(', '));

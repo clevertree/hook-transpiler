@@ -10,6 +10,7 @@ import RemoteFetchTest from './tests/remote-fetch-test.jsx';
 import EventsTest from './tests/events-test.jsx';
 import TemplateLiteralsTest from './tests/template-literals-test.jsx';
 import MarkdownTest from './tests/markdown-test.jsx';
+import InputTest from './tests/input-test.jsx';
 
 const TABS = [
   { id: 'state', label: 'useState', component: UseStateTest },
@@ -21,10 +22,11 @@ const TABS = [
   { id: 'events', label: 'Events', component: EventsTest },
   { id: 'template', label: 'Templates', component: TemplateLiteralsTest },
   { id: 'markdown', label: 'Markdown-NEW', component: MarkdownTest },
+  { id: 'input', label: 'Input/List', component: InputTest },
 ];
 
 export default function TestSuite() {
-  const [activeTab, setActiveTab] = useState('markdown');
+  const [activeTab, setActiveTab] = useState('input');
   const [themeState, setThemeState] = useState(() => getThemes());
   const [renderError, setRenderError] = useState(null);
   const [resetKey, setResetKey] = useState(0);
@@ -59,7 +61,7 @@ export default function TestSuite() {
               <button
                 key={theme}
                 onClick={() => handleThemeChange(theme)}
-                className={`px-2 py-1 rounded-md text-[10px] uppercase tracking-wider ${currentTheme === theme ? 'bg-bg shadow-sm font-bold text-themed' : 'text-muted'}`}
+                className={`px-2 py-1 rounded-md text-[10px] uppercase tracking-wider ${currentTheme === theme ? 'bg-primary shadow-sm font-bold' : ''}`}
               >
                 {theme}
               </button>

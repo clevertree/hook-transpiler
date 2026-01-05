@@ -1,7 +1,7 @@
 # Hook-Transpiler Android Architecture - Refactored
 
 ## Overview
-Unified JSX rendering strategy for both web (WASM) and Android (QuickJS/JNI) using the ACT library, with zero code duplication.
+Unified JSX rendering strategy for both web (WASM) and Android (JavaScriptCore/JNI) using the ACT library, with zero code duplication.
 
 ## Architecture Diagram
 
@@ -21,7 +21,7 @@ Unified JSX rendering strategy for both web (WASM) and Android (QuickJS/JNI) usi
 │  ┌──────────────────┐    ┌──────────────────┐               │
 │  │  Web Layer       │    │  Android Layer   │               │
 │  ├──────────────────┤    ├──────────────────┤               │
-│  │ • WASM init      │    │ • QuickJS setup  │               │
+│  │ • WASM init      │    │ • JSC setup      │               │
 │  │ • Browser APIs   │    │ • JNI transpiler │               │
 │  │ • fetch, timers  │    │ • Native fetch   │               │
 │  │ • URL, etc       │    │ • Module shims   │               │
@@ -41,63 +41,47 @@ Unified JSX rendering strategy for both web (WASM) and Android (QuickJS/JNI) usi
 
 ## Core Modules
 
-### `src/android/quickJsContext.ts` ✅
-Manages CommonJS module execution in QuickJS.
+### `HookRenderer.kt` (Kotlin) ✅
+The primary entry point for Android. Manages the `JSContext` (via `jscbridge`) and coordinates fetching, transpilation, and rendering.
 
-**Problem Solved**: 
-- QuickJS eval() doesn't automatically have access to function-local variable scope
-- Transpiled code uses `module.exports.default = ...` but module wasn't accessible
+**Key Responsibilities**:
+- Initializes `JSContext` and installs native bridge functions.
+- Fetches hook source code (local or remote).
+- Calls `HookTranspiler` (Rust/JNI) to convert JSX to JS.
+- Executes transpiled JS in the `JSContext`.
+- Coordinates with `NativeRenderer` to create Android views.
 
-**Solution**:
-```typescript
-export function createQuickJsContext(evalFn?: typeof eval): QuickJsModuleContext {
-  // Provides: executeCode(code, filename) → result
-  // Automatically wraps eval to ensure module and all globals are in scope
-  // Returns module.exports.default for hook component
-}
-```
-
-**Usage Pattern**:
-```typescript
-const ctx = createQuickJsContext()
-ctx.setGlobal('React', React)
-ctx.setGlobal('__hook_jsx_runtime', hookRuntime)
-const hookFn = ctx.executeCode(transpiledCode, 'hook.jsx')
-const component = hookFn({ /* props */ })
-```
-
-### `src/android/webApiShims.ts` ✅
-Minimal shims for missing Web APIs - NOT fetch (that's native).
+### `bridge.js` (JavaScript Asset) ✅
+A JavaScript shim loaded into every `JSContext` to provide a web-compatible environment.
 
 **APIs Provided**:
-- ✅ `URLSearchParams` shim (if missing from QuickJS)
-- ✅ Timer verification (setTimeout/setInterval must exist)
-- ⚠️ `URL` - warns if missing (may be in QuickJS already)
-- ❌ `fetch` - NOT installed here (already native via Kotlin)
-- ❌ `Request/Response/Headers` - NOT installed (native handles this)
+- ✅ `setTimeout` / `clearTimeout` (via `__android_schedule_timer`)
+- ✅ `setInterval` / `clearInterval`
+- ✅ `console` polyfill (via `__android_log`)
+- ✅ `fetch` polyfill (via `__android_fetch`)
+- ✅ Virtual module system (`globalThis.__clevertree_packages`)
 
-**Usage**:
-```typescript
-import { installWebApiShims } from '@clevertree/hook-transpiler/android'
+### `NativeRenderer.kt` (Kotlin) ✅
+Converts the virtual view hierarchy from the JS runtime into actual Android `View` objects.
 
-installWebApiShims({ requireTimers: true, debug: true })
-```
+**Key Responsibilities**:
+- Handles `createView`, `updateProps`, `addChild`, etc.
+- Applies styles using `ThemedStylerModule` (Rust/JNI).
+- Manages the view tree and event listeners.
 
 ### Already Implemented (No Changes Needed)
 
-#### Kotlin `QuickJSManager.kt` - Native Fetch
+#### Native Fetch Bridge
 ```kotlin
-globalThis.fetch = function(url, options) {
-  return new Promise((resolve, reject) => {
-    const id = Math.random().toString(36).substring(7)
-    globalThis.__pendingFetches[id] = { resolve, reject }
-    globalThis.__pushMessage('fetch', { url, options, id })
-  })
-}
+ctx.setObjectForKey("__android_fetch", object : JavaScriptObject() {
+    fun callString(url: String, optionsJson: String?): String {
+        // Native implementation using HttpURLConnection
+    }
+})
 ```
 
 **Why it works**:
-- Async Promise-based API matches web fetch()
+- `bridge.js` wraps this in a Promise-based `fetch()` function that matches the Web API.
 - Returns Response object with `ok`, `status`, `text()`, `json()`
 - No CORS (native layer handles allowlists)
 - Host bridges HTTP client to QuickJS via `__pushMessage` + `__resolveFetch`

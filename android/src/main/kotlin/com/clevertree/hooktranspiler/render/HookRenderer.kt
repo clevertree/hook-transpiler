@@ -17,6 +17,7 @@ import com.clevertree.hooktranspiler.model.RendererMode
 import com.clevertree.hooktranspiler.transpiler.HookTranspiler
 import com.clevertree.hooktranspiler.ui.DebugConsoleOverlay
 import com.relay.client.ThemedStylerModule
+import com.clevertree.md2jsx.MarkdownParser
 import com.clevertree.jscbridge.JSContext
 import com.clevertree.jscbridge.JSException
 import com.clevertree.jscbridge.JavaScriptObject
@@ -49,11 +50,20 @@ class HookRenderer @JvmOverloads constructor(
     private var debugConsole: DebugConsoleOverlay? = null
     private var customThemesJson: String? = null
     
+    private var jscManager: HookJSCManager? = null
     private var jsContext: JSContext? = null
+
+    private inner class HookJSCManager(context: Context) : com.clevertree.jscbridge.JSCManager(context) {
+        override fun setupModules(context: JSContext) {
+            super.setupModules(context)
+            this@HookRenderer.installBridge(context)
+        }
+    }
     private var rendererMode = RendererMode.ANDROID
     private var host: String = ""
     private var currentStatus = HookStatus(hookPath = "")
     private var currentHookPath: String? = null
+    private var currentSource: String? = null
     private var currentProps: Map<String, Any> = emptyMap()
 
     // Callbacks
@@ -62,6 +72,7 @@ class HookRenderer @JvmOverloads constructor(
     var onError: ((HookError) -> Unit)? = null
     var onSourceLoaded: ((String) -> Unit)? = null
     var onTranspiled: ((String) -> Unit)? = null
+    var onThemeChanged: ((String) -> Unit)? = null
 
     init {
         // Main content container
@@ -96,6 +107,39 @@ class HookRenderer @JvmOverloads constructor(
         setupEngine()
     }
     
+    fun setTheme(themesJson: String) {
+        customThemesJson = themesJson
+        nativeRenderer.setTheme(themesJson)
+        
+        // If we have an active JS context, sync the theme there too
+        jsContext?.let { ctx ->
+            try {
+                val themes = gson.fromJson(themesJson, Map::class.java) as? Map<String, Any>
+                val themesMap = themes?.get("themes") as? Map<String, Any>
+                val currentTheme = (themes?.get("current_theme") as? String) ?: (themes?.get("currentTheme") as? String)
+                
+                if (themesMap != null) {
+                    val syncScript = StringBuilder()
+                    for ((name, def) in themesMap) {
+                        val defJson = gson.toJson(def)
+                        syncScript.append("if (globalThis.__clevertree_packages && globalThis.__clevertree_packages['@clevertree/themed-styler']) {\n")
+                        syncScript.append("  globalThis.__clevertree_packages['@clevertree/themed-styler'].registerTheme('$name', $defJson);\n")
+                        syncScript.append("}\n")
+                    }
+                    if (currentTheme != null) {
+                        syncScript.append("if (globalThis.__clevertree_packages && globalThis.__clevertree_packages['@clevertree/themed-styler']) {\n")
+                        syncScript.append("  globalThis.__clevertree_packages['@clevertree/themed-styler'].setCurrentTheme('$currentTheme');\n")
+                        syncScript.append("}\n")
+                    }
+                    ctx.evaluateScript(syncScript.toString(), "sync_themes_global.js")
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to sync theme to JS context", e)
+            }
+            Unit
+        }
+    }
+
     private fun switchMode(mode: RendererMode) {
         debugConsole?.logInfo("Switching to $mode mode...")
         setRendererMode(mode)
@@ -231,6 +275,7 @@ class HookRenderer @JvmOverloads constructor(
      */
     fun render(source: String, filename: String = "hook.jsx", props: Map<String, Any> = emptyMap()) {
         Log.d(TAG, "render: $filename, source length=${source.length}")
+        currentSource = source
         scope.launch {
             try {
                 val transpiled = transpiler.transpile(source, filename).getOrThrow()
@@ -290,10 +335,12 @@ class HookRenderer @JvmOverloads constructor(
         StrictMode.setThreadPolicy(policy)
 
         try {
-            jsContext = JSContext(JSContext.create()).also { ctx ->
-                Log.d(TAG, "setupEngine: JSContext created")
-                installBridge(ctx)
-                Log.d(TAG, "setupEngine: bridge installed")
+            jscManager = HookJSCManager(context).also { manager ->
+                manager.initialize()
+                val ctx = manager.getContext() ?: throw Exception("Failed to get JSContext")
+                jsContext = ctx
+                
+                Log.d(TAG, "setupEngine: JSContext created and bridge installed")
                 nativeRenderer.setJSContext(ctx)
                 
                 // Initialize native renderer with default theme
@@ -426,11 +473,22 @@ class HookRenderer @JvmOverloads constructor(
             }
         })
 
+        ctx.setObjectForKey("__android_md2jsx_parse", object : JavaScriptObject() {
+            fun callString(markdown: String, allowedTagsJson: String): String {
+                val allowedTags = try {
+                    gson.fromJson(allowedTagsJson, Array<String>::class.java).toList()
+                } catch (e: Exception) {
+                    emptyList<String>()
+                }
+                return MarkdownParser.parse(markdown, allowedTags)
+            }
+        })
+
         ctx.setObjectForKey("__android_createView", object : JavaScriptObject() {
             override fun call(json: String) {
                 try {
                     val data = gson.fromJson(json, Map::class.java)
-                    val tag = (data["tag"] as Double).toInt()
+                    val tag = (data["tag"] as? Double)?.toInt() ?: -1
                     val type = data["type"] as String
                     val props = data["props"] as? Map<String, Any> ?: emptyMap()
                     nativeRenderer.createView(tag, type, props)
@@ -444,7 +502,7 @@ class HookRenderer @JvmOverloads constructor(
             override fun call(json: String) {
                 try {
                     val data = gson.fromJson(json, Map::class.java)
-                    val tag = (data["tag"] as Double).toInt()
+                    val tag = (data["tag"] as? Double)?.toInt() ?: -1
                     val props = data["props"] as? Map<String, Any> ?: emptyMap()
                     nativeRenderer.updateProps(tag, props)
                 } catch (e: Exception) {
@@ -457,8 +515,8 @@ class HookRenderer @JvmOverloads constructor(
             override fun call(json: String) {
                 try {
                     val data = gson.fromJson(json, Map::class.java)
-                    val parent = (data["parent"] as Double).toInt()
-                    val child = (data["child"] as Double).toInt()
+                    val parent = (data["parent"] as? Double)?.toInt() ?: -1
+                    val child = (data["child"] as? Double)?.toInt() ?: -1
                     val index = (data["index"] as? Double)?.toInt() ?: -1
                     nativeRenderer.addChild(parent, child, index)
                 } catch (e: Exception) {
@@ -471,8 +529,8 @@ class HookRenderer @JvmOverloads constructor(
             override fun call(json: String) {
                 try {
                     val data = gson.fromJson(json, Map::class.java)
-                    val parent = (data["parent"] as Double).toInt()
-                    val child = (data["child"] as Double).toInt()
+                    val parent = (data["parent"] as? Double)?.toInt() ?: -1
+                    val child = (data["child"] as? Double)?.toInt() ?: -1
                     nativeRenderer.removeChild(parent, child)
                 } catch (e: Exception) {
                     Log.e(TAG, "Error in __android_removeChild", e)
@@ -484,7 +542,7 @@ class HookRenderer @JvmOverloads constructor(
             override fun call(json: String) {
                 try {
                     val data = gson.fromJson(json, Map::class.java)
-                    val tag = (data["tag"] as Double).toInt()
+                    val tag = (data["tag"] as? Double)?.toInt() ?: -1
                     val event = data["event"] as String
                     nativeRenderer.addEventListener(tag, event)
                 } catch (e: Exception) {
@@ -514,6 +572,7 @@ class HookRenderer @JvmOverloads constructor(
                 
                 customThemesJson = themesJson
                 nativeRenderer.setTheme(themesJson)
+                onThemeChanged?.invoke(themeName)
             }
         })
 
@@ -588,164 +647,219 @@ class HookRenderer @JvmOverloads constructor(
         // Register virtual modules for hooks to import
         // These are provided by the HookRenderer and made available via globalThis.__clevertree_packages
         Log.d(TAG, "installBridge: registering virtual modules")
-        try {
-            // Initialize __clevertree_packages object if not already present
-            ctx.evaluateScript("""
-                (function() {
-                    if (!globalThis.__clevertree_packages) {
-                        globalThis.__clevertree_packages = {};
-                    }
-                    
-                    // Initialize themed-styler bridge state
-                    if (!globalThis.__themed_styler_state) {
-                        globalThis.__themed_styler_state = {
-                            themes: {},
-                            currentTheme: null,
-                            usage: {
-                                tags: new Set(),
-                                classes: new Set(),
-                                tagClasses: new Set()
-                            }
+        
+        // Register @clevertree/themed-styler
+        ctx.evaluateScript("""
+            globalThis.__clevertree_packages['@clevertree/themed-styler'] = (function() {
+                var state = globalThis.__themed_styler_state || {
+                    themes: {},
+                    currentTheme: null,
+                    usage: { tags: new Set(), classes: new Set(), tagClasses: new Set() }
+                };
+                globalThis.__themed_styler_state = state;
+                
+                return {
+                    parseThemeYaml: function(yaml) {
+                        if (typeof globalThis.__android_parseThemeYaml === 'function') {
+                            return JSON.parse(globalThis.__android_parseThemeYaml(yaml));
+                        }
+                        return {};
+                    },
+                    setCurrentTheme: function(name) {
+                        state.currentTheme = name;
+                        if (typeof globalThis.__android_setCurrentTheme === 'function') {
+                            globalThis.__android_setCurrentTheme(name);
+                        }
+                        return true;
+                    },
+                    getThemeList: function() {
+                        var list = [];
+                        for (var key in state.themes) {
+                            list.push({ key: key, name: key });
+                        }
+                        return list;
+                    },
+                    getThemes: function() {
+                        return {
+                            themes: state.themes,
+                            currentTheme: state.currentTheme,
+                            current_theme: state.currentTheme,
+                            default_theme: state.currentTheme,
+                            variables: {},
+                            breakpoints: {}
                         };
-                    }
-                })();
-            """.trimIndent(), "init_packages.js")
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed to initialize __relay_packages", e)
-        }
-
-        // Set up the @clevertree/themed-styler module with JavaScript-based implementation
-        try {
-            ctx.evaluateScript("""
-                (function() {
-                    var state = globalThis.__themed_styler_state;
-                    
-                    // Create the themed-styler bridge module
-                    globalThis.__clevertree_packages['@clevertree/themed-styler'] = {
-                        parseThemeYaml: function(yaml) {
-                            console.log('[themed-styler] parseThemeYaml');
-                            if (typeof globalThis.__android_parseThemeYaml === 'function') {
-                                return JSON.parse(globalThis.__android_parseThemeYaml(yaml));
-                            }
-                            return {};
-                        },
-                        setCurrentTheme: function(name) {
-                            console.log('[themed-styler] setCurrentTheme: ' + name);
-                            state.currentTheme = name;
-                            if (typeof globalThis.__android_setCurrentTheme === 'function') {
-                                globalThis.__android_setCurrentTheme(name);
-                            }
-                            return true;
-                        },
-                        getThemeList: function() {
-                            console.log('[themed-styler] getThemeList');
-                            var list = [];
-                            for (var key in state.themes) {
-                                list.push({ key: key, name: key });
-                            }
-                            return list;
-                        },
-                        getThemes: function() {
-                            console.log('[themed-styler] getThemes: current=' + state.currentTheme + ' themes=' + Object.keys(state.themes).join(','));
-                            return {
-                                themes: state.themes,
-                                currentTheme: state.currentTheme,
-                                current_theme: state.currentTheme,
-                                default_theme: state.currentTheme,
-                                variables: {},
-                                breakpoints: {}
-                            };
-                        },
-                        registerTheme: function(name, defs) {
-                            console.log('[themed-styler] registerTheme: ' + name);
-                            state.themes[name] = defs || {};
-                            if (!state.currentTheme) state.currentTheme = name;
-                            if (typeof globalThis.__android_registerTheme === 'function') {
-                                globalThis.__android_registerTheme(name, JSON.stringify(defs));
-                            }
-                            return true;
-                        },
-                        clearUsage: function() {
-                            console.log('[themed-styler] clearUsage');
-                            state.usage.tags.clear();
-                            state.usage.classes.clear();
-                            state.usage.tagClasses.clear();
-                            return true;
-                        },
-                        getUsageSnapshot: function() {
-                            console.log('[themed-styler] getUsageSnapshot');
-                            var selectors = Array.from(state.usage.tagClasses.values ? state.usage.tagClasses.values() : []);
-                            return {
-                                tags: Array.from(state.usage.tags.values ? state.usage.tags.values() : []),
-                                classes: Array.from(state.usage.classes.values ? state.usage.classes.values() : []),
-                                tagClasses: selectors,
-                                selectors: selectors
-                            };
-                        },
-                        registerUsage: function(tag, props, hierarchy) {
-                            if (!tag) return;
-                            state.usage.tags.add(tag);
-                            var cls = (props && (props.className || props.class || '')) || '';
-                            if (typeof cls === 'string' && cls.trim().length > 0) {
-                                var classes = cls.split(/\s+/).map(function(c) { return c.trim(); }).filter(Boolean);
-                                for (var i = 0; i < classes.length; i++) {
-                                    var c = classes[i];
-                                    state.usage.classes.add(c);
-                                    state.usage.tagClasses.add(tag + '|' + c);
-                                }
+                    },
+                    registerTheme: function(name, defs) {
+                        state.themes[name] = defs || {};
+                        if (!state.currentTheme) state.currentTheme = name;
+                        if (typeof globalThis.__android_registerTheme === 'function') {
+                            globalThis.__android_registerTheme(name, JSON.stringify(defs));
+                        }
+                        return true;
+                    },
+                    clearUsage: function() {
+                        state.usage.tags.clear();
+                        state.usage.classes.clear();
+                        state.usage.tagClasses.clear();
+                        return true;
+                    },
+                    getUsageSnapshot: function() {
+                        var selectors = Array.from(state.usage.tagClasses.values ? state.usage.tagClasses.values() : []);
+                        return {
+                            tags: Array.from(state.usage.tags.values ? state.usage.tags.values() : []),
+                            classes: Array.from(state.usage.classes.values ? state.usage.classes.values() : []),
+                            tagClasses: selectors,
+                            selectors: selectors
+                        };
+                    },
+                    registerUsage: function(tag, props, hierarchy) {
+                        if (!tag) return;
+                        state.usage.tags.add(tag);
+                        var cls = (props && (props.className || props.class || '')) || '';
+                        if (typeof cls === 'string' && cls.trim().length > 0) {
+                            var classes = cls.split(/\s+/).map(function(c) { return c.trim(); }).filter(Boolean);
+                            for (var i = 0; i < classes.length; i++) {
+                                var c = classes[i];
+                                state.usage.classes.add(c);
+                                state.usage.tagClasses.add(tag + '|' + c);
                             }
                         }
-                    };
-                    
-                    console.log('[INIT] @clevertree/themed-styler registered in __clevertree_packages');
-                })();
-            """.trimIndent(), "register_themed_styler.js")
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed to register @clevertree/themed-styler in __clevertree_packages", e)
-        }
+                    }
+                };
+            })();
+        """.trimIndent(), "register_themed_styler.js")
 
-        // Register other virtual modules (React aliases and metadata)
-        try {
-            ctx.evaluateScript("""
-                (function() {
-                    // @clevertree/hook-transpiler - alias to React
-                    if (globalThis.__hook_react) {
-                        globalThis.__clevertree_packages['@clevertree/hook-transpiler'] = globalThis.__hook_react;
+        // Register @clevertree/theme as an alias with registerThemesFromYaml
+        ctx.evaluateScript("""
+            globalThis.__clevertree_packages['@clevertree/theme'] = (function() {
+                var styler = globalThis.__clevertree_packages['@clevertree/themed-styler'];
+                return Object.assign({}, styler, {
+                    registerThemesFromYaml: function(path) {
+                        console.log('[theme] registerThemesFromYaml: ' + path);
+                        return new Promise(function(resolve, reject) {
+                            globalThis.fetch(path).then(function(resp) {
+                                return resp.text();
+                            }).then(function(yaml) {
+                                var defs = styler.parseThemeYaml(yaml);
+                                for (var name in defs) {
+                                    styler.registerTheme(name, defs[name]);
+                                }
+                                resolve();
+                            }).catch(reject);
+                        });
                     }
-                    
-                    // @clevertree/act - alias to Act or React
-                    if (globalThis.Act) {
-                        globalThis.__clevertree_packages['@clevertree/act'] = globalThis.Act;
-                    } else if (globalThis.__hook_react) {
-                        globalThis.__clevertree_packages['@clevertree/act'] = globalThis.__hook_react;
+                });
+            })();
+        """.trimIndent(), "register_theme.js")
+
+        // Register @clevertree/hook-transpiler and @clevertree/act as aliases to React
+        ctx.evaluateScript("globalThis.__clevertree_packages['@clevertree/hook-transpiler'] = globalThis.__hook_react;", "register_hook_transpiler.js")
+        ctx.evaluateScript("globalThis.__clevertree_packages['@clevertree/act'] = globalThis.Act || globalThis.__hook_react;", "register_act.js")
+        
+        // Register @clevertree/meta
+        ctx.evaluateScript("globalThis.__clevertree_packages['@clevertree/meta'] = { filename: '', dirname: '', url: '' };", "register_meta.js")
+
+        // Register @clevertree/markdown
+        ctx.evaluateScript("""
+            globalThis.__clevertree_packages['@clevertree/markdown'] = (function() {
+                var renderAst = function (nodes, Act, overrides) {
+                    if (!nodes) return null;
+                    if (!Array.isArray(nodes)) return null;
+
+                    return nodes.map(function (node, index) {
+                        if (node.type === 'text') {
+                            return node.content;
+                        }
+                        if (node.type === 'element') {
+                            var tag = node.tag;
+                            var props = node.props || {};
+                            props.key = props.key || index;
+
+                            var component = tag;
+                            if (overrides && overrides[tag]) {
+                                if (overrides[tag].component) {
+                                    component = overrides[tag].component;
+                                    if (overrides[tag].props) {
+                                        props = Object.assign({}, props, overrides[tag].props);
+                                    }
+                                } else {
+                                    component = overrides[tag];
+                                }
+                            }
+
+                            var children = renderAst(node.children, Act, overrides);
+                            return Act.createElement(component, props, children);
+                        }
+                        return null;
+                    });
+                };
+
+                var MarkdownRenderer = function (props) {
+                    var Act = globalThis.Act || globalThis.React || globalThis.__hook_react;
+                    if (!Act) {
+                        console.error('[Markdown] Act/React not found');
+                        return null;
                     }
-                    
-                    // @clevertree/meta - for import.meta
-                    globalThis.__clevertree_packages['@clevertree/meta'] = {
-                        filename: '',
-                        dirname: '',
-                        url: ''
+
+                    var content = props.content || props.children || '';
+
+                    // Map standard HTML tags to our native-supported tags
+                    var defaultOverrides = {
+                        MarkdownRenderer: { component: MarkdownRenderer },
+                        h1: { component: 'h1' },
+                        h2: { component: 'h2' },
+                        h3: { component: 'h3' },
+                        h4: { component: 'h4' },
+                        h5: { component: 'h5' },
+                        h6: { component: 'h6' },
+                        p: { component: 'p' },
+                        span: { component: 'span' },
+                        strong: { component: 'span', props: { style: { fontWeight: 'bold' } } },
+                        em: { component: 'span', props: { style: { fontStyle: 'italic' } } },
+                        code: { component: 'span', props: { className: 'font-mono bg-gray-100' } },
+                        del: { component: 'span', props: { style: { textDecorationLine: 'line-through' } } },
+                        ins: { component: 'span', props: { style: { textDecorationLine: 'underline' } } },
+                        div: { component: 'div' },
+                        img: { component: 'img' },
+                        a: { component: 'span', props: { className: 'text-blue-500' } },
+                        ul: { component: 'div' },
+                        ol: { component: 'div' },
+                        li: { component: 'div' },
+                        table: { component: 'table', props: { className: 'table' } },
+                        thead: { component: 'div' },
+                        tbody: { component: 'div' },
+                        tr: { component: 'table-row', props: { className: 'table-row' } },
+                        th: { component: 'table-cell', props: { className: 'table-cell table-header' } },
+                        td: { component: 'table-cell', props: { className: 'table-cell' } }
                     };
-                    
-                    console.log('[INIT] Virtual modules registered:', Object.keys(globalThis.__clevertree_packages || {}));
-                })();
-            """.trimIndent(), "register_virtual_modules.js")
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed to register virtual modules", e)
-        }
+
+                    var overrides = Object.assign({}, defaultOverrides, props.overrides || {});
+                    var allowedTags = Object.keys(overrides);
+
+                    try {
+                        if (typeof globalThis.__android_md2jsx_parse === 'function') {
+                            var astJson = globalThis.__android_md2jsx_parse(content, JSON.stringify(allowedTags));
+                            var ast = JSON.parse(astJson);
+                            return Act.createElement('div', { className: 'markdown-body' }, renderAst(ast, Act, overrides));
+                        }
+
+                        console.warn('[Markdown] Native parser not found, falling back to raw text');
+                        return Act.createElement('text', { text: content });
+                    } catch (e) {
+                        console.error('[Markdown] Error rendering markdown:', e);
+                        return Act.createElement('text', { text: 'Error rendering markdown' });
+                    }
+                };
+
+                return {
+                    MarkdownRenderer: MarkdownRenderer
+                };
+            })();
+        """.trimIndent(), "register_markdown.js")
 
         // Load bridge from asset file
         Log.d(TAG, "installBridge: loading bridge.js from assets")
         try {
-            // Load markdown-to-jsx if available
-            try {
-                val markdownCode = context.assets.open("markdown-to-jsx.min.js").bufferedReader().use { it.readText() }
-                ctx.evaluateScript(markdownCode, "markdown-to-jsx.js")
-                Log.d(TAG, "Successfully loaded markdown-to-jsx.min.js")
-            } catch (e: Exception) {
-                Log.w(TAG, "markdown-to-jsx.min.js not found in assets, skipping")
-            }
-
             val bridgeCode = context.assets.open("bridge.js").bufferedReader().use { it.readText() }
             val bridgeResult = ctx.evaluateScript(bridgeCode, "bridge.js")
             Log.d(TAG, "Bridge evaluation result: $bridgeResult")
@@ -1407,26 +1521,37 @@ class HookRenderer @JvmOverloads constructor(
             }
         """.trimIndent(), "meta.js")
         
-        // Update native renderer theme if present in props
-        val themes = props["themes"] as? Map<String, Any>
-        if (themes != null) {
-            val themesJson = gson.toJson(themes)
-            customThemesJson = themesJson
+        // Update native renderer theme
+        val themesFromProps = props["themes"] as? Map<String, Any>
+        val themesJson = if (themesFromProps != null) {
+            val json = gson.toJson(themesFromProps)
+            customThemesJson = json
+            json
+        } else {
+            customThemesJson
+        }
+
+        if (themesJson != null) {
             nativeRenderer.setTheme(themesJson)
             
             // Sync with JS bridge state for @clevertree/themed-styler
             try {
-                val themesMap = themes["themes"] as? Map<String, Any>
-                val currentTheme = (themes["current_theme"] as? String) ?: (themes["currentTheme"] as? String)
+                val themesMapObj = gson.fromJson(themesJson, Map::class.java)
+                val themesMap = themesMapObj["themes"] as? Map<String, Any>
+                val currentTheme = (themesMapObj["current_theme"] as? String) ?: (themesMapObj["currentTheme"] as? String)
                 
                 if (themesMap != null) {
                     val syncScript = StringBuilder()
                     for ((name, def) in themesMap) {
                         val defJson = gson.toJson(def)
-                        syncScript.append("globalThis.__clevertree_packages['@clevertree/themed-styler'].registerTheme('$name', $defJson);\n")
+                        syncScript.append("if (globalThis.__clevertree_packages && globalThis.__clevertree_packages['@clevertree/themed-styler']) {\n")
+                        syncScript.append("  globalThis.__clevertree_packages['@clevertree/themed-styler'].registerTheme('$name', $defJson);\n")
+                        syncScript.append("}\n")
                     }
                     if (currentTheme != null) {
-                        syncScript.append("globalThis.__clevertree_packages['@clevertree/themed-styler'].setCurrentTheme('$currentTheme');\n")
+                        syncScript.append("if (globalThis.__clevertree_packages && globalThis.__clevertree_packages['@clevertree/themed-styler']) {\n")
+                        syncScript.append("  globalThis.__clevertree_packages['@clevertree/themed-styler'].setCurrentTheme('$currentTheme');\n")
+                        syncScript.append("}\n")
                     }
                     ctx.evaluateScript(syncScript.toString(), "sync_themes.js")
                 }
@@ -1434,7 +1559,6 @@ class HookRenderer @JvmOverloads constructor(
                 Log.e(TAG, "Failed to sync themes to JS bridge", e)
             }
         } else {
-            customThemesJson = null
             // Try to find theme in env
             val env = props["env"] as? Map<String, Any>
             val themeName = env?.get("theme") as? String ?: getSystemTheme()
@@ -1450,9 +1574,13 @@ class HookRenderer @JvmOverloads constructor(
                     val syncScript = StringBuilder()
                     for ((name, def) in themesMap) {
                         val defJson = gson.toJson(def)
-                        syncScript.append("globalThis.__clevertree_packages['@clevertree/themed-styler'].registerTheme('$name', $defJson);\n")
+                        syncScript.append("if (globalThis.__clevertree_packages && globalThis.__clevertree_packages['@clevertree/themed-styler']) {\n")
+                        syncScript.append("  globalThis.__clevertree_packages['@clevertree/themed-styler'].registerTheme('$name', $defJson);\n")
+                        syncScript.append("}\n")
                     }
-                    syncScript.append("globalThis.__clevertree_packages['@clevertree/themed-styler'].setCurrentTheme('$themeName');\n")
+                    syncScript.append("if (globalThis.__clevertree_packages && globalThis.__clevertree_packages['@clevertree/themed-styler']) {\n")
+                    syncScript.append("  globalThis.__clevertree_packages['@clevertree/themed-styler'].setCurrentTheme('$themeName');\n")
+                    syncScript.append("}\n")
                     ctx.evaluateScript(syncScript.toString(), "sync_bundled_themes.js")
                 }
             } catch (e: Exception) {
@@ -1712,6 +1840,16 @@ class HookRenderer @JvmOverloads constructor(
                 
                 Log.i(TAG, "[RENDER_SUCCESS] Renderer: $rendererUsed, Views: $viewsCreated, Bridge calls: $bridgeCalls, Expected: $rendererMode")
                 debugConsole?.logInfo("✓ Rendered with $rendererUsed ($viewsCreated views, $bridgeCalls calls)")
+
+                // Check for empty render which is usually an error in this context
+                if (viewsCreated == 0 && bridgeCalls == 0) {
+                    Log.e(TAG, "[RENDER_ERROR] No native views were created and no bridge calls were made.")
+                    handleError(HookError.RenderError(
+                        message = "No native views were created. This usually means the component returned null, an empty fragment, or the renderer failed to execute.",
+                        context = "Renderer: $rendererUsed, Bridge calls: $bridgeCalls"
+                    ))
+                    return
+                }
                 
                 // Verify correct renderer was used
                 when (rendererMode) {
@@ -1737,16 +1875,12 @@ class HookRenderer @JvmOverloads constructor(
                     
                 if (viewsCreated == 0) {
                     Log.w(TAG, "WARNING: Bridge was invoked but no views were created. Renderer=$rendererUsed, BridgeCalls=$bridgeCalls")
-                    // Show diagnostic error UI
-                    val diagnosticMsg = buildString {
-                        append("Hook rendered but produced no native views\n\n")
-                        append("Details:\n")
-                        append("• Renderer: $rendererUsed\n")
-                        append("• Bridge calls: $bridgeCalls\n")
-                        append("• Component likely returned null or empty\n\n")
-                        append("Ensure your hook's default export returns a valid component")
-                    }
-                    handleError(diagnosticMsg)
+                    val error = HookError.RenderError(
+                        message = "Hook rendered but produced no native views",
+                        element = filename,
+                        context = "Renderer: $rendererUsed, Bridge calls: $bridgeCalls"
+                    )
+                    handleError(error)
                 } else {
                     onReady?.invoke(viewsCreated)
                 }
@@ -1882,6 +2016,31 @@ class HookRenderer @JvmOverloads constructor(
         source
     }
 
+    private fun getCodeSnippet(source: String, line: Int, column: Int): String {
+        val lines = source.lines()
+        if (line <= 0 || line > lines.size) return ""
+        
+        val result = StringBuilder()
+        val startLine = (line - 3).coerceAtLeast(0)
+        val endLine = (line + 2).coerceAtMost(lines.size - 1)
+        
+        for (i in startLine..endLine) {
+            val lineNum = i + 1
+            val prefix = if (lineNum == line) "> " else "  "
+            result.append(String.format("%s%3d | %s\n", prefix, lineNum, lines[i]))
+            
+            if (lineNum == line && column > 0) {
+                result.append("      | ")
+                for (j in 0 until column - 1) {
+                    result.append(" ")
+                }
+                result.append("^\n")
+            }
+        }
+        
+        return result.toString()
+    }
+
     private fun handleError(error: HookError) {
         currentStatus = currentStatus.copy(loading = false, error = error.message)
         onError?.invoke(error)
@@ -1893,32 +2052,115 @@ class HookRenderer @JvmOverloads constructor(
 
         post {
             scrollView.removeAllViews()
-            val errorView = TextView(context).apply {
-                val errorText = StringBuilder()
-                errorText.append("⚠️ Hook Error\n\n")
-                errorText.append(error.message)
+            val container = LinearLayout(context).apply {
+                orientation = LinearLayout.VERTICAL
+                setPadding(64, 64, 64, 64)
+                layoutParams = LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT)
+            }
+
+            // Icon/Header
+            val header = TextView(context).apply {
+                text = "⚠️ Render Issue"
+                setTextColor(Color.parseColor("#D32F2F"))
+                setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 20f)
+                setTypeface(null, android.graphics.Typeface.BOLD)
+                setPadding(0, 0, 0, 32)
+            }
+            container.addView(header)
+
+            // Friendly Message
+            val message = TextView(context).apply {
+                text = when (error) {
+                    is HookError.ParseError -> "There's a syntax error in the code. It couldn't be understood."
+                    is HookError.ExecutionError -> "The code crashed while running."
+                    is HookError.RenderError -> "The code ran but didn't show anything on screen."
+                    else -> "An unexpected error occurred."
+                }
+                setTextColor(Color.parseColor("#333333"))
+                setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 16f)
+                setPadding(0, 0, 0, 48)
+            }
+            container.addView(message)
+
+            // Code Snippet (if available)
+            val snippet = when (error) {
+                is HookError.ParseError -> currentSource?.let { getCodeSnippet(it, error.line, error.column) }
+                is HookError.ExecutionError -> {
+                    // Try to extract line number from stack trace if possible
+                    val regex = """:(\d+):(\d+)""".toRegex()
+                    val match = regex.find(error.message) ?: regex.find(error.stackTrace)
+                    if (match != null) {
+                        val line = match.groupValues[1].toInt()
+                        val col = match.groupValues[2].toInt()
+                        currentSource?.let { getCodeSnippet(it, line, col) }
+                    } else null
+                }
+                else -> null
+            }
+
+            if (!snippet.isNullOrEmpty()) {
+                val snippetLabel = TextView(context).apply {
+                    text = "CODE SNIPPET"
+                    setTextColor(Color.parseColor("#757575"))
+                    setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 12f)
+                    setTypeface(null, android.graphics.Typeface.BOLD)
+                    setPadding(0, 0, 0, 8)
+                }
+                container.addView(snippetLabel)
+
+                val snippetView = TextView(context).apply {
+                    text = snippet
+                    setTextColor(Color.parseColor("#212121"))
+                    setBackgroundColor(Color.parseColor("#F5F5F5"))
+                    setPadding(24, 24, 24, 24)
+                    setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 13f)
+                    typeface = android.graphics.Typeface.MONOSPACE
+                    layoutParams = LinearLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT).apply {
+                        setMargins(0, 0, 0, 48)
+                    }
+                }
+                container.addView(snippetView)
+            }
+
+            // Technical Details Section
+            val detailsLabel = TextView(context).apply {
+                text = "TECHNICAL DETAILS"
+                setTextColor(Color.parseColor("#757575"))
+                setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 12f)
+                setTypeface(null, android.graphics.Typeface.BOLD)
+                setPadding(0, 0, 0, 8)
+            }
+            container.addView(detailsLabel)
+
+            val detailsView = TextView(context).apply {
+                val details = StringBuilder()
+                details.append(error.message)
                 
                 if (error is HookError.ExecutionError && error.stackTrace.isNotEmpty()) {
-                    errorText.append("\n\nStack Trace:\n")
-                    errorText.append(error.stackTrace)
+                    details.append("\n\nStack Trace:\n")
+                    details.append(error.stackTrace)
                 }
                 
                 if (error is HookError.ParseError) {
-                    errorText.append("\n\nPosition: ${error.line}:${error.column}")
+                    details.append("\n\nPosition: ${error.line}:${error.column}")
+                }
+
+                if (error is HookError.RenderError) {
                     if (error.context.isNotEmpty()) {
-                        errorText.append("\nContext: ${error.context}")
+                        details.append("\n\nContext:\n")
+                        details.append(error.context)
                     }
                 }
                 
-                text = errorText.toString()
-                setTextColor(Color.parseColor("#D32F2F"))
-                setPadding(48, 48, 48, 48)
-                setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 14f)
-                setLineSpacing(8f, 1f)
+                text = details.toString()
+                setTextColor(Color.parseColor("#616161"))
+                setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 12f)
                 typeface = android.graphics.Typeface.MONOSPACE
-                layoutParams = LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT)
+                setLineSpacing(4f, 1f)
             }
-            scrollView.addView(errorView)
+            container.addView(detailsView)
+
+            scrollView.addView(container)
         }
     }
 

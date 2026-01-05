@@ -1,5 +1,4 @@
-import Markdown from 'markdown-to-jsx'
-import React, { useEffect, useRef } from 'react'
+import React, { useEffect, useRef, useMemo } from 'react'
 
 interface MarkdownRendererProps {
     content: string
@@ -8,17 +7,88 @@ interface MarkdownRendererProps {
     overrides?: any
 }
 
-function preprocessHtmlForMarkdown(content: string): string {
-    let processed = content
-    processed = processed.replace(/<([^>]+?)>/g, (match) => {
-        return match.replace(/\n\s*/g, ' ').replace(/\s+/g, ' ')
-    })
-    return processed
+function renderAst(nodes: any[], Act: any, overrides: any, onElement?: (tag: string, props: any) => void): any {
+    if (!nodes || !Array.isArray(nodes)) return null;
+
+    return nodes.map((node, index) => {
+        if (node.type === 'text') {
+            return node.content;
+        }
+        if (node.type === 'element') {
+            const tag = node.tag;
+            let props = { ...(node.props || {}), key: index };
+
+            if (typeof tag === 'string' && onElement) {
+                try { onElement(tag, props) } catch (e) { }
+            }
+
+            let component: any = tag;
+            const override = overrides[tag];
+            if (override) {
+                if (override.component) {
+                    component = override.component;
+                    if (override.props) {
+                        props = { ...props, ...override.props };
+                    }
+                } else {
+                    component = override;
+                }
+            }
+
+            const children = renderAst(node.children, Act, overrides);
+            return Act.createElement(component, props, children);
+        }
+        return null;
+    });
 }
 
 export function MarkdownRenderer({ content, navigate, onElement, overrides = {} }: MarkdownRendererProps) {
     const contentRef = useRef<HTMLDivElement>(null)
-    const processedContent = preprocessHtmlForMarkdown(content)
+
+    const defaultOverrides = useMemo(() => ({
+        h1: { component: 'h1' },
+        h2: { component: 'h2' },
+        h3: { component: 'h3' },
+        h4: { component: 'h4' },
+        h5: { component: 'h5' },
+        h6: { component: 'h6' },
+        p: { component: 'p' },
+        span: { component: 'span' },
+        strong: { component: 'strong' },
+        em: { component: 'em' },
+        code: { component: 'code' },
+        del: { component: 'del' },
+        ins: { component: 'ins' },
+        div: { component: 'div' },
+        img: { component: 'img' },
+        a: { component: 'a' },
+        ul: { component: 'ul' },
+        ol: { component: 'ol' },
+        li: { component: 'li' },
+        table: { component: 'table' },
+        thead: { component: 'thead' },
+        tbody: { component: 'tbody' },
+        tr: { component: 'tr' },
+        th: { component: 'th' },
+        td: { component: 'td' }
+    }), []);
+
+    const allOverrides = useMemo(() => ({ ...defaultOverrides, ...overrides }), [defaultOverrides, overrides]);
+    const allowedTags = useMemo(() => Object.keys(allOverrides), [allOverrides]);
+
+    const renderedContent = useMemo(() => {
+        const parseFn = (globalThis as any).__hook_md2jsx_parse;
+        if (typeof parseFn === 'function') {
+            try {
+                const ast = parseFn(content, allowedTags);
+                return renderAst(ast, React, allOverrides, onElement);
+            } catch (e) {
+                console.error('[MarkdownRenderer] Error parsing markdown:', e);
+                return content;
+            }
+        }
+        return content;
+    }, [content, allowedTags, allOverrides, onElement]);
 
     useEffect(() => {
         if (onElement) {
@@ -58,25 +128,9 @@ export function MarkdownRenderer({ content, navigate, onElement, overrides = {} 
         }
     }, [navigate])
 
-    const defaultOverrides = {
-        script: () => null,
-        iframe: () => null,
-        ...overrides
-    }
-
     return (
         <div ref={contentRef} className="markdown-content">
-            <Markdown options={{
-                overrides: defaultOverrides,
-                createElement: (type, props, ...children) => {
-                    if (typeof type === 'string' && onElement) {
-                        try { onElement(type, props as any) } catch (e) { }
-                    }
-                    return React.createElement(type, props as any, ...children)
-                }
-            }}>
-                {processedContent}
-            </Markdown>
+            {renderedContent}
         </div>
     )
 }

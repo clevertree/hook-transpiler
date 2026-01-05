@@ -2,27 +2,32 @@
 (() => {
   // src/core.js
   function createAct(renderer2) {
-    var tagCounter = 1;
-    var rootComponent = null;
-    var rootProps = {};
-    var renderQueued = false;
-    var isRendering = false;
-    var componentState = {};
-    var hookCursor = {};
-    var pendingEffects = [];
-    var currentPath = "root";
-    var suspenseStack = [];
-    var SUSPENSE_TYPE = typeof Symbol !== "undefined" ? /* @__PURE__ */ Symbol.for("act.suspense") : "__act_suspense__";
-    var FRAGMENT_TYPE = typeof Symbol !== "undefined" ? /* @__PURE__ */ Symbol.for("act.fragment") : "__act_fragment__";
+    let tagCounter = 1;
+    let rootComponent = null;
+    let rootProps = {};
+    let renderQueued = false;
+    let isRendering = false;
+    let componentState = {};
+    let hookCursor = {};
+    let pendingEffects = [];
+    let pendingLayoutEffects = [];
+    let currentPath = "root";
+    let suspenseStack = [];
+    let nextUnitOfWork = null;
+    let wipRoot = null;
+    let currentRoot = null;
+    let deletions = [];
+    const SUSPENSE_TYPE = typeof Symbol !== "undefined" ? /* @__PURE__ */ Symbol.for("act.suspense") : "__act_suspense__";
+    const FRAGMENT_TYPE = typeof Symbol !== "undefined" ? /* @__PURE__ */ Symbol.for("act.fragment") : "__act_fragment__";
     function log(level, message) {
       try {
-        var g2 = typeof globalThis !== "undefined" ? globalThis : typeof window !== "undefined" ? window : {};
-        var logger = g2.console && g2.console[level] ? g2.console[level] : null;
+        const g2 = typeof globalThis !== "undefined" ? globalThis : typeof window !== "undefined" ? window : {};
+        const logger = g2.console && g2.console[level] ? g2.console[level] : null;
         if (logger) {
-          logger("[act] " + message);
+          logger(`[act] ${message}`);
         }
         if (level === "error" && typeof g2.__log === "function") {
-          g2.__log("error", "[act] " + message);
+          g2.__log("error", `[act] ${message}`);
         }
       } catch (e) {
       }
@@ -31,20 +36,20 @@
       log("error", message);
     }
     function flattenChildren(args) {
-      var out = [];
-      for (var i = 2; i < args.length; i++) {
-        var child = args[i];
+      const out = [];
+      for (let i = 2; i < args.length; i++) {
+        const child = args[i];
         if (Array.isArray(child)) {
-          for (var j = 0; j < child.length; j++) out.push(child[j]);
+          out.push(...child);
         } else if (child !== void 0 && child !== null && child !== false) {
           out.push(child);
         }
       }
       return out;
     }
-    function createElement(type, props) {
-      var children = flattenChildren(arguments);
-      var p = props || {};
+    function createElement(type, props, ...childrenArgs) {
+      const children = flattenChildren([type, props, ...childrenArgs]);
+      const p = props || {};
       if (children.length > 0) {
         p.children = children.length === 1 ? children[0] : children;
       }
@@ -63,12 +68,12 @@
       hookCursor[path] = 0;
     }
     function nextHookIndex(path) {
-      var idx = hookCursor[path] !== void 0 ? hookCursor[path] : 0;
+      const idx = hookCursor[path] !== void 0 ? hookCursor[path] : 0;
       hookCursor[path] = idx + 1;
       return idx;
     }
     function getHookSlot(path, index) {
-      var state = componentState[path];
+      let state = componentState[path];
       if (!state) {
         state = { hooks: [] };
         componentState[path] = state;
@@ -81,16 +86,329 @@
     function shallowDepsChanged(prev, next) {
       if (!prev || !next) return true;
       if (prev.length !== next.length) return true;
-      for (var i = 0; i < prev.length; i++) {
+      for (let i = 0; i < prev.length; i++) {
         if (prev[i] !== next[i]) return true;
       }
       return false;
+    }
+    function shallowEqual(objA, objB) {
+      if (objA === objB) return true;
+      if (typeof objA !== "object" || objA === null || typeof objB !== "object" || objB === null) return false;
+      const keysA = Object.keys(objA);
+      const keysB = Object.keys(objB);
+      if (keysA.length !== keysB.length) return false;
+      for (let i = 0; i < keysA.length; i++) {
+        if (!Object.prototype.hasOwnProperty.call(objB, keysA[i]) || objA[keysA[i]] !== objB[keysA[i]]) {
+          return false;
+        }
+      }
+      return true;
     }
     function scheduleRender() {
       if (!rootComponent) return;
       if (renderQueued) return;
       renderQueued = true;
-      renderNow();
+      const g2 = typeof globalThis !== "undefined" ? globalThis : typeof window !== "undefined" ? window : {};
+      if (typeof g2.requestAnimationFrame === "function") {
+        g2.requestAnimationFrame(renderNow);
+      } else {
+        setTimeout(renderNow, 0);
+      }
+    }
+    function workLoop(deadline) {
+      let shouldYield = false;
+      while (nextUnitOfWork && !shouldYield) {
+        nextUnitOfWork = performUnitOfWork(nextUnitOfWork);
+        shouldYield = deadline.timeRemaining() < 1;
+      }
+      if (!nextUnitOfWork && wipRoot) {
+        commitRoot();
+      }
+      if (nextUnitOfWork) {
+        const g2 = typeof globalThis !== "undefined" ? globalThis : typeof window !== "undefined" ? window : {};
+        const ric = g2.requestIdleCallback || ((cb) => {
+          const start = Date.now();
+          return setTimeout(() => {
+            cb({
+              didTimeout: false,
+              timeRemaining: () => Math.max(0, 50 - (Date.now() - start))
+            });
+          }, 1);
+        });
+        ric(workLoop);
+      }
+    }
+    function performUnitOfWork(fiber) {
+      try {
+        const isFunctionComponent = typeof fiber.type === "function";
+        if (isFunctionComponent) {
+          updateFunctionComponent(fiber);
+        } else if (fiber.type === SUSPENSE_TYPE) {
+          updateSuspenseComponent(fiber);
+        } else {
+          updateHostComponent(fiber);
+        }
+      } catch (e) {
+        if (e && typeof e.then === "function") {
+          let suspenseFiber = fiber;
+          while (suspenseFiber && suspenseFiber.type !== SUSPENSE_TYPE) {
+            suspenseFiber = suspenseFiber.parent;
+          }
+          if (suspenseFiber && !suspenseFiber.didThrow) {
+            suspenseFiber.didThrow = true;
+            e.then(() => {
+              scheduleRender();
+            }, () => {
+              scheduleRender();
+            });
+            return suspenseFiber;
+          }
+        }
+        let boundary = fiber.parent;
+        while (boundary) {
+          if (boundary.props && typeof boundary.props.componentDidCatch === "function") {
+            if (!boundary.hasError) {
+              boundary.hasError = true;
+              boundary.error = e;
+              boundary.props.componentDidCatch(e, {
+                componentStack: boundary.path || "unknown"
+              });
+              return boundary;
+            }
+          }
+          boundary = boundary.parent;
+        }
+        throw e;
+      }
+      if (fiber.child) {
+        return fiber.child;
+      }
+      let nextFiber = fiber;
+      while (nextFiber) {
+        if (nextFiber.sibling) {
+          return nextFiber.sibling;
+        }
+        nextFiber = nextFiber.parent;
+      }
+      return null;
+    }
+    function updateFunctionComponent(fiber) {
+      const path = fiber.path || "root";
+      resetHookCursor(path);
+      const prevPath = currentPath;
+      currentPath = path;
+      let children;
+      if (fiber.hasError) {
+        if (fiber.props && fiber.props.fallback) {
+          const fallbackResult = typeof fiber.props.fallback === "function" ? fiber.props.fallback(fiber.error) : fiber.props.fallback;
+          children = Array.isArray(fallbackResult) ? fallbackResult : [fallbackResult];
+        } else {
+          children = [];
+        }
+      } else {
+        try {
+          const result = fiber.type(fiber.props);
+          children = Array.isArray(result) ? result : [result];
+        } catch (e) {
+          currentPath = prevPath;
+          if (e && typeof e.then === "function") {
+            throw e;
+          } else {
+            throw e;
+          }
+        } finally {
+          if (currentPath === path) {
+            currentPath = prevPath;
+          }
+        }
+      }
+      reconcileChildren(fiber, children);
+    }
+    function updateSuspenseComponent(fiber) {
+      let children;
+      if (fiber.didThrow) {
+        const fallback = fiber.props.fallback;
+        children = fallback !== void 0 && fallback !== null ? Array.isArray(fallback) ? fallback : [fallback] : [];
+        fiber.showingFallback = true;
+      } else {
+        const rawChildren = fiber.props.children;
+        children = rawChildren !== void 0 && rawChildren !== null ? Array.isArray(rawChildren) ? rawChildren : [rawChildren] : [];
+        fiber.showingFallback = false;
+      }
+      const prevPath = currentPath;
+      currentPath = makePath(fiber.path, "s");
+      reconcileChildren(fiber, children);
+      currentPath = prevPath;
+    }
+    function updateHostComponent(fiber) {
+      if (fiber.hasError && fiber.props && fiber.props.fallback) {
+        const fallbackResult = typeof fiber.props.fallback === "function" ? fiber.props.fallback(fiber.error) : fiber.props.fallback;
+        const children2 = Array.isArray(fallbackResult) ? fallbackResult : [fallbackResult];
+        reconcileChildren(fiber, children2);
+        return;
+      }
+      if (!fiber.dom && renderer2.createInstance && typeof fiber.type === "string") {
+        fiber.dom = renderer2.createInstance(fiber.type, fiber.props || {}, {
+          nextTag,
+          log
+        });
+      }
+      let children = fiber.props && fiber.props.children !== void 0 && fiber.props.children !== null ? fiber.props.children : [];
+      if (!Array.isArray(children)) {
+        children = [children];
+      }
+      const flatChildren = [];
+      for (let i = 0; i < children.length; i++) {
+        const child = children[i];
+        if (Array.isArray(child)) {
+          flatChildren.push(...child);
+        } else {
+          flatChildren.push(child);
+        }
+      }
+      reconcileChildren(fiber, flatChildren);
+    }
+    function reconcileChildren(wipFiber, elements) {
+      let index = 0;
+      let oldFiber = wipFiber.alternate && wipFiber.alternate.child;
+      let prevSibling = null;
+      let flatElements = [];
+      if (Array.isArray(elements)) {
+        for (let i = 0; i < elements.length; i++) {
+          const item = elements[i];
+          if (Array.isArray(item)) {
+            flatElements.push(...item);
+          } else {
+            flatElements.push(item);
+          }
+        }
+      } else if (elements !== void 0 && elements !== null && elements !== false) {
+        flatElements = [elements];
+      }
+      while (index < flatElements.length || oldFiber != null) {
+        let element = flatElements[index];
+        let newFiber = null;
+        const isText = typeof element === "string" || typeof element === "number";
+        if (isText) {
+          element = {
+            type: "TEXT_ELEMENT",
+            props: {
+              nodeValue: String(element),
+              children: []
+            }
+          };
+        }
+        const sameType = oldFiber && element && element.type == oldFiber.type;
+        if (sameType) {
+          for (let d = 0; d < deletions.length; d++) {
+            if (deletions[d] === oldFiber) {
+              deletions.splice(d, 1);
+              break;
+            }
+          }
+          newFiber = {
+            type: oldFiber.type,
+            props: element.props,
+            dom: oldFiber.dom,
+            parent: wipFiber,
+            alternate: oldFiber,
+            effectTag: "UPDATE",
+            path: makePath(wipFiber.path, index)
+          };
+        } else {
+          if (element) {
+            newFiber = {
+              type: element.type,
+              props: element.props,
+              dom: null,
+              parent: wipFiber,
+              alternate: null,
+              effectTag: "PLACEMENT",
+              path: makePath(wipFiber.path, index)
+            };
+          }
+          if (oldFiber) {
+            let alreadyInDeletions = false;
+            for (let d = 0; d < deletions.length; d++) {
+              if (deletions[d] === oldFiber) {
+                alreadyInDeletions = true;
+                break;
+              }
+            }
+            if (!alreadyInDeletions) {
+              oldFiber.effectTag = "DELETION";
+              deletions.push(oldFiber);
+            }
+          }
+        }
+        if (oldFiber) {
+          oldFiber = oldFiber.sibling;
+        }
+        if (index === 0) {
+          wipFiber.child = newFiber;
+        } else if (newFiber) {
+          prevSibling.sibling = newFiber;
+        }
+        if (newFiber) {
+          prevSibling = newFiber;
+        }
+        index++;
+      }
+    }
+    function commitRoot() {
+      deletions.forEach(commitWork);
+      commitWork(wipRoot);
+      currentRoot = wipRoot;
+      wipRoot = null;
+      flushLayoutEffects();
+      flushEffects();
+    }
+    function commitWork(fiber) {
+      if (!fiber) return;
+      let domParentFiber = fiber.parent;
+      while (domParentFiber && !domParentFiber.dom) {
+        domParentFiber = domParentFiber.parent;
+      }
+      const domParent = domParentFiber ? domParentFiber.dom : renderer2.container;
+      if (fiber.effectTag === "PLACEMENT" && fiber.dom != null) {
+        if (renderer2.appendChild) {
+          renderer2.appendChild(domParent, fiber.dom);
+        }
+      } else if (fiber.effectTag === "UPDATE" && fiber.dom != null) {
+        if (renderer2.commitUpdate) {
+          renderer2.commitUpdate(fiber.dom, fiber.alternate ? fiber.alternate.props : {}, fiber.props);
+        }
+      } else if (fiber.effectTag === "DELETION") {
+        commitDeletion(fiber, domParent);
+        return;
+      }
+      commitWork(fiber.child);
+      commitWork(fiber.sibling);
+    }
+    function commitDeletion(fiber, domParent) {
+      if (!fiber) return;
+      if (fiber.dom) {
+        if (renderer2.removeChild) {
+          try {
+            renderer2.removeChild(domParent, fiber.dom);
+          } catch (e) {
+            if (e.message.indexOf("not a child") === -1) {
+              log("error", `removeChild failed: ${e.message}`);
+            }
+          }
+        }
+      } else {
+        let child = fiber.child;
+        while (child) {
+          commitDeletion(child, domParent);
+          child = child.sibling;
+        }
+      }
+    }
+    function flushWork() {
+      if (renderQueued) {
+        renderNow();
+      }
     }
     function pushSuspense(fallback) {
       suspenseStack.push(fallback);
@@ -103,42 +421,68 @@
     function currentSuspenseFallback() {
       return suspenseStack.length > 0 ? suspenseStack[suspenseStack.length - 1] : null;
     }
+    function memo(fn, compare) {
+      return {
+        type: "memo",
+        fn,
+        compare: compare || shallowEqual
+      };
+    }
     function renderComponent(fn, props, path) {
-      if (typeof fn !== "function") return fn;
-      if (componentState[path] && componentState[path].type !== fn) {
-        log("info", "Component type changed at " + path + ", resetting state");
-        componentState[path] = { hooks: [], type: fn };
-      } else if (!componentState[path]) {
-        componentState[path] = { hooks: [], type: fn };
+      let componentFn = fn;
+      let isMemo = false;
+      let compare = null;
+      if (fn && typeof fn === "object" && fn.type === "memo") {
+        componentFn = fn.fn;
+        isMemo = true;
+        compare = fn.compare;
       }
+      if (typeof componentFn !== "function") return fn;
+      let state = componentState[path];
+      if (state && state.type !== componentFn) {
+        state = { hooks: [], type: componentFn };
+        componentState[path] = state;
+      } else if (!state) {
+        state = { hooks: [], type: componentFn };
+        componentState[path] = state;
+      }
+      if (isMemo && state.prevProps && compare(state.prevProps, props)) {
+        if (state.prevVNode) {
+          return state.prevVNode;
+        }
+      }
+      state.prevProps = props;
       resetHookCursor(path);
-      var prevPath = currentPath;
+      const prevPath = currentPath;
       currentPath = path;
       try {
-        var vnode = fn(props || {});
+        const vnode = componentFn(props || {});
+        state.prevVNode = vnode;
         currentPath = prevPath;
         return vnode;
       } catch (e) {
         currentPath = prevPath;
-        emitError("renderComponent failed at " + path + ": " + (e.message || String(e)));
+        if (e && typeof e.then === "function") {
+          throw e;
+        }
+        emitError(`renderComponent failed at ${path}: ${e.message || String(e)}`);
         throw e;
       }
     }
     function flushEffects() {
-      var effects = pendingEffects.slice();
+      const effects = [...pendingEffects];
       pendingEffects.length = 0;
-      for (var i = 0; i < effects.length; i++) {
-        var item = effects[i];
+      for (const item of effects) {
         if (!item || !item.hook || typeof item.effect !== "function") continue;
         if (typeof item.hook.cleanup === "function") {
           try {
             item.hook.cleanup();
           } catch (e) {
-            log("error", "effect cleanup failed: " + e.message);
+            log("error", `effect cleanup failed: ${e.message}`);
           }
         }
         try {
-          var nextCleanup = item.effect();
+          const nextCleanup = item.effect();
           if (typeof nextCleanup === "function") {
             item.hook.cleanup = nextCleanup;
           } else {
@@ -146,7 +490,32 @@
           }
           item.hook.deps = item.deps;
         } catch (e) {
-          log("error", "effect error: " + e.message);
+          log("error", `effect error: ${e.message}`);
+        }
+      }
+    }
+    function flushLayoutEffects() {
+      const effects = [...pendingLayoutEffects];
+      pendingLayoutEffects.length = 0;
+      for (const item of effects) {
+        if (!item || !item.hook || typeof item.effect !== "function") continue;
+        if (typeof item.hook.layoutCleanup === "function") {
+          try {
+            item.hook.layoutCleanup();
+          } catch (e) {
+            log("error", `layout effect cleanup failed: ${e.message}`);
+          }
+        }
+        try {
+          const nextCleanup = item.effect();
+          if (typeof nextCleanup === "function") {
+            item.hook.layoutCleanup = nextCleanup;
+          } else {
+            item.hook.layoutCleanup = null;
+          }
+          item.hook.deps = item.deps;
+        } catch (e) {
+          log("error", `layout effect error: ${e.message}`);
         }
       }
     }
@@ -156,82 +525,91 @@
       if (!rootComponent) return;
       isRendering = true;
       try {
-        if (renderer2.clear) renderer2.clear();
-        resetTags();
-        hookCursor = {};
-        var vnode = renderComponent(rootComponent, rootProps || {}, "root");
-        renderer2.mountNode(vnode, -1, 0, null, "root", {
-          nextTag,
-          makePath,
-          renderComponent,
-          log,
-          emitError,
-          pushSuspense,
-          popSuspense,
-          currentSuspenseFallback,
-          suspenseType: SUSPENSE_TYPE,
-          fragmentType: FRAGMENT_TYPE
-        });
-        flushEffects();
+        let children;
+        if (rootComponent && typeof rootComponent === "object" && rootComponent.type) {
+          children = [rootComponent];
+        } else {
+          children = [createElement(rootComponent, rootProps)];
+        }
+        wipRoot = {
+          dom: currentRoot ? currentRoot.dom : renderer2.container || null,
+          props: {
+            children
+          },
+          alternate: currentRoot,
+          path: "root"
+        };
+        nextUnitOfWork = wipRoot;
+        deletions = [];
+        while (nextUnitOfWork) {
+          nextUnitOfWork = performUnitOfWork(nextUnitOfWork);
+        }
+        if (wipRoot) {
+          commitRoot();
+        }
       } catch (e) {
-        var errorMsg = "render failed: " + (e.message || String(e));
-        log("error", errorMsg);
-        emitError(errorMsg);
+        if (e && typeof e.then === "function") {
+          e.then(scheduleRender, scheduleRender);
+        } else {
+          log("error", `renderNow failed: ${e.message || String(e)}`);
+        }
       } finally {
         isRendering = false;
       }
     }
     function useState(initialValue) {
-      var path = currentPath;
-      var idx = nextHookIndex(path);
-      var hook = getHookSlot(path, idx);
+      const path = currentPath;
+      const idx = nextHookIndex(path);
+      const hook = getHookSlot(path, idx);
       if (!("value" in hook)) {
         hook.value = typeof initialValue === "function" ? initialValue() : initialValue;
-        log("info", "useState init: path=" + path + " idx=" + idx + " value=" + (typeof hook.value === "object" ? "object" : hook.value));
       }
-      var setter = function(next) {
-        var nextValue = typeof next === "function" ? next(hook.value) : next;
+      const setter = (next) => {
+        const nextValue = typeof next === "function" ? next(hook.value) : next;
         hook.value = nextValue;
-        log("info", "useState set: path=" + path + " idx=" + idx + " nextValue=" + (typeof nextValue === "object" ? "object" : nextValue));
         scheduleRender();
       };
       return [hook.value, setter];
     }
     function useReducer(reducer, initialArg, init) {
-      var initialState = init !== void 0 ? init(initialArg) : initialArg;
-      var stateHook = useState(initialState);
-      var state = stateHook[0];
-      var setState = stateHook[1];
-      var dispatch = function(action) {
-        setState(function(currentState) {
-          return reducer(currentState, action);
-        });
+      const initialState = init !== void 0 ? init(initialArg) : initialArg;
+      const [state, setState] = useState(initialState);
+      const dispatch = (action) => {
+        setState((currentState) => reducer(currentState, action));
       };
       return [state, dispatch];
     }
     function useEffect(effect, deps) {
-      var path = currentPath;
-      var idx = nextHookIndex(path);
-      var hook = getHookSlot(path, idx);
-      var shouldRun = shallowDepsChanged(hook.deps, deps);
+      const path = currentPath;
+      const idx = nextHookIndex(path);
+      const hook = getHookSlot(path, idx);
+      const shouldRun = shallowDepsChanged(hook.deps, deps);
       if (shouldRun) {
-        log("info", "useEffect schedule: path=" + path + " idx=" + idx);
         pendingEffects.push({ hook, effect, deps });
       }
     }
+    function useLayoutEffect(effect, deps) {
+      const path = currentPath;
+      const idx = nextHookIndex(path);
+      const hook = getHookSlot(path, idx);
+      const shouldRun = shallowDepsChanged(hook.deps, deps);
+      if (shouldRun) {
+        pendingLayoutEffects.push({ hook, effect, deps });
+      }
+    }
     function useRef(initialValue) {
-      var path = currentPath;
-      var idx = nextHookIndex(path);
-      var hook = getHookSlot(path, idx);
+      const path = currentPath;
+      const idx = nextHookIndex(path);
+      const hook = getHookSlot(path, idx);
       if (!("ref" in hook)) {
         hook.ref = { current: initialValue };
       }
       return hook.ref;
     }
     function useMemo(factory, deps) {
-      var path = currentPath;
-      var idx = nextHookIndex(path);
-      var hook = getHookSlot(path, idx);
+      const path = currentPath;
+      const idx = nextHookIndex(path);
+      const hook = getHookSlot(path, idx);
       if (!("value" in hook) || shallowDepsChanged(hook.deps, deps)) {
         hook.value = factory();
         hook.deps = deps;
@@ -239,44 +617,47 @@
       return hook.value;
     }
     function useCallback(fn, deps) {
-      return useMemo(function() {
-        return fn;
+      return useMemo(() => fn, deps);
+    }
+    function useImperativeHandle(ref, createHandle, deps) {
+      useEffect(() => {
+        if (ref) {
+          const handle = createHandle();
+          if (typeof ref === "function") {
+            ref(handle);
+          } else if (ref && typeof ref === "object" && "current" in ref) {
+            ref.current = handle;
+          }
+        }
       }, deps);
     }
     function lazy(loader) {
-      var resolved = null;
-      var loading = null;
-      var failed = null;
+      let resolved = null;
+      let loading = null;
+      let failed = null;
       return function LazyComponent(props) {
-        var state = useState(function() {
-          return resolved;
-        });
-        var Component = resolved || state[0];
-        if (!Component && !loading && !failed) {
-          try {
-            loading = Promise.resolve(loader()).then(function(mod) {
-              resolved = mod && mod.default ? mod.default : mod;
-              state[1](resolved);
-            }).catch(function(err) {
-              failed = err || new Error("lazy loader failed");
-              scheduleRender();
-            });
-          } catch (e) {
-            failed = e;
-          }
+        if (resolved) {
+          return createElement(resolved, props);
         }
         if (failed) {
           throw failed;
         }
-        if (Component) {
-          return createElement(Component, props);
+        if (!loading) {
+          loading = Promise.resolve(loader()).then((mod) => {
+            resolved = mod && mod.default ? mod.default : mod;
+            loading = null;
+            scheduleRender();
+          }).catch((err) => {
+            failed = err || new Error("lazy loader failed");
+            loading = null;
+            scheduleRender();
+          });
         }
-        var fallback = currentSuspenseFallback();
-        return fallback !== void 0 ? fallback : null;
+        throw loading;
       };
     }
     function Suspense(props) {
-      var children = props && props.children;
+      let children = props && props.children;
       if (Array.isArray(children) && children.length === 1) {
         children = children[0];
       }
@@ -287,9 +668,9 @@
       };
     }
     function createContext(defaultValue) {
-      var context = {
+      const context = {
         _currentValue: defaultValue,
-        Provider: function(props) {
+        Provider: (props) => {
           if ("value" in props) {
             context._currentValue = props.value;
           }
@@ -301,37 +682,49 @@
     function useContext(context) {
       return context._currentValue;
     }
-    function render(component, props) {
-      rootComponent = component;
-      rootProps = props || {};
+    function render(element, container) {
+      if (container) {
+        rootComponent = element;
+        rootProps = {};
+        if (renderer2 && !renderer2.container) {
+          renderer2.container = container;
+        }
+      } else {
+        rootComponent = element;
+        rootProps = {};
+      }
       scheduleRender();
+      flushWork();
     }
     function unmount() {
-      for (var path in componentState) {
-        var state = componentState[path];
+      for (const path in componentState) {
+        const state = componentState[path];
         if (state && state.hooks) {
-          for (var i = 0; i < state.hooks.length; i++) {
-            var hook = state.hooks[i];
+          for (const hook of state.hooks) {
             if (hook && typeof hook.cleanup === "function") {
               try {
                 hook.cleanup();
               } catch (e) {
-                log("error", "hook cleanup failed: " + e.message);
+                log("error", `hook cleanup failed: ${e.message}`);
               }
             }
           }
         }
       }
       if (renderer2.clear) renderer2.clear();
+      rootComponent = null;
+      rootProps = {};
+      currentRoot = null;
+      wipRoot = null;
+      nextUnitOfWork = null;
+      deletions = [];
       resetTags();
       componentState = {};
       hookCursor = {};
       suspenseStack = [];
     }
-    var StyleSheet2 = {
-      create: function(styles) {
-        return styles;
-      }
+    const StyleSheet2 = {
+      create: (styles) => styles
     };
     return {
       createElement,
@@ -339,95 +732,113 @@
       unmount,
       useState,
       useEffect,
-      useLayoutEffect: useEffect,
+      useLayoutEffect,
       useRef,
       useMemo,
       useCallback,
+      useImperativeHandle: (ref, create, deps) => {
+        if (ref) {
+          ref.current = create();
+        }
+      },
       useReducer,
       createContext,
       useContext,
       Fragment: FRAGMENT_TYPE,
       Suspense,
       lazy,
-      memo: function(comp) {
-        return comp;
-      },
-      forwardRef: function(comp) {
-        return comp;
-      },
+      memo,
+      forwardRef: (comp) => comp,
       StyleSheet: StyleSheet2,
       ActUtils: {
-        act: (cb) => cb()
+        act: (cb) => {
+          const res = cb();
+          flushWork();
+          return res;
+        }
       }
     };
   }
 
   // src/renderer-android.js
   function createAndroidRenderer() {
-    function normalizeType(type) {
+    const normalizeType = (type) => {
       if (typeof type === "string") return type;
       return "view";
-    }
-    function getBridge() {
-      var g2 = typeof globalThis !== "undefined" ? globalThis : typeof window !== "undefined" ? window : {};
+    };
+    const getBridge = () => {
+      const g2 = typeof globalThis !== "undefined" ? globalThis : typeof window !== "undefined" ? window : {};
       return g2.bridge;
-    }
+    };
     function mountNode(node, parentTag, index, parentType, path, helpers) {
       if (node === null || node === void 0 || node === false) return;
+      if (node && node.type === helpers.suspenseType) {
+        helpers.pushSuspense(node.props ? node.props.fallback : null);
+        try {
+          const child = node.props ? node.props.children : null;
+          mountNode(child, parentTag, index, parentType, helpers.makePath(path, "s"), helpers);
+        } finally {
+          helpers.popSuspense();
+        }
+        return;
+      }
       if (Array.isArray(node)) {
-        for (var i = 0; i < node.length; i++) {
+        for (let i = 0; i < node.length; i++) {
           mountNode(node[i], parentTag, index + i, parentType, helpers.makePath(path, i), helpers);
         }
         return;
       }
-      var nb = getBridge();
+      const nb = getBridge();
       if (!nb) {
         helpers.log("error", "bridge missing");
         return;
       }
       if (typeof node === "string" || typeof node === "number") {
-        var textVal = String(node);
+        const textVal = String(node);
         if (parentType === "span" || parentType === "text" || parentType === "button") {
           nb.updateProps(parentTag, { text: textVal });
         } else {
-          var textTag = helpers.nextTag();
+          const textTag = helpers.nextTag();
           nb.createView(textTag, "span", { text: textVal, width: "wrap_content", height: "wrap_content" });
           nb.addChild(parentTag, textTag, index);
         }
         return;
       }
       if (node.type === helpers.fragmentType) {
-        var kids = node.children || [];
-        var flatKids = [];
-        for (var i = 0; i < kids.length; i++) {
-          if (Array.isArray(kids[i])) {
-            for (var j = 0; j < kids[i].length; j++) {
-              flatKids.push(kids[i][j]);
+        const kids2 = node.children || [];
+        const flatKids2 = [];
+        for (let i = 0; i < kids2.length; i++) {
+          if (Array.isArray(kids2[i])) {
+            for (let j = 0; j < kids2[i].length; j++) {
+              flatKids2.push(kids2[i][j]);
             }
           } else {
-            flatKids.push(kids[i]);
+            flatKids2.push(kids2[i]);
           }
         }
-        for (var i = 0; i < flatKids.length; i++) {
-          mountNode(flatKids[i], parentTag, index + i, parentType, helpers.makePath(path, i), helpers);
+        for (let i = 0; i < flatKids2.length; i++) {
+          mountNode(flatKids2[i], parentTag, index + i, parentType, helpers.makePath(path, i), helpers);
         }
         return;
       }
       if (typeof node.type === "function") {
-        var compPath = helpers.makePath(path, "c" + index);
+        const compPath = helpers.makePath(path, `c${index}`);
         try {
-          var rendered = helpers.renderComponent(node.type, node.props || {}, compPath);
+          const rendered = helpers.renderComponent(node.type, node.props || {}, compPath);
           mountNode(rendered, parentTag, index, parentType, compPath, helpers);
         } catch (e) {
-          helpers.emitError("Failed to mount component: " + (e.message || String(e)));
+          helpers.emitError(`Failed to mount component: ${e.message || String(e)}`);
         }
         return;
       }
-      var type = normalizeType(node.type);
-      var tag = helpers.nextTag();
-      var props = Object.assign({}, node.props || {});
-      var onClick = props.onClick;
+      const type = normalizeType(node.type);
+      const tag = helpers.nextTag();
+      const props = Object.assign({}, node.props || {});
+      const onClick = props.onClick;
+      const onChange = props.onChange || props.onInput;
       delete props.onClick;
+      delete props.onChange;
+      delete props.onInput;
       delete props.children;
       if (!props.width && parentTag === -1) props.width = "match_parent";
       if (!props.height && parentTag === -1) props.height = "match_parent";
@@ -435,36 +846,90 @@
       if (typeof onClick === "function") {
         nb.addEventListener(tag, "click", onClick);
       }
-      var kids = node.children || [];
+      if (typeof onChange === "function") {
+        nb.addEventListener(tag, "change", onChange);
+      }
+      let kids = node.children || [];
       if (node.props && node.props.children) {
         if (kids.length === 0) {
           kids = Array.isArray(node.props.children) ? node.props.children : [node.props.children];
         }
       }
-      var flatKids = [];
-      for (var i = 0; i < kids.length; i++) {
+      const flatKids = [];
+      for (let i = 0; i < kids.length; i++) {
         if (Array.isArray(kids[i])) {
-          for (var j = 0; j < kids[i].length; j++) {
+          for (let j = 0; j < kids[i].length; j++) {
             flatKids.push(kids[i][j]);
           }
         } else {
           flatKids.push(kids[i]);
         }
       }
-      for (var i = 0; i < flatKids.length; i++) {
+      for (let i = 0; i < flatKids.length; i++) {
         mountNode(flatKids[i], tag, i, type, helpers.makePath(path, i), helpers);
       }
       nb.addChild(parentTag, tag, index);
     }
     return {
       mountNode,
-      clear: function() {
-        var g2 = typeof globalThis !== "undefined" ? globalThis : typeof window !== "undefined" ? window : {};
+      createInstance(type, props, helpers) {
+        const nb = getBridge();
+        if (!nb) return null;
+        const tag = helpers.nextTag();
+        if (type === "TEXT_ELEMENT") {
+          nb.createView(tag, "span", { text: String(props.nodeValue || ""), width: "wrap_content", height: "wrap_content" });
+          return { tag, type: "span" };
+        }
+        const androidType = normalizeType(type);
+        const p = Object.assign({}, props || {});
+        delete p.children;
+        nb.createView(tag, androidType, p);
+        if (typeof props.onClick === "function") {
+          nb.addEventListener(tag, "click", props.onClick);
+        }
+        return { tag, type: androidType };
+      },
+      appendChild(parent, child) {
+        const nb = getBridge();
+        if (!nb || !child) return;
+        const parentTag = parent ? parent.tag : -1;
+        nb.addChild(parentTag, child.tag, -1);
+      },
+      commitUpdate(instance, oldProps, newProps) {
+        const nb = getBridge();
+        if (!nb || !instance) return;
+        if (instance.type === "span" && "nodeValue" in newProps) {
+          nb.updateProps(instance.tag, { text: String(newProps.nodeValue || "") });
+          return;
+        }
+        const p = Object.assign({}, newProps || {});
+        delete p.children;
+        nb.updateProps(instance.tag, p);
+        if (newProps.onClick !== oldProps.onClick) {
+          if (typeof newProps.onClick === "function") {
+            nb.addEventListener(instance.tag, "click", newProps.onClick);
+          }
+        }
+        if (newProps.onChange !== oldProps.onChange || newProps.onInput !== oldProps.onInput) {
+          const nextChange = newProps.onChange || newProps.onInput;
+          if (typeof nextChange === "function") {
+            nb.addEventListener(instance.tag, "change", nextChange);
+          }
+        }
+      },
+      removeChild(parent, child) {
+        const nb = getBridge();
+        if (!nb || !child) return;
+        const parentTag = parent ? parent.tag : -1;
+        nb.removeChild(parentTag, child.tag);
+      },
+      clear() {
+        const g2 = typeof globalThis !== "undefined" ? globalThis : typeof window !== "undefined" ? window : {};
         if (typeof g2.__clearViews === "function") {
           g2.__clearViews();
           return;
         }
-        var nb = g2.bridge;
+        const nb = g2.bridge;
         if (nb && nb.removeChild) {
           try {
             nb.removeChild(-1, -1);

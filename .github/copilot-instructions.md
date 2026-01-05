@@ -10,7 +10,8 @@ Handles React JSX, TypeScript, dynamic/static imports, and special module rewrit
 1. **Import Rewriting** - Converts static imports to global references, dynamic imports to `__hook_import()`
 2. **JSX Transformation** - React auto-transform with JSX runtime handling
 3. **Module Conversion** - Optional CommonJS output for older environments
-4. **WASM Bindings** - Feature-gated WASM API exposed via `transpile_jsx()`
+4. **Markdown Support** - Integrated `md2jsx` for high-performance Markdown rendering
+5. **WASM Bindings** - Feature-gated WASM API exposed via `transpile_jsx()`
 
 ### Build System
 - Cargo crate: `name = "relay-hook-transpiler"` (CRITICAL - not "hook-transpiler")
@@ -161,7 +162,11 @@ Android HookRenderer provides virtual modules to hooks via `globalThis.__clevert
    - State stored in `globalThis.__themed_styler_state`
    - Pure JavaScript implementation (no JNI calls for theme state management)
 
-2. **@clevertree/act** - React alias for Act runtime
+2. **@clevertree/markdown** - Markdown to JSX bridge (via `md2jsx`)
+   - Provides `MarkdownRenderer` component
+   - Uses `__android_md2jsx_parse` native binding
+
+3. **@clevertree/act** - React alias for Act runtime
 3. **@clevertree/hook-transpiler** - React alias
 4. **@clevertree/meta** - Provides import.meta information
 
@@ -236,5 +241,5 @@ Android HookRenderer provides virtual modules to hooks via `globalThis.__clevert
 - Before Gradle: refresh transpiler/native bits: `npm --prefix /home/ari/dev/hook-transpiler run build` and ensure JNI/JSI sources are up to date; Gradle will compile native libs.
 - Build debug APK: `cd /home/ari/dev/relay-client-android/android && ./gradlew clean assembleDebug`.
 - Install to device/emulator: `adb install -r app/build/outputs/apk/debug/app-debug.apk`.
-- Logs: `adb logcat | grep -E "HermesManager|NativeRenderer|RelayJSI"`.
+- Logs: `adb logcat | grep -E "JSCManager|HookRenderer|NativeRenderer|RelayJSI"`.
 

@@ -1,131 +1,37 @@
 current_theme: "light"
 themes:
   default:
-    breakpoints:
-      sm: 640
-      md: 768
-      lg: 1024
-      xl: 1280
-      "2xl": 1536
+    variables:
+      bg: "#ffffff"
+      surface: "#f5f6fb"
+      text: "#0f172a"
+      muted: "#64748b"
+      primary: "#2563eb"
+      border: "#e2e8f0"
     selectors:
       body:
-        font-family: "Inter, system-ui, Avenir, Helvetica, Arial, sans-serif"
-      button:
-        background-color: "#2563eb"
-        color: "#ffffff"
-        border-radius: 6
-        padding: "8px 12px"
-      # App-specific navigation styles
-      ".nav-btn":
-        padding: "8px 12px"
-        border-radius: 8
-        border: "1px solid var(color.border)"
-        background-color: "var(color.surface)"
-        color: "var(color.text)"
-        font-weight: 600
-      ".nav-btn.active":
-        background-color: "var(color.primary)"
-        color: "#ffffff"
-        border: "1px solid var(color.primary-strong)"
-      ".nav-btn:active":
-        transform: "translateY(1px)"
-      # Typography
-      "h1, h2, h3, h4, h5, h6":
-        margin-top: "1.5rem"
-        margin-bottom: "0.5rem"
-        line-height: "1.2"
-      h1:
-        font-size: "2.2rem"
-        padding-bottom: "0.35rem"
-      h2:
-        font-size: "1.75rem"
-        padding-bottom: "0.25rem"
-      p:
-        margin-bottom: "1rem"
-      "ul, ol":
-        margin-left: "1.25rem"
-        margin-bottom: "1rem"
-      blockquote:
-        border-left: "4px solid var(color.primary)"
-        padding-left: "1rem"
-      code:
-        background-color: "var(color.bg)"
-        border: "1px solid var(color.border)"
-        border-radius: "0.5rem"
-        padding: "0.2rem 0.4rem"
-        font-family: "'JetBrains Mono', 'Fira Code', Consolas, monospace"
-      pre:
-        background-color: "var(color.bg)"
-        border: "1px solid var(color.border)"
-        border-radius: "0.75rem"
-        padding: "1rem"
-        overflow-x: auto
-      table:
+        backgroundColor: "var(bg)"
         width: "100%"
-        border-collapse: collapse
-        margin-bottom: "1rem"
-      "td, th":
-        border: "1px solid var(color.border)"
-        padding: "0.75rem"
-      th:
-        background-color: "var(color.surface)"
-        font-weight: 600
-      hr:
-        border: 0
-        height: "1px"
-        background-color: "var(color.border)"
-        margin: "2rem 0"
-      ".border-themed":
-        border: "1px solid var(color.border)"
-      ".bg-bg":
-        background-color: "var(color.bg)"
+        height: "100%"
+      "span, button, h1, h2, h3, h4, h5, h6, p, input, select, textarea":
+        color: "var(text)"
       ".bg-surface":
-        background-color: "var(color.surface)"
+        backgroundColor: "var(surface)"
       ".bg-primary":
-        background-color: "var(color.primary)"
-      ".text-themed":
-        color: "var(color.text)"
+        backgroundColor: "var(primary)"
       ".text-muted":
-        color: "var(color.muted)"
-      ".text-primary":
-        color: "var(color.primary)"
+        color: "var(muted)"
       ".border-themed":
-        border: "1px solid var(color.border)"
+        borderColor: "var(border)"
+        borderWidth: 1
   light:
     inherits: "default"
-    selectors:
-      body:
-        background-color: "#ffffff"
-        color: "#0f172a"
-    variables:
-      color.bg: "#ffffff"
-      color.surface: "#f5f6fb"
-      color.border: "#d9dee7"
-      color.text: "#111b26"
-      color.muted: "#5f6b7a"
-      color.primary: "#1f73ff"
-      color.primary-strong: "#0f59d2"
-      color.secondary: "#10b981"
-      color.danger: "#e75b64"
-      color.warning: "#f59e0b"
-      color.info: "#3b82f6"
-      color.success: "#10b981"
   dark:
     inherits: "default"
-    selectors:
-      body:
-        background-color: "#0f172a"
-        color: "#f8fafc"
     variables:
-      color.bg: "#0f172a"
-      color.surface: "#161b22"
-      color.border: "#30363d"
-      color.text: "#f8fafc"
-      color.muted: "#adb5c7"
-      color.primary: "#58a6ff"
-      color.primary-strong: "#2187ff"
-      color.secondary: "#a78bfa"
-      color.danger: "#ff7b72"
-      color.warning: "#fbbf24"
-      color.info: "#60a5fa"
-      color.success: "#34d399"
+      bg: "#0f172a"
+      surface: "#1e293b"
+      text: "#f8fafc"
+      muted: "#94a3b8"
+      primary: "#3b82f6"
+      border: "#334155"

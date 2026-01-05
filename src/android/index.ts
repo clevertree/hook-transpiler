@@ -1,4 +1,4 @@
-// Android QuickJS/JNI entrypoint: keep API aligned with web exports without Android-specific JSI bindings
+// Android JavaScriptCore/JNI entrypoint: keep API aligned with web exports without Android-specific JSI bindings
 import { transpileCode } from '../web/runtimeLoader.js'
 
 export {
@@ -21,7 +21,7 @@ export {
 export { ES6ImportHandler, type ImportHandlerOptions } from '../shared/es6ImportHandler.js'
 export { buildPeerUrl, buildRepoHeaders } from '../shared/urlBuilder.js'
 
-// Android uses native JNI/QuickJS to set __hook_transpile_jsx; no WASM needed
+// Android uses native JNI/JSC to set __hook_transpile_jsx; no WASM needed
 export async function initTranspiler(): Promise<void> {
     // No-op: Android initializes via native JNI binding
     return

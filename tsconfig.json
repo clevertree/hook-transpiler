@@ -13,7 +13,7 @@
     "esModuleInterop": true,
     "skipLibCheck": true,
     "outDir": "./dist",
-    "rootDir": "./",
+    "rootDir": "./src",
     "strict": true,
     "resolveJsonModule": true
   },
@@ -25,9 +25,7 @@
   "exclude": [
     "node_modules",
     "dist",
-    "src/*.rs",
-    "**/*.test.ts",
-    "**/*.test.tsx"
+    "src/*.rs"
   ],
   "ts-node": {
     "compilerOptions": {

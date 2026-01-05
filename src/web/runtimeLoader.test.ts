@@ -1,3 +1,6 @@
+import { describe, test } from 'node:test';
+import assert from 'node:assert';
+
 /**
  * Tests for runtimeLoader JSX automatic runtime wrapper
  * 
@@ -43,51 +46,51 @@ describe('runtimeLoader - JSX Automatic Runtime', () => {
 
     test('creates jsx factory from React', () => {
         const jsxFactory = createJsxFactory(mockReact)
-        expect(jsxFactory).toBeDefined()
-        expect(typeof jsxFactory).toBe('function')
+        assert.ok(jsxFactory)
+        assert.strictEqual(typeof jsxFactory, 'function')
     })
 
     test('handles key from third parameter', () => {
-        const jsxFactory = createJsxFactory(mockReact)
+        const jsxFactory = createJsxFactory(mockReact) as any
         const element = jsxFactory('div', { children: 'hello' }, 'key-1')
 
-        expect(element.key).toBe('key-1')
-        expect(element.props.children).toBe('hello')
+        assert.strictEqual(element.key, 'key-1')
+        assert.strictEqual(element.props.children, 'hello')
     })
 
     test('converts numeric key to string', () => {
-        const jsxFactory = createJsxFactory(mockReact)
+        const jsxFactory = createJsxFactory(mockReact) as any
         const element = jsxFactory('div', { children: 'hello' }, 123)
 
-        expect(element.key).toBe('123')
+        assert.strictEqual(element.key, '123')
     })
 
     test('prefers key from third parameter over config.key', () => {
-        const jsxFactory = createJsxFactory(mockReact)
+        const jsxFactory = createJsxFactory(mockReact) as any
         const element = jsxFactory('div', { children: 'hello', key: 'config-key' }, 'param-key')
 
-        expect(element.key).toBe('param-key')
+        assert.strictEqual(element.key, 'param-key')
     })
 
     test('handles key in config when no third parameter', () => {
-        const jsxFactory = createJsxFactory(mockReact)
+        const jsxFactory = createJsxFactory(mockReact) as any
         const element = jsxFactory('div', { children: 'hello', key: 'config-key' }, undefined)
 
-        expect(element.key).toBe('config-key')
+        assert.strictEqual(element.key, 'config-key')
     })
 
     test('removes key from config before passing to createElement', () => {
-        const jsxFactory = createJsxFactory(mockReact)
+        const jsxFactory = createJsxFactory(mockReact) as any
         const element = jsxFactory('div', { children: 'hello', key: 'config-key', className: 'test' }, undefined)
 
         // The key should be set on element but not in props
-        expect(element.key).toBe('config-key')
-        expect(element.props.key).toBeUndefined()
-        expect(element.props.className).toBe('test')
+        assert.strictEqual(element.key, 'config-key')
+        assert.strictEqual(element.props.key, undefined)
+        assert.strictEqual(element.props.className, 'test')
     })
 
     test('handles .map() scenario with numeric items as keys', () => {
-        const jsxFactory = createJsxFactory(mockReact)
+        const jsxFactory = createJsxFactory(mockReact) as any
 
         // Simulate what the transpiler produces: items.map((item) => _jsx("div", { children: item }, item))
         const items = [1, 2, 3]
@@ -95,15 +98,15 @@ describe('runtimeLoader - JSX Automatic Runtime', () => {
             jsxFactory('div', { children: item }, item)
         )
 
-        expect(elements).toHaveLength(3)
+        assert.strictEqual(elements.length, 3)
         elements.forEach((el, idx) => {
-            expect(el.key).toBe(String(items[idx]))
-            expect(el.props.children).toBe(items[idx])
+            assert.strictEqual(el.key, String(items[idx]))
+            assert.strictEqual(el.props.children, items[idx])
         })
     })
 
     test('handles .map() scenario with object keys', () => {
-        const jsxFactory = createJsxFactory(mockReact)
+        const jsxFactory = createJsxFactory(mockReact) as any
 
         // Simulate: movies.map((movie) => _jsx("div", { children: movie.title }, String(movie.id)))
         const movies = [
@@ -114,25 +117,25 @@ describe('runtimeLoader - JSX Automatic Runtime', () => {
             jsxFactory('div', { children: movie.title }, String(movie.id))
         )
 
-        expect(elements).toHaveLength(2)
-        expect(elements[0].key).toBe('1')
-        expect(elements[0].props.children).toBe('Movie 1')
-        expect(elements[1].key).toBe('2')
-        expect(elements[1].props.children).toBe('Movie 2')
+        assert.strictEqual(elements.length, 2)
+        assert.strictEqual(elements[0].key, '1')
+        assert.strictEqual(elements[0].props.children, 'Movie 1')
+        assert.strictEqual(elements[1].key, '2')
+        assert.strictEqual(elements[1].props.children, 'Movie 2')
     })
 
     test('returns undefined factory for missing React', () => {
         const jsxFactory = createJsxFactory(null)
-        expect(jsxFactory).toBeUndefined()
+        assert.strictEqual(jsxFactory, undefined)
     })
 
     test('returns undefined factory for React without createElement', () => {
         const jsxFactory = createJsxFactory({})
-        expect(jsxFactory).toBeUndefined()
+        assert.strictEqual(jsxFactory, undefined)
     })
 
     test('preserves other props when key is extracted', () => {
-        const jsxFactory = createJsxFactory(mockReact)
+        const jsxFactory = createJsxFactory(mockReact) as any
         const element = jsxFactory('div', {
             children: 'hello',
             className: 'test-class',
@@ -140,10 +143,10 @@ describe('runtimeLoader - JSX Automatic Runtime', () => {
             key: 'my-key',
         }, undefined)
 
-        expect(element.key).toBe('my-key')
-        expect(element.props.className).toBe('test-class')
-        expect(element.props.id).toBe('test-id')
-        expect(element.props.children).toBe('hello')
-        expect(element.props.key).toBeUndefined() // key should not be in props
+        assert.strictEqual(element.key, 'my-key')
+        assert.strictEqual(element.props.className, 'test-class')
+        assert.strictEqual(element.props.id, 'test-id')
+        assert.strictEqual(element.props.children, 'hello')
+        assert.strictEqual(element.props.key, undefined) // key should not be in props
     })
 })

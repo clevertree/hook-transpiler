@@ -54,6 +54,30 @@ export async function initWasmTranspiler() {
         globalThis.__hook_transpile_jsx_with_metadata = transpileWithMetadataFn;
         globalThis.__hook_wasm_self_test = run_self_test;
         console.log('[hook-transpiler] WASM transpiler ready:', version);
+        // Initialize md2jsx WASM
+        try {
+            // @ts-ignore
+            const { default: initMd, transpile: parseMd } = await import('../wasm/md2jsx.js');
+            if (isNode) {
+                const fs = await import('node:fs/promises');
+                const wasmFile = new URL('../wasm/md2jsx_bg.wasm', import.meta.url);
+                const buffer = await fs.readFile(wasmFile);
+                await initMd({ module_or_path: buffer });
+            }
+            else {
+                let wasmPath = '/wasm/md2jsx_bg.wasm';
+                try {
+                    wasmPath = new URL('/wasm/md2jsx_bg.wasm', window.location.origin);
+                }
+                catch (e) { }
+                await initMd({ module_or_path: wasmPath });
+            }
+            globalThis.__hook_md2jsx_parse = parseMd;
+            console.log('[hook-transpiler] md2jsx WASM ready');
+        }
+        catch (e) {
+            console.warn('[hook-transpiler] Failed to initialize md2jsx WASM', e);
+        }
     }
     catch (e) {
         console.warn('[hook-transpiler] Failed to initialize WASM transpiler (expected in Android)', e);

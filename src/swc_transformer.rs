@@ -93,6 +93,20 @@ impl Transpiler {
     fn handle_normal(&mut self) {
         let ch = self.current_char();
         
+        // Check for const/let -> var
+        if self.has_valid_word_prefix() {
+            if ch == Some('c') && self.peek(1) == Some('o') && self.peek(2) == Some('n') && self.peek(3) == Some('s') && self.peek(4) == Some('t') && self.is_word_boundary_at(self.pos + 5) {
+                self.output.push_str("var");
+                self.pos += 5;
+                return;
+            }
+            if ch == Some('l') && self.peek(1) == Some('e') && self.peek(2) == Some('t') && self.is_word_boundary_at(self.pos + 3) {
+                self.output.push_str("var");
+                self.pos += 3;
+                return;
+            }
+        }
+
         // Check for optional chaining
         if ch == Some('?') && self.peek(1) == Some('.') {
             if self.is_optional_chaining_context() {
@@ -510,6 +524,23 @@ impl Transpiler {
 
     fn peek(&self, offset: usize) -> Option<char> {
         self.input.get(self.pos + offset).copied()
+    }
+
+    fn is_word_boundary_at(&self, pos: usize) -> bool {
+        match self.input.get(pos) {
+            Some(c) => !c.is_alphanumeric() && *c != '_' && *c != '$',
+            None => true,
+        }
+    }
+
+    fn has_valid_word_prefix(&self) -> bool {
+        if self.pos == 0 {
+            return true;
+        }
+        match self.input.get(self.pos - 1) {
+            Some(c) => !c.is_alphanumeric() && *c != '_' && *c != '$',
+            None => true,
+        }
     }
 }
 

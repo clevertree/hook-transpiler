@@ -1,9 +1,13 @@
 /* tslint:disable */
 /* eslint-disable */
 
+export function get_debug_level(): string;
+
 export function get_version(): string;
 
 export function run_self_test(): any;
+
+export function set_debug_level(level: string): boolean;
 
 export function transpile_jsx(source: string, filename: string, is_typescript?: boolean | null): any;
 
@@ -13,18 +17,19 @@ export type InitInput = RequestInfo | URL | Response | BufferSource | WebAssembl
 
 export interface InitOutput {
   readonly memory: WebAssembly.Memory;
+  readonly get_debug_level: (a: number) => void;
+  readonly get_version: (a: number) => void;
   readonly hook_transpile_jsx: (a: number, b: number, c: number) => number;
   readonly hook_transpiler_free_string: (a: number) => void;
   readonly hook_transpiler_version: () => number;
-  readonly get_version: () => [number, number];
-  readonly run_self_test: () => any;
-  readonly transpile_jsx: (a: number, b: number, c: number, d: number, e: number) => any;
-  readonly transpile_jsx_with_metadata: (a: number, b: number, c: number, d: number, e: number) => any;
-  readonly __wbindgen_malloc: (a: number, b: number) => number;
-  readonly __wbindgen_realloc: (a: number, b: number, c: number, d: number) => number;
-  readonly __wbindgen_externrefs: WebAssembly.Table;
-  readonly __wbindgen_free: (a: number, b: number, c: number) => void;
-  readonly __wbindgen_start: () => void;
+  readonly run_self_test: () => number;
+  readonly set_debug_level: (a: number, b: number) => number;
+  readonly transpile_jsx: (a: number, b: number, c: number, d: number, e: number) => number;
+  readonly transpile_jsx_with_metadata: (a: number, b: number, c: number, d: number, e: number) => number;
+  readonly __wbindgen_export: (a: number, b: number) => number;
+  readonly __wbindgen_export2: (a: number, b: number, c: number, d: number) => number;
+  readonly __wbindgen_add_to_stack_pointer: (a: number) => number;
+  readonly __wbindgen_export3: (a: number, b: number, c: number) => void;
 }
 
 export type SyncInitInput = BufferSource | WebAssembly.Module;

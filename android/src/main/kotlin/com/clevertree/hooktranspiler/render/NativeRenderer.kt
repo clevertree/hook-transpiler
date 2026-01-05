@@ -40,6 +40,8 @@ class NativeRenderer(private val context: Context, private val rootContainer: Vi
     private val containerNodes = ConcurrentHashMap<Int, ViewGroup>()
     private val viewTypes = ConcurrentHashMap<Int, String>()
     private val classNames = ConcurrentHashMap<Int, String>()
+    private val jsxIds = ConcurrentHashMap<String, Int>()
+    private val tagProps = ConcurrentHashMap<Int, Map<String, Any>>()
     private val tagMap = java.util.WeakHashMap<View, Int>()
     private val lastAppliedStyles = ConcurrentHashMap<Int, Map<String, Any>>()
     private val renderEpoch = AtomicInteger(0)
@@ -119,16 +121,12 @@ class NativeRenderer(private val context: Context, private val rootContainer: Vi
 
     private fun createViewInternal(tag: Int, type: String, props: Map<String, Any>): View {
         val className = props["className"] as? String ?: ""
-        val styles = if (className.isNotEmpty()) {
-            try {
-                val s = ThemedStylerModule.getStyles(type, className)
-                Log.d(TAG, "[CREATE_VIEW_INTERNAL] tag=$tag type=$type className=$className styles=$s")
-                s
-            } catch (e: Exception) {
-                emptyMap<String, Any>()
-            }
-        } else {
-            emptyMap()
+        val styles = try {
+            val s = ThemedStylerModule.getStyles(type, className)
+            Log.d(TAG, "[CREATE_VIEW_INTERNAL] tag=$tag type=$type className=$className styles=$s")
+            s
+        } catch (e: Exception) {
+            emptyMap<String, Any>()
         }
 
         val view = when (type.lowercase()) {
@@ -179,6 +177,47 @@ class NativeRenderer(private val context: Context, private val rootContainer: Vi
             "frame" -> FrameLayout(context).apply { containerNodes[tag] = this }
             "button" -> Button(context)
             "img", "image" -> ImageView(context)
+            "input" -> {
+                val inputType = props["type"]?.toString()?.lowercase()
+                when (inputType) {
+                    "checkbox" -> androidx.appcompat.widget.AppCompatCheckBox(context)
+                    "radio" -> androidx.appcompat.widget.AppCompatRadioButton(context)
+                    else -> {
+                        if (props.containsKey("list")) {
+                            androidx.appcompat.widget.AppCompatAutoCompleteTextView(context).apply {
+                                threshold = 1
+                            }
+                        } else {
+                            androidx.appcompat.widget.AppCompatEditText(context)
+                        }
+                    }
+                }
+            }
+            "textarea" -> androidx.appcompat.widget.AppCompatEditText(context).apply {
+                setSingleLine(false)
+                inputType = android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_FLAG_MULTI_LINE
+                gravity = android.view.Gravity.TOP
+            }
+            "checkbox" -> androidx.appcompat.widget.AppCompatCheckBox(context)
+            "radio" -> androidx.appcompat.widget.AppCompatRadioButton(context)
+            "radiogroup" -> android.widget.RadioGroup(context).apply {
+                orientation = LinearLayout.VERTICAL
+                containerNodes[tag] = this
+            }
+            "select" -> androidx.appcompat.widget.AppCompatSpinner(context).apply {
+                // Spinner is an AdapterView and doesn't support addView().
+                // We use a virtual LinearLayout to collect option tags.
+                containerNodes[tag] = LinearLayout(context)
+                // Reduce default padding to match EditText more closely
+                setPadding(paddingLeft, 0, paddingRight, 0)
+                minimumHeight = 0
+                gravity = android.view.Gravity.CENTER_VERTICAL
+            }
+            "datalist" -> LinearLayout(context).apply { 
+                visibility = View.GONE 
+                containerNodes[tag] = this
+            }
+            "option" -> View(context).apply { visibility = View.GONE }
             "scroll", "scrollview" -> ScrollView(context).apply {
                 isFillViewport = true
                 val inner = LinearLayout(context).apply { orientation = LinearLayout.VERTICAL }
@@ -243,6 +282,40 @@ class NativeRenderer(private val context: Context, private val rootContainer: Vi
                         triggerEvent(tag, event, emptyMap<String, Any>())
                     }
                 }
+                "change", "onchange", "input", "oninput" -> {
+                    if (view is EditText) {
+                        Log.d(TAG, "[addEventListener] Setting TextWatcher for tag=$tag")
+                        view.addTextChangedListener(object : android.text.TextWatcher {
+                            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+                            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+                                Log.d(TAG, "[onChange] Native text change detected for tag=$tag: $s")
+                                triggerEvent(tag, "change", mapOf("value" to s.toString()))
+                            }
+                            override fun afterTextChanged(s: android.text.Editable?) {}
+                        })
+                    } else if (view is android.widget.CompoundButton) {
+                        view.setOnCheckedChangeListener { _, isChecked ->
+                            Log.d(TAG, "[onChange] Native checked change detected for tag=$tag: $isChecked")
+                            triggerEvent(tag, "change", mapOf("checked" to isChecked, "value" to isChecked))
+                        }
+                    } else if (view is androidx.appcompat.widget.AppCompatSpinner) {
+                        view.onItemSelectedListener = object : android.widget.AdapterView.OnItemSelectedListener {
+                            override fun onItemSelected(parent: android.widget.AdapterView<*>?, v: View?, position: Int, id: Long) {
+                                val selectedValue = parent?.getItemAtPosition(position)?.toString() ?: ""
+                                Log.d(TAG, "[onChange] Native spinner selection detected for tag=$tag: $selectedValue")
+                                triggerEvent(tag, "change", mapOf("value" to selectedValue))
+                            }
+                            override fun onNothingSelected(parent: android.widget.AdapterView<*>?) {}
+                        }
+                    } else if (view is android.widget.RadioGroup) {
+                        view.setOnCheckedChangeListener { _, checkedId ->
+                            val radioButton = view.findViewById<android.widget.RadioButton>(checkedId)
+                            val value = radioButton?.text?.toString() ?: ""
+                            Log.d(TAG, "[onChange] Native radiogroup change detected for tag=$tag: $value")
+                            triggerEvent(tag, "change", mapOf("value" to value))
+                        }
+                    }
+                }
             }
         }
     }
@@ -259,6 +332,7 @@ class NativeRenderer(private val context: Context, private val rootContainer: Vi
     }
 
     fun updateProps(tag: Int, props: Map<String, Any>) {
+        tagProps[tag] = props
         runOnMainThread {
             Log.d(TAG, "[UpdateProps] tag=$tag propsKeys=${props.keys} values=${props.values.map { it.toString().take(20) }}")
             val view = nodes[tag] ?: run {
@@ -333,7 +407,160 @@ class NativeRenderer(private val context: Context, private val rootContainer: Vi
             if (props.containsKey("className") && props["className"] !is String) {
                 Log.w(TAG, "[Class] tag=$tag className type=${props["className"]?.javaClass} value=${props["className"]}")
             }
+
+            // Handle ID mapping for datalist resolution
+            (props["id"] as? String)?.let { id ->
+                Log.d(TAG, "[ID_MAP] Mapping id=$id to tag=$tag (type=${viewTypes[tag]})")
+                jsxIds[id] = tag
+                // If this is a datalist, refresh any inputs that might be waiting for it
+                if (viewTypes[tag] == "datalist") {
+                    Log.d(TAG, "[ID_MAP] Datalist detected, refreshing inputs for $id")
+                    refreshInputsForDatalist(id)
+                }
+            }
+
+            // Handle input-specific props
+            if (view is EditText) {
+                Log.d(TAG, "[Input] tag=$tag list=${props["list"]}")
+                (props["placeholder"] ?: props["hint"])?.let { view.hint = it.toString() }
+                (props["value"])?.let { 
+                    val text = it.toString()
+                    if (view.text.toString() != text) {
+                        view.setText(text)
+                    }
+                }
+                
+                // Handle input type
+                (props["type"] as? String)?.let { type ->
+                    view.inputType = when (type.lowercase()) {
+                        "password" -> android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD
+                        "number" -> android.text.InputType.TYPE_CLASS_NUMBER
+                        "decimal" -> android.text.InputType.TYPE_CLASS_NUMBER or android.text.InputType.TYPE_NUMBER_FLAG_DECIMAL
+                        "email" -> android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS
+                        "phone", "tel" -> android.text.InputType.TYPE_CLASS_PHONE
+                        "url" -> android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_VARIATION_URI
+                        "date" -> android.text.InputType.TYPE_CLASS_DATETIME or android.text.InputType.TYPE_DATETIME_VARIATION_DATE
+                        "time" -> android.text.InputType.TYPE_CLASS_DATETIME or android.text.InputType.TYPE_DATETIME_VARIATION_TIME
+                        "datetime-local" -> android.text.InputType.TYPE_CLASS_DATETIME
+                        "search" -> android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_VARIATION_FILTER
+                        else -> {
+                            if (viewTypes[tag] == "textarea") {
+                                android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_FLAG_MULTI_LINE
+                            } else {
+                                android.text.InputType.TYPE_CLASS_TEXT
+                            }
+                        }
+                    }
+                }
+
+                // Handle rows for textarea
+                if (viewTypes[tag] == "textarea") {
+                    (props["rows"])?.let { 
+                        val rows = when (it) {
+                            is Number -> it.toInt()
+                            is String -> it.toIntOrNull() ?: 1
+                            else -> 1
+                        }
+                        view.minLines = rows
+                    }
+                }
+
+                // Handle datalist linking
+                if (view is AutoCompleteTextView && props.containsKey("list")) {
+                    val listId = props["list"].toString()
+                    jsxIds[listId]?.let { listTag ->
+                        val options = getDatalistValues(listTag)
+                        if (options.isNotEmpty()) {
+                            val adapter = ArrayAdapter<String>(context, android.R.layout.simple_dropdown_item_1line, options)
+                            view.setAdapter(adapter)
+                        }
+                    }
+                }
+            }
+
+            // Handle CheckBox and RadioButton
+            if (view is android.widget.CompoundButton) {
+                val checked = when (val c = props["checked"]) {
+                    is Boolean -> c
+                    is String -> c.toBoolean()
+                    else -> false
+                }
+                if (view.isChecked != checked) {
+                    view.isChecked = checked
+                }
+            }
+
+            // Handle Spinner (select)
+            if (view is androidx.appcompat.widget.AppCompatSpinner) {
+                refreshSelectOptions(tag)
+                (props["value"])?.let { value ->
+                    val adapter = view.adapter
+                    if (adapter != null) {
+                        for (i in 0 until adapter.count) {
+                            if (adapter.getItem(i).toString() == value.toString()) {
+                                if (view.selectedItemPosition != i) {
+                                    view.setSelection(i)
+                                }
+                                break
+                            }
+                        }
+                    }
+                }
+            }
         }
+    }
+
+    private fun refreshSelectOptions(selectTag: Int) {
+        val spinner = nodes[selectTag] as? androidx.appcompat.widget.AppCompatSpinner ?: return
+        val options = getDatalistValues(selectTag)
+        if (options.isNotEmpty()) {
+            runOnMainThread {
+                val adapter = ArrayAdapter<String>(context, android.R.layout.simple_spinner_item, options)
+                adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+                spinner.adapter = adapter
+                
+                // Re-apply value if present
+                tagProps[selectTag]?.get("value")?.let { value ->
+                    for (i in 0 until adapter.count) {
+                        if (adapter.getItem(i).toString() == value.toString()) {
+                            spinner.setSelection(i)
+                            break
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private fun refreshInputsForDatalist(listId: String) {
+        for ((tag, props) in tagProps) {
+            if (viewTypes[tag] == "input" && props["list"]?.toString() == listId) {
+                val view = nodes[tag] as? AutoCompleteTextView ?: continue
+                val listTag = jsxIds[listId] ?: continue
+                val options = getDatalistValues(listTag)
+                if (options.isNotEmpty()) {
+                    runOnMainThread {
+                        val adapter = ArrayAdapter<String>(context, android.R.layout.simple_dropdown_item_1line, options)
+                        view.setAdapter(adapter)
+                    }
+                }
+            }
+        }
+    }
+
+    private fun getDatalistValues(datalistTag: Int): List<String> {
+        val datalistView = (containerNodes[datalistTag] ?: nodes[datalistTag]) as? ViewGroup ?: run {
+            Log.w(TAG, "[Datalist] Tag $datalistTag is not a ViewGroup (view=${nodes[datalistTag]?.javaClass?.simpleName})")
+            return emptyList()
+        }
+        val values = mutableListOf<String>()
+        for (i in 0 until datalistView.childCount) {
+            val child = datalistView.getChildAt(i)
+            val childTag = tagMap[child] ?: continue
+            val props = tagProps[childTag] ?: continue
+            (props["value"] ?: props["text"])?.let { values.add(it.toString()) }
+        }
+        return values
     }
 
     private fun applyStyles(view: View, style: Map<String, Any>) {
@@ -413,6 +640,12 @@ class NativeRenderer(private val context: Context, private val rootContainer: Vi
                                 try { it.setTextColor(Color.parseColor(colorStr)) } catch (e: Exception) {}
                             }
                         }
+                    }
+                }
+                "placeholderColor" -> {
+                    val colorStr = value.toString()
+                    if (view is TextView && colorStr.startsWith("#")) {
+                        try { view.setHintTextColor(Color.parseColor(colorStr)) } catch (e: Exception) {}
                     }
                 }
                 "fontSize" -> {
@@ -705,6 +938,18 @@ class NativeRenderer(private val context: Context, private val rootContainer: Vi
                 } else {
                     parent.addView(child)
                 }
+
+                // If we added an option to a datalist, refresh linked inputs
+                if (viewTypes[parentTag] == "datalist") {
+                    tagProps[parentTag]?.get("id")?.toString()?.let { id ->
+                        refreshInputsForDatalist(id)
+                    }
+                }
+
+                // If parent is a select, refresh its options
+                if (viewTypes[parentTag] == "select") {
+                    refreshSelectOptions(parentTag)
+                }
                 
                 // Handle justify-between for LinearLayout
                 lastAppliedStyles[parentTag]?.let { parentStyles ->
@@ -800,9 +1045,25 @@ class NativeRenderer(private val context: Context, private val rootContainer: Vi
 
     fun removeChild(parentTag: Int, childTag: Int) {
         runOnMainThreadBlocking {
-            val parent = if (parentTag == -1) rootContainer else nodes[parentTag] as? ViewGroup
+            val parent = if (parentTag == -1) {
+                rootContainer
+            } else {
+                containerNodes[parentTag] ?: nodes[parentTag] as? ViewGroup
+            }
             val child = nodes[childTag] ?: return@runOnMainThreadBlocking
             parent?.removeView(child)
+
+            // If parent is a datalist, notify any inputs using it
+            if (viewTypes[parentTag] == "datalist") {
+                tagProps[parentTag]?.get("id")?.toString()?.let { id ->
+                    refreshInputsForDatalist(id)
+                }
+            }
+
+            // If parent is a select, refresh its options
+            if (viewTypes[parentTag] == "select") {
+                refreshSelectOptions(parentTag)
+            }
         }
     }
 
@@ -816,8 +1077,11 @@ class NativeRenderer(private val context: Context, private val rootContainer: Vi
             Log.d(TAG, "[CLEAR] Epoch incremented: $oldEpoch -> $newEpoch")
             
             nodes.clear()
+            containerNodes.clear()
             viewTypes.clear()
             classNames.clear()
+            jsxIds.clear()
+            tagProps.clear()
             tagMap.clear()
             lastAppliedStyles.clear()
             rootContainer.removeAllViews()

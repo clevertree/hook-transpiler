@@ -377,6 +377,17 @@ mod tests {
         , "should emit CommonJS exports");
         assert!(output.contains("__hook_jsx_runtime") || output.contains("jsx"), "should include JSX runtime calls");
         assert!(output.contains("sourceMappingURL=data:application/json;base64,"), "should include inline source map footer");
+        
+        // Verify source map content
+        let footer_prefix = "sourceMappingURL=data:application/json;base64,";
+        let footer_start = output.find(footer_prefix).unwrap() + footer_prefix.len();
+        let encoded_map = &output[footer_start..].trim();
+        let decoded_map = base64::Engine::decode(&base64::engine::general_purpose::STANDARD, encoded_map).unwrap();
+        let map_json: serde_json::Value = serde_json::from_slice(&decoded_map).unwrap();
+        
+        assert!(map_json["sources"].as_array().unwrap().iter().any(|s| s.as_str() == Some("map-test.jsx")), "should contain filename in sources");
+        assert!(map_json["sourcesContent"].as_array().is_some(), "should contain sourcesContent");
+        assert!(map_json["sourcesContent"].as_array().unwrap()[0].as_str().unwrap().contains("Component"), "sourcesContent should contain original source");
     }
 
     #[test]

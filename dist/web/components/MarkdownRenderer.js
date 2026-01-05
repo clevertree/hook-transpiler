@@ -1,16 +1,85 @@
 import { jsx as _jsx } from "react/jsx-runtime";
-import Markdown from 'markdown-to-jsx';
-import React, { useEffect, useRef } from 'react';
-function preprocessHtmlForMarkdown(content) {
-    let processed = content;
-    processed = processed.replace(/<([^>]+?)>/g, (match) => {
-        return match.replace(/\n\s*/g, ' ').replace(/\s+/g, ' ');
+import React, { useEffect, useRef, useMemo } from 'react';
+function renderAst(nodes, Act, overrides, onElement) {
+    if (!nodes || !Array.isArray(nodes))
+        return null;
+    return nodes.map((node, index) => {
+        if (node.type === 'text') {
+            return node.content;
+        }
+        if (node.type === 'element') {
+            const tag = node.tag;
+            let props = { ...(node.props || {}), key: index };
+            if (typeof tag === 'string' && onElement) {
+                try {
+                    onElement(tag, props);
+                }
+                catch (e) { }
+            }
+            let component = tag;
+            const override = overrides[tag];
+            if (override) {
+                if (override.component) {
+                    component = override.component;
+                    if (override.props) {
+                        props = { ...props, ...override.props };
+                    }
+                }
+                else {
+                    component = override;
+                }
+            }
+            const children = renderAst(node.children, Act, overrides);
+            return Act.createElement(component, props, children);
+        }
+        return null;
     });
-    return processed;
 }
 export function MarkdownRenderer({ content, navigate, onElement, overrides = {} }) {
     const contentRef = useRef(null);
-    const processedContent = preprocessHtmlForMarkdown(content);
+    const defaultOverrides = useMemo(() => ({
+        h1: { component: 'h1' },
+        h2: { component: 'h2' },
+        h3: { component: 'h3' },
+        h4: { component: 'h4' },
+        h5: { component: 'h5' },
+        h6: { component: 'h6' },
+        p: { component: 'p' },
+        span: { component: 'span' },
+        strong: { component: 'strong' },
+        em: { component: 'em' },
+        code: { component: 'code' },
+        del: { component: 'del' },
+        ins: { component: 'ins' },
+        div: { component: 'div' },
+        img: { component: 'img' },
+        a: { component: 'a' },
+        ul: { component: 'ul' },
+        ol: { component: 'ol' },
+        li: { component: 'li' },
+        table: { component: 'table' },
+        thead: { component: 'thead' },
+        tbody: { component: 'tbody' },
+        tr: { component: 'tr' },
+        th: { component: 'th' },
+        td: { component: 'td' }
+    }), []);
+    const allOverrides = useMemo(() => ({ ...defaultOverrides, ...overrides }), [defaultOverrides, overrides]);
+    const allowedTags = useMemo(() => Object.keys(allOverrides), [allOverrides]);
+    const renderedContent = useMemo(() => {
+        const parseFn = globalThis.__hook_md2jsx_parse;
+        if (typeof parseFn === 'function') {
+            try {
+                const ast = parseFn(content, allowedTags);
+                return renderAst(ast, React, allOverrides, onElement);
+            }
+            catch (e) {
+                console.error('[MarkdownRenderer] Error parsing markdown:', e);
+                return content;
+            }
+        }
+        return content;
+    }, [content, allowedTags, allOverrides, onElement]);
     useEffect(() => {
         if (onElement) {
             onElement('div', { className: 'markdown-content' });
@@ -48,22 +117,6 @@ export function MarkdownRenderer({ content, navigate, onElement, overrides = {} 
             };
         }
     }, [navigate]);
-    const defaultOverrides = {
-        script: () => null,
-        iframe: () => null,
-        ...overrides
-    };
-    return (_jsx("div", { ref: contentRef, className: "markdown-content", children: _jsx(Markdown, { options: {
-                overrides: defaultOverrides,
-                createElement: (type, props, ...children) => {
-                    if (typeof type === 'string' && onElement) {
-                        try {
-                            onElement(type, props);
-                        }
-                        catch (e) { }
-                    }
-                    return React.createElement(type, props, ...children);
-                }
-            }, children: processedContent }) }));
+    return (_jsx("div", { ref: contentRef, className: "markdown-content", children: renderedContent }));
 }
 //# sourceMappingURL=MarkdownRenderer.js.map

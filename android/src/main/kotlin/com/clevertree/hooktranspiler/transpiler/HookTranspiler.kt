@@ -48,11 +48,28 @@ class HookTranspiler {
                 errorCause = e
             ))
         } catch (e: Exception) {
-            Result.failure(HookError.ExecutionError(
-                message = "Transpilation failed: ${e.message}",
-                sourceCode = source,
-                errorCause = e
-            ))
+            val message = e.message ?: "Unknown error"
+            
+            // Try to parse SWC error format: "error: ... at filename:line:col"
+            val regex = """:(\d+):(\d+)""".toRegex()
+            val match = regex.find(message)
+            
+            if (match != null) {
+                val line = match.groupValues[1].toInt()
+                val col = match.groupValues[2].toInt()
+                Result.failure(HookError.ParseError(
+                    message = "Transpilation failed: $message",
+                    source = source,
+                    line = line,
+                    column = col
+                ))
+            } else {
+                Result.failure(HookError.ExecutionError(
+                    message = "Transpilation failed: $message",
+                    sourceCode = source,
+                    errorCause = e
+                ))
+            }
         }
     }
 

@@ -1,7 +1,7 @@
 # HookRenderer Architecture & Flow
 
 ## Overview
-`HookRenderer` is a native Android component that bridges JavaScript/JSX code execution with native Android view rendering. It supports two rendering backends: **Act** (CleverTree's library) and **React Native**, allowing users to choose which framework best suits their needs.
+`HookRenderer` is a native Android component that bridges JavaScript/JSX code execution with native Android view rendering. It supports two rendering backends: **Act** (CleverTree's library) and **Android Native**, allowing users to choose which framework best suits their needs.
 
 ## High-Level Flow
 
@@ -42,7 +42,7 @@
                        │
                        ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│ 5. RENDER (via Act or React Native)                             │
+│ 5. RENDER (via Act or Android Native)                           │
 │    • Call renderer.render(Component, props)                    │
 │    • Framework triggers bridge calls to create native views     │
 │    • Each bridge call incremented and logged                    │
@@ -63,14 +63,14 @@
 ### Initialization
 ```kotlin
 val renderer = HookRenderer(context)
-renderer.setRendererMode(RendererMode.ACT)  // or REACT_NATIVE (default)
+renderer.setRendererMode(RendererMode.ACT)  // or ANDROID (default)
 renderer.setHost("https://api.example.com")  // Optional, for remote hooks
 ```
 
 1. **init block**: Calls `setupEngine()` immediately
 2. **setupEngine()**: Creates `JSContext` and installs JS bridge
 3. **installBridge()**: Registers 10+ native callback functions
-4. **loadRuntime()**: Loads Act or React Native bundle, injects SWC helpers
+4. **loadRuntime()**: Loads Act or Android Native bundle, injects SWC helpers
 
 ### Hook Loading
 ```kotlin
@@ -86,7 +86,7 @@ Flow:
 4. Transpiles via `HookTranspiler`
 5. Calls `onTranspiled` callback
 6. Executes transpiled JS
-7. Renders via Act/RN
+7. Renders via Act/Android
 8. Calls `onReady` callback with view count
 
 ### Error Handling

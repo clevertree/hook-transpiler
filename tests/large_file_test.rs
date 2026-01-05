@@ -15,7 +15,7 @@ fn test_hook_jsx_large_file() {
             println!("Transpiled successfully: {} bytes", output.len());
             assert!(output.contains("__hook_jsx_runtime"), "should use jsx runtime");
             assert!(output.contains("useState"), "should preserve hooks");
-            assert!(output.contains("ListItem"), "should preserve component references");
+            assert!(output.contains("MarkdownTest"), "should preserve component references");
         }
         Err(e) => {
             panic!("Transpilation failed: {}", e);

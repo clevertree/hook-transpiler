@@ -18,6 +18,25 @@ impl ParseContext {
         Self { source: source.chars().collect(), pos: 0, is_typescript }
     }
 
+    pub fn get_line_col(&self) -> (usize, usize) {
+        let mut line = 1;
+        let mut col = 1;
+        for i in 0..self.pos {
+            if self.source[i] == '\n' {
+                line += 1;
+                col = 1;
+            } else {
+                col += 1;
+            }
+        }
+        (line, col)
+    }
+
+    pub fn error(&self, msg: &str) -> anyhow::Error {
+        let (line, col) = self.get_line_col();
+        anyhow!("{} at line {}, column {}", msg, line, col)
+    }
+
     pub fn current_char(&self) -> Option<char> {
         self.source.get(self.pos).copied()
     }
@@ -45,7 +64,7 @@ impl ParseContext {
             self.advance();
             Ok(())
         } else {
-            Err(anyhow!("Expected '{}' at position {}", expected, self.pos))
+            Err(self.error(&format!("Expected '{}'", expected)))
         }
     }
 
@@ -509,8 +528,8 @@ fn check_for_typescript_syntax(source: &str) -> Result<()> {
                 let next_non_ws = ctx.source.get(peek_pos).copied();
                 let type_terminated = matches!(next_non_ws, Some(',') | Some(';') | Some('=') | Some(')') | Some('>') | Some('{') | Some('}') | Some('|') | Some('&'));
 
-                if (is_builtin || (!word.is_empty() && word.chars().next().unwrap().is_uppercase())) && type_terminated {
-                     return Err(anyhow!("Unexpected TypeScript type annotation at position {}", saved_pos));
+                if is_builtin && type_terminated {
+                     return Err(ctx.error("Unexpected TypeScript type annotation"));
                 }
             }
             ctx.pos = saved_pos;
@@ -873,7 +892,7 @@ fn parse_jsx_element(ctx: &mut ParseContext) -> Result<String> {
     ctx.skip_whitespace();
     
     // Parse props
-    let props = parse_props(ctx)?;
+    let (props, key) = parse_props(ctx)?;
     
     ctx.skip_whitespace();
     
@@ -881,16 +900,28 @@ fn parse_jsx_element(ctx: &mut ParseContext) -> Result<String> {
     if ctx.current_char() == Some('/') {
         ctx.advance();
         ctx.consume('>')?;
-        let tag_value = if is_custom_component(&tag_name) {
+        let tag_value = if tag_name == "Fragment" {
+            "__hook_jsx_runtime.Fragment".to_string()
+        } else if is_custom_component(&tag_name) {
             tag_name
         } else {
             format!("\"{}\"", tag_name)
         };
-        return Ok(format!(
-            "__hook_jsx_runtime.jsx({}, {})",
-            tag_value,
-            props
-        ));
+        
+        if let Some(k) = key {
+            return Ok(format!(
+                "__hook_jsx_runtime.jsx({}, {}, {})",
+                tag_value,
+                props,
+                k
+            ));
+        } else {
+            return Ok(format!(
+                "__hook_jsx_runtime.jsx({}, {})",
+                tag_value,
+                props
+            ));
+        }
     }
     
     ctx.consume('>')?;
@@ -899,18 +930,29 @@ fn parse_jsx_element(ctx: &mut ParseContext) -> Result<String> {
     let children = parse_children(ctx, &tag_name)?;
     
     // Build jsx call
-    let tag_value = if is_custom_component(&tag_name) {
+    let tag_value = if tag_name == "Fragment" {
+        "__hook_jsx_runtime.Fragment".to_string()
+    } else if is_custom_component(&tag_name) {
         tag_name.clone()
     } else {
         format!("\"{}\"", tag_name)
     };
 
     let jsx_call = if children.is_empty() {
-        format!(
-            "__hook_jsx_runtime.jsx({}, {})",
-            tag_value,
-            props
-        )
+        if let Some(k) = key {
+            format!(
+                "__hook_jsx_runtime.jsx({}, {}, {})",
+                tag_value,
+                props,
+                k
+            )
+        } else {
+            format!(
+                "__hook_jsx_runtime.jsx({}, {})",
+                tag_value,
+                props
+            )
+        }
     } else {
         // Add children to props object without spread syntax
         let props_with_children = if props == "{}" {
@@ -923,11 +965,29 @@ fn parse_jsx_element(ctx: &mut ParseContext) -> Result<String> {
                 format!("{{ {}, children: [{}] }}", inner, children.join(", "))
             }
         };
-        format!(
-            "__hook_jsx_runtime.jsx({}, {})",
-            tag_value,
-            props_with_children
-        )
+        
+        let runtime_fn = if children.len() > 1 {
+            "__hook_jsx_runtime.jsxs"
+        } else {
+            "__hook_jsx_runtime.jsx"
+        };
+        
+        if let Some(k) = key {
+            format!(
+                "{}({}, {}, {})",
+                runtime_fn,
+                tag_value,
+                props_with_children,
+                k
+            )
+        } else {
+            format!(
+                "{}({}, {})",
+                runtime_fn,
+                tag_value,
+                props_with_children
+            )
+        }
     };
     
     Ok(jsx_call)
@@ -937,10 +997,16 @@ fn parse_fragment(ctx: &mut ParseContext) -> Result<String> {
     let children = parse_children(ctx, "")?;
     
     let jsx_call = if children.is_empty() {
-        "__hook_jsx_runtime.jsx('div', {})".to_string()
+        "__hook_jsx_runtime.jsx(__hook_jsx_runtime.Fragment, {})".to_string()
     } else {
+        let runtime_fn = if children.len() > 1 {
+            "__hook_jsx_runtime.jsxs"
+        } else {
+            "__hook_jsx_runtime.jsx"
+        };
         format!(
-            "__hook_jsx_runtime.jsx('div', {{ children: [{}] }})",
+            "{}(__hook_jsx_runtime.Fragment, {{ children: [{}] }})",
+            runtime_fn,
             children.join(", ")
         )
     };
@@ -948,8 +1014,9 @@ fn parse_fragment(ctx: &mut ParseContext) -> Result<String> {
     Ok(jsx_call)
 }
 
-fn parse_props(ctx: &mut ParseContext) -> Result<String> {
+fn parse_props(ctx: &mut ParseContext) -> Result<(String, Option<String>)> {
     let mut props = Vec::new();
+    let mut key = None;
     
     while ctx.current_char() != Some('>') && ctx.current_char() != Some('/') {
         ctx.skip_whitespace();
@@ -1001,11 +1068,19 @@ fn parse_props(ctx: &mut ParseContext) -> Result<String> {
                 return Err(anyhow!("Expected prop value at position {}", ctx.pos));
             };
             
-            props.push(format!("{}: {}", prop_name, value));
+            if prop_name == "key" {
+                key = Some(value);
+            } else {
+                props.push(format!("{}: {}", prop_name, value));
+            }
         } else {
             if !prop_name.is_empty() {
-                // Boolean prop (no value means true)
-                props.push(format!("{}: true", prop_name));
+                if prop_name == "key" {
+                    key = Some("true".to_string());
+                } else {
+                    // Boolean prop (no value means true)
+                    props.push(format!("{}: true", prop_name));
+                }
             } else if let Some(ch) = ctx.current_char() {
                 // Skip invalid character to avoid infinite loop
                 if ch != '>' && ch != '/' {
@@ -1017,11 +1092,13 @@ fn parse_props(ctx: &mut ParseContext) -> Result<String> {
         ctx.skip_whitespace();
     }
     
-    if props.is_empty() {
-        Ok("{}".to_string())
+    let props_str = if props.is_empty() {
+        "{}".to_string()
     } else {
-        Ok(format!("{{ {} }}", props.join(", ")))
-    }
+        format!("{{ {} }}", props.join(", "))
+    };
+    
+    Ok((props_str, key))
 }
 
 fn parse_children(ctx: &mut ParseContext, parent_tag: &str) -> Result<Vec<String>> {
@@ -1667,24 +1744,40 @@ const element = <div user={user as any} />;"#;
     fn test_with_children() {
         let input = "<div>Hello World</div>";
         let output = transpile_jsx(input, &TranspileOptions::default()).unwrap();
-        assert!(output.contains("children"));
-        assert!(output.contains("Hello World"));
+        assert_eq!(output, "__hook_jsx_runtime.jsx(\"div\", { children: [\"Hello World\"] })");
     }
 
     #[test]
     fn test_nested_elements() {
         let input = "<div><span>Nested</span></div>";
         let output = transpile_jsx(input, &TranspileOptions::default()).unwrap();
-        assert!(output.contains("div"));
-        assert!(output.contains("span"));
-        assert!(output.contains("Nested"));
+        assert_eq!(output, "__hook_jsx_runtime.jsx(\"div\", { children: [__hook_jsx_runtime.jsx(\"span\", { children: [\"Nested\"] })] })");
     }
 
     #[test]
     fn test_fragment() {
         let input = "<>Fragment content</>";
         let output = transpile_jsx(input, &TranspileOptions::default()).unwrap();
-        assert!(output.contains("Fragment content"));
+        assert_eq!(output, "__hook_jsx_runtime.jsx(__hook_jsx_runtime.Fragment, { children: [\"Fragment content\"] })");
+    }
+
+    #[test]
+    fn test_fragment_multiple_children() {
+        let input = "<><span>1</span><span>2</span></>";
+        let output = transpile_jsx(input, &TranspileOptions::default()).unwrap();
+        assert!(output.starts_with("__hook_jsx_runtime.jsxs(__hook_jsx_runtime.Fragment"));
+    }
+
+    #[test]
+    fn test_key_prop() {
+        let input = r#"<div key="my-key"></div>"#;
+        let output = transpile_jsx(input, &TranspileOptions::default()).unwrap();
+        assert_eq!(output, "__hook_jsx_runtime.jsx(\"div\", {}, \"my-key\")");
+
+        let input_with_children = r#"<div key="my-key"><span>1</span><span>2</span></div>"#;
+        let output_with_children = transpile_jsx(input_with_children, &TranspileOptions::default()).unwrap();
+        assert!(output_with_children.contains("__hook_jsx_runtime.jsxs(\"div\","));
+        assert!(output_with_children.contains("\"my-key\")"));
     }
 
     // ========== Import/Export Module Tests ==========

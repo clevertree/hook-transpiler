@@ -16,20 +16,32 @@ fn test_client_jsx_dynamic_import() {
     
     // Check if dynamic imports were transformed
     println!("=== Checking for dynamic import transformation ===");
-    let has_import_call = result.contains("import(");
+    
+    // We expect one import( in the <p> tag, but none in the code
+    
+    // Let's use a more robust check: count "import(" that are NOT preceded by "__hook_"
+    let mut real_import_count = 0;
+    for (i, _) in result.char_indices() {
+        if result[i..].starts_with("import(") {
+            if i < 7 || !result[..i].ends_with("__hook_") {
+                real_import_count += 1;
+            }
+        }
+    }
+    
     let has_hook_import = result.contains("__hook_import(");
     
-    println!("Contains import(: {}", has_import_call);
+    println!("real import( count: {}", real_import_count);
     println!("Contains __hook_import(: {}", has_hook_import);
     
     // Find the relevant section
     if let Some(idx) = result.find("loadData") {
         let start = idx.saturating_sub(50);
-        let end = (idx + 500).min(result.len());
+        let end = (idx + 1000).min(result.len());
         println!("\n=== loadData function (around line) ===");
         println!("{}", &result[start..end]);
     }
     
     assert!(has_hook_import, "Dynamic import should be transformed to __hook_import");
-    assert!(!has_import_call, "import() calls should be converted");
+    assert!(real_import_count <= 1, "import() calls in code should be converted (only the one in <p> tag should remain)");
 }

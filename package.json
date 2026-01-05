@@ -1,7 +1,7 @@
 {
   "name": "@clevertree/hook-transpiler",
-  "version": "1.3.22",
-  "description": "Minimal JSX/TSX transpiler for Relay hooks on web and Android (QuickJS/JNI)",
+  "version": "1.3.31",
+  "description": "Minimal JSX/TSX transpiler for Relay hooks on web and Android (JavaScriptCore/JNI)",
   "type": "module",
   "main": "./dist/web/index.js",
   "types": "./dist/web/index.d.ts",
@@ -29,8 +29,8 @@
   ],
   "scripts": {
     "clean": "rm -rf dist",
-    "build": "tsc && npm run build:wasm",
-    "build:wasm": "wasm-pack build --release --target web --features wasm && mkdir -p wasm && cp pkg/relay_hook_transpiler* wasm/ && mkdir -p dist/web/wasm && cp pkg/relay_hook_transpiler* dist/web/wasm/ && mkdir -p dist/wasm && cp pkg/relay_hook_transpiler* dist/wasm/",
+    "build": "npm run build:wasm && tsc",
+    "build:wasm": "wasm-pack build --release --target web --features wasm && mkdir -p wasm && cp pkg/relay_hook_transpiler* wasm/ && mkdir -p dist/web/wasm && cp pkg/relay_hook_transpiler* dist/web/wasm/ && mkdir -p dist/wasm && cp pkg/relay_hook_transpiler* dist/wasm/ && cp ../md2jsx/pkg/md2jsx* wasm/ && cp ../md2jsx/pkg/md2jsx* dist/web/wasm/ && cp ../md2jsx/pkg/md2jsx* dist/wasm/",
     "build:debug": "tsc && npm run build:wasm:debug",
     "build:wasm:debug": "wasm-pack build --release --target web --features wasm,debug && mkdir -p wasm && cp pkg/relay_hook_transpiler* wasm/ && mkdir -p dist/web/wasm && cp pkg/relay_hook_transpiler* dist/web/wasm/ && mkdir -p dist/wasm && cp pkg/relay_hook_transpiler* dist/wasm/",
     "test": "cargo test && npm run build && node --test dist/web/selfCheck.test.js",
@@ -46,7 +46,7 @@
     "typescript": "^5.0.0"
   },
   "dependencies": {
-    "markdown-to-jsx": "^9.3.0"
+    "@clevertree/md2jsx": "^1.0.2"
   },
   "peerDependencies": {
     "react": ">=18.0.0"

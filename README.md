@@ -1,6 +1,36 @@
 # <img src="icon.png" width="32" height="32" align="center" /> @clevertree/hook-transpiler
 
-A minimal JSX/TSX transpiler specifically designed for Relay hooks. This library provides a unified interface for code transpilation across Web (via WASM) and Android (QuickJS + JNI).
+A minimal JSX/TSX transpiler specifically designed for Relay hooks. This library provides a unified interface for code transpilation across Web (via WASM) and Android (JavaScriptCore + JNI).
+
+## Architecture
+
+```mermaid
+graph TD
+    subgraph "Input"
+        JSX[JSX/TSX Source]
+    end
+
+    subgraph "Transpiler Core (Rust)"
+        Parser[SWC Parser]
+        TS[TypeScript Stripping]
+        React[React Transform]
+        Import[Import Rewriting]
+        CJS[CommonJS Conversion]
+    end
+
+    subgraph "Output"
+        Web[WASM / ESM]
+        Android[JNI / CommonJS]
+    end
+
+    JSX --> Parser
+    Parser --> TS
+    TS --> React
+    React --> Import
+    Import --> CJS
+    CJS --> Web
+    CJS --> Android
+```
 
 ## Why this library?
 
@@ -333,6 +363,17 @@ npm run test:e2e
 3. Check that the hook file exists at the given `hookPath`
 4. Verify the host URL is accessible
 5. Check browser console for transpilation errors (will be logged by WASM module)
+
+## Roadmap & Future Features
+
+The following features are planned for future releases:
+
+- **Advanced Input Types**: Support for `date`, `time`, and `datetime-local` with native Android pickers (currently only changes keyboard type).
+- **File Uploads**: Support for `<input type="file">` with native file picker integration.
+- **Color Picker**: Support for `<input type="color">` with a native color picker dialog.
+- **Range Slider**: Support for `<input type="range">` mapping to `SeekBar`.
+- **Validation**: Built-in support for HTML5-style validation attributes (`required`, `pattern`, `min`, `max`).
+- **Performance**: Further optimizations for large component trees and complex state updates.
 
 ## Contributing
 

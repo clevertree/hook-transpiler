@@ -161,7 +161,19 @@ fn transpile_with_swc_inner(source: &str, opts: &TranspileOptions) -> Result<Str
                 let mut sm_json = Vec::new();
                 sm.to_writer(&mut sm_json)
                     .context("failed to serialize source map")?;
-                let encoded = Base64.encode(sm_json);
+                
+                // Manually inject sourcesContent if missing
+                let mut map_obj: serde_json::Value = serde_json::from_slice(&sm_json).context("failed to parse source map JSON")?;
+                if map_obj["sourcesContent"].is_null() {
+                    let mut contents = Vec::new();
+                    for _ in sm.sources() {
+                        contents.push(serde_json::Value::String(source.to_string()));
+                    }
+                    map_obj["sourcesContent"] = serde_json::Value::Array(contents);
+                }
+                
+                let sm_json_final = serde_json::to_vec(&map_obj).context("failed to re-serialize source map")?;
+                let encoded = Base64.encode(sm_json_final);
                 if opts.inline_source_map {
                     code.push_str("\n//# sourceMappingURL=data:application/json;base64,");
                     code.push_str(&encoded);

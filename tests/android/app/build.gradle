@@ -4,11 +4,11 @@ plugins {
 }
 
 android {
-    namespace 'com.relay.test'
+    namespace 'com.relay.hooktranspiler.test'
     compileSdk 34
 
     defaultConfig {
-        applicationId "com.relay.test"
+        applicationId "com.relay.hooktranspiler.test"
         minSdk 24
         targetSdk 34
         versionCode 1
@@ -56,7 +56,7 @@ dependencies {
     implementation 'com.google.code.gson:gson:2.10.1'
 
     // Themed-styler Android helpers (YAML parsing hook)
-    implementation 'com.clevertree:themed-styler-android:1.0.0'
+    implementation 'com.clevertree:themed-styler-android:1.2.9'
 
     // HTTP for remote hooks
     implementation 'com.squareup.okhttp3:okhttp:4.11.0'
